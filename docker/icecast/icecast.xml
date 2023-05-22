@@ -1,0 +1,57 @@
+<icecast>
+    <hostname>ice</hostname>
+    <location>earth</location>
+    <admin>icemaster@localhost</admin>
+    <fileserve>1</fileserve>
+
+    <security>
+        <chroot>0</chroot>
+        <changeowner>
+            <user>icecast2</user>
+            <group>icecast</group>
+        </changeowner>
+    </security>
+
+    <logging>
+        <accesslog>-</accesslog>
+        <errorlog>-</errorlog>
+    </logging>
+
+    <paths>
+        <basedir>/usr/share/icecast2</basedir>
+        <logdir>/var/log/icecast2</logdir>
+        <webroot>/usr/share/icecast2/web</webroot>
+        <adminroot>/usr/share/icecast2/admin</adminroot>
+    </paths>
+
+    <limits>
+        <sources>1</sources>
+        <queue-size>102400</queue-size>
+        <header-timeout>15</header-timeout>
+        <source-timeout>10</source-timeout>
+        <burst-size>65536</burst-size>
+    </limits>
+
+    <authentication>
+        <source-password>hackme</source-password>
+        <relay-password>hackme</relay-password>
+        <admin-user>admin</admin-user>
+        <admin-password>hackme</admin-password>
+    </authentication>
+
+    <listen-socket>
+        <port>8000</port>
+    </listen-socket>
+
+    <http-headers>
+        <header type="cors" name="Access-Control-Allow-Origin" />
+        <header type="cors" name="Access-Control-Allow-Headers" />
+        <header type="cors" name="Access-Control-Expose-Headers" />
+    </http-headers>
+
+    <mount type="normal">
+        <mount-name>/lumiradio</mount-name>
+        <stream-name>lumiRadio</stream-name>
+        <stream-description>24/7 Homestuck and Fan Music Radio</stream-description>
+    </mount>
+</icecast>

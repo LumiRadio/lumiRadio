@@ -1,0 +1,35 @@
+{
+  "db": "PostgreSQL",
+  "7699ad2ba816c8d6483a82d9de26e66ed4f397848a6e662a7db8b609f916330f": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "INSERT INTO played_songs (song_id) VALUES ($1)"
+  },
+  "7a5eceb63bb78eda46c6f5978e7b7aa355a875a66ea8931fcf898538f72a65b5": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT id FROM songs WHERE file_path = $1"
+  }
+}

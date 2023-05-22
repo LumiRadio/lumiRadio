@@ -1,0 +1,111 @@
+{
+  "db": "PostgreSQL",
+  "2e469366a6300f12c1c6acd26a7de9c3ba224509c4a55095e67a06c12a2d95f6": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO song_requests (song_id, user_id)\n        VALUES ($1, $2)\n        "
+  },
+  "78bf93280ab182d8f176a58482cb25c045e1ac3fcef34edd75913d9a0ddf85a5": {
+    "describe": {
+      "columns": [
+        {
+          "name": "title",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "artist",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "album",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "file_path",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "duration",
+          "ordinal": 4,
+          "type_info": "Float8"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT title, artist, album, file_path, duration\n        FROM songs\n        WHERE file_path = $1\n        "
+  },
+  "900b903cf1eec03a3d26fd279c05df4d4cc3199b69642456adf3c6e1bb17317f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "title",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "artist",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "album",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "file_path",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        WITH search AS (\n            SELECT to_tsquery(string_agg(lexeme || ':*', ' & ' ORDER BY positions)) AS query\n            FROM unnest(to_tsvector($1))\n        )\n        SELECT title, artist, album, file_path\n        FROM songs, search\n        WHERE tsvector @@ query\n        "
+  },
+  "d01ade5eda1307fd7cd93fbf5f33cc2f941e074ab5c6fb6b24e8e95834cffc40": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Text"
+        ]
+      }
+    },
+    "query": "INSERT INTO users (id, youtube_channel_id) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET youtube_channel_id = $2"
+  }
+}

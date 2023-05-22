@@ -1,0 +1,28 @@
+{
+  "db": "PostgreSQL",
+  "4acfb06affe5a65976956ca6f66b2397bb28dc277accb74a37b609691f42ec9d": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "DELETE FROM songs"
+  },
+  "af256f5c598ecfc208d42bfb52745e5fcffbfddae20a3c504bdc5055959ec9b0": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "INSERT INTO songs (title, artist, album, file_path) VALUES ($1, $2, $3, $4)"
+  }
+}

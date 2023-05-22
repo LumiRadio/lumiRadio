@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "xtask",
+    "byers",
+    "langley"
+]
+default-members = ["byers"]
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3

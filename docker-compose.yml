@@ -1,0 +1,68 @@
+version: '3'
+
+services:
+  ice:
+    image: lumiradio/icecast2
+    build:
+      context: ./docker/icecast
+      dockerfile: Dockerfile
+    command: ["/bin/sh", "-c", "/usr/bin/icecast2 -c /etc/icecast2/icecast.xml"]
+    ports:
+      - 8000:8000
+    volumes:
+      - ./docker/icecast/icecast.xml:/etc/icecast2/icecast.xml
+  liquidsoap:
+    image: lumiradio/liquidsoap
+    build:
+      context: ./docker/liquidsoap
+      dockerfile: Dockerfile
+      args:
+        - OPAM_PACKAGES=liquidsoap${LIQUIDSOAP_VERSION:+.$LIQUIDSOAP_VERSION} taglib mad lame vorbis cry samplerate ocurl
+    ports:
+      - 1234:1234
+      - 127.0.0.1:8001:8000
+    depends_on:
+      - ice
+    volumes:
+      - ./docker/liquidsoap/script.liq:/etc/liquidsoap/script.liq
+      - ${RADIO_MUSIC:?RADIO_MUSIC is unset}:/music
+      - liquidsoap:/persistent
+  db:
+    image: postgres:12
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DATABASE}
+  byers:
+    image: lumiradio/byers
+    build: 
+      context: ./byers
+      dockerfile: Dockerfile
+    depends_on:
+      - liquidsoap
+    environment:
+      DISCORD_TOKEN: ${BYERS_DISCORD_TOKEN}
+      DATABASE_URL: postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}
+      LIQUIDSOAP__HOST: liquidsoap
+      LIQUIDSOAP__PORT: 1234
+      GOOGLE__CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE__CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      RUST_LOG: info
+  langley:
+    image: lumiradio/langley
+    build:
+      context: ./langley
+      dockerfile: Dockerfile
+    ports:
+      - 8002:8000
+    environment:
+      ROCKET_ADDRESS: 0.0.0.0
+      ROCKET_DATABASES: '{byersdb={url="postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}"}}'
+
+volumes:
+  pg_data:
+  liquidsoap:

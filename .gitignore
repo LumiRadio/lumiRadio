@@ -1,0 +1,4 @@
+.env
+icecast/icecast.xml
+liquidsoap/script.liq
+target/
