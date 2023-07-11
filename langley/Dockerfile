@@ -1,4 +1,4 @@
-FROM rust:1.67 as builder
+FROM rust:1.70 as builder
 
 ENV SQLX_OFFLINE=true
 
@@ -13,7 +13,7 @@ ADD . ./
 RUN rm ./target/release/deps/langley*
 RUN cargo build --release
 
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 ARG APP=/usr/src/app
 
 # Install SSL certificates, timezone data, libpq

@@ -27,7 +27,7 @@ interactive.harbor()
 v = interactive.float("volume", 1.)
 
 # Persist them
-interactive.persistent("/persistent/vars.json")
+interactive.persistent("/etc/liquidsoap/vars.json")
 
 # Load music directory
 playlist = mksafe(playlist("/music"))
@@ -39,21 +39,25 @@ radio = fallback([request.queue(id = "prioq"), request.queue(id = "srq"), playli
 # Normalize volume
 radio = normalize(radio)
 # Set volume
-radio = amplify(radio, v)
+radio = amplify(v, radio)
 
 current_track = ref([])
 def on_track(t)
     current_track := t
     filename = t["filename"]
+    title = t["title"]
+    artist = t["artist"]
+    album = t["album"]
     headers = [("Content-Type", "application/json")]
-    payload = "{\"filename\": \"" ^ filename ^ "\"}"
+    payload = "{\"filename\": \"" ^ filename ^ "\", \"title\": \"" ^ title ^ "\", \"artist\": \"" ^ artist ^ "\", \"album\": \"" ^ album ^ "\" }"
 
+    print(payload)
     http.post(data = payload, headers = headers, langley_url)
     ()
 end
 source.on_track(radio, on_track)
 
-def on_current_track()
+def on_current_track(cli)
     t = !current_track
     title = t["title"]
     artist = t["artist"]

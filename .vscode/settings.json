@@ -9,6 +9,13 @@
             "database": "byers",
             "username": "byers",
             "password": "byers"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "ByersPlus",
+            "database": "slcb_data/byers_plus.db"
         }
-    ]
+    ],
+    "sqltools.useNodeRuntime": true
 }

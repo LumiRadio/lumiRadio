@@ -3,7 +3,10 @@ use tracing_unwrap::{OptionExt, ResultExt};
 
 use crate::{prelude::*, telnet_communication::ByersTelnet};
 
-pub async fn autocomplete_songs(ctx: Context<'_>, partial: &str) -> impl Iterator<Item = poise::AutocompleteChoice<String>> {
+pub async fn autocomplete_songs(
+    ctx: Context<'_>,
+    partial: &str,
+) -> impl Iterator<Item = poise::AutocompleteChoice<String>> {
     let data = ctx.data();
 
     let songs = sqlx::query!(
@@ -25,8 +28,9 @@ pub async fn autocomplete_songs(ctx: Context<'_>, partial: &str) -> impl Iterato
         e
     })
     .expect_or_log("Failed to query database");
-    
-    songs.into_iter()
+
+    songs
+        .into_iter()
         .take(20)
         .map(|song| poise::AutocompleteChoice {
             name: format!("{} - {}", song.artist, song.title),
@@ -35,12 +39,16 @@ pub async fn autocomplete_songs(ctx: Context<'_>, partial: &str) -> impl Iterato
 }
 
 /// Requests a song for the radio
-#[poise::command(slash_command, user_cooldown = 5400)]
+#[poise::command(
+    slash_command,
+    user_cooldown = 5400,
+    required_bot_permissions = "SEND_MESSAGES"
+)]
 pub async fn song_request(
     ctx: Context<'_>,
-    #[description = "The song to request"] 
+    #[description = "The song to request"]
     #[rest]
-    #[autocomplete = "autocomplete_songs"] 
+    #[autocomplete = "autocomplete_songs"]
     song: String,
 ) -> Result<(), Error> {
     let ctx = match ctx {
@@ -103,26 +111,31 @@ pub async fn song_request(
         std::time::Duration::from_secs(5413)
     };
 
-    let over = last_played + chrono::Duration::from_std(cooldown_time)
-        .expect_or_log("Failed to convert std::time::Duration to chrono::Duration");
+    let over = last_played
+        + chrono::Duration::from_std(cooldown_time)
+            .expect_or_log("Failed to convert std::time::Duration to chrono::Duration");
 
     if over > chrono::Utc::now().naive_utc() {
         let discord_relative = format!("<t:{}:R>", over.timestamp());
         ctx.send(|b| {
-            b.content(format!("This song has been requested recently. You can request this song again {}", discord_relative))
-                .ephemeral(true)
+            b.content(format!(
+                "This song has been requested recently. You can request this song again {}",
+                discord_relative
+            ))
+            .ephemeral(true)
         })
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to send message: {}", e);
-                e
-            })?;
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to send message: {}", e);
+            e
+        })?;
         return Ok(());
     }
 
     let result = {
         let mut telnet = data.telnet.lock().await;
-        telnet.request_song(&song.file_path)
+        telnet
+            .request_song(&song.file_path)
             .expect_or_log("Failed to request song")
     };
 
@@ -140,13 +153,14 @@ pub async fn song_request(
         tracing::error!("Failed to insert song request: {}", e);
         e
     })?;
-    
+
     let cooldown_time = std::time::Duration::from_secs(5400);
-    let over = chrono::Utc::now() + chrono::Duration::from_std(cooldown_time)
-        .expect_or_log("Failed to convert std::time::Duration to chrono::Duration");
-    let discord_relative = format!("<t:{}:R>", over.timestamp());
+    let over = chrono::Utc::now()
+        + chrono::Duration::from_std(cooldown_time)
+            .expect_or_log("Failed to convert std::time::Duration to chrono::Duration");
+    let discord_relative = over.relative_time();
     ctx.send(|b| {
-        b.content(format!(r#""{} - {}" requested! You can request again {discord_relative}. (Request ID {result})"#, &song.album, &song.title))
+        b.content(format!(r#""{} - {}" requested! You can request again in 1 and 1/2 hours ({discord_relative}). (Request ID {result})"#, &song.album, &song.title))
             .ephemeral(true)
     })
         .await

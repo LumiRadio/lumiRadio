@@ -1,6 +1,8 @@
 version: '3'
 
 services:
+  redis:
+    image: redis:7.0.11-alpine
   ice:
     image: lumiradio/icecast2
     build:
@@ -17,7 +19,7 @@ services:
       context: ./docker/liquidsoap
       dockerfile: Dockerfile
       args:
-        - OPAM_PACKAGES=liquidsoap${LIQUIDSOAP_VERSION:+.$LIQUIDSOAP_VERSION} taglib mad lame vorbis cry samplerate ocurl
+        - OPAM_PACKAGES=liquidsoap.2.0.0 taglib mad lame vorbis cry samplerate ocurl
     ports:
       - 1234:1234
       - 127.0.0.1:8001:8000
@@ -25,8 +27,8 @@ services:
       - ice
     volumes:
       - ./docker/liquidsoap/script.liq:/etc/liquidsoap/script.liq
+      - ./docker/liquidsoap/vars.json:/etc/liquidsoap/vars.json
       - ${RADIO_MUSIC:?RADIO_MUSIC is unset}:/music
-      - liquidsoap:/persistent
   db:
     image: postgres:12
     volumes:
@@ -51,6 +53,7 @@ services:
       LIQUIDSOAP__PORT: 1234
       GOOGLE__CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE__CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      REDIS_URL: redis://redis/
       RUST_LOG: info
   langley:
     image: lumiradio/langley
@@ -62,6 +65,7 @@ services:
     environment:
       ROCKET_ADDRESS: 0.0.0.0
       ROCKET_DATABASES: '{byersdb={url="postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}"}}'
+      REDIS_URL: redis://redis/
 
 volumes:
   pg_data:

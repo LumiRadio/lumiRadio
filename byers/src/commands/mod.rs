@@ -1,3 +1,6 @@
+pub mod currency;
 pub mod help;
-pub mod request;
+pub mod minigames;
+pub mod songs;
+pub mod version;
 pub mod youtube;
