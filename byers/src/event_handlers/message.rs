@@ -10,7 +10,7 @@ use tracing_unwrap::ResultExt;
 
 use crate::{
     db::DbUser,
-    prelude::{Data, Error, W},
+    prelude::{Data, Error, Wrappable, W},
 };
 
 #[async_trait::async_trait]
@@ -82,7 +82,9 @@ impl UserMessageHandlerExt for DbUser {
         redis_client
             .set(
                 &cooldown_key,
-                W((chrono::Utc::now() + chrono::Duration::minutes(5)).naive_utc()),
+                (chrono::Utc::now() + chrono::Duration::minutes(5))
+                    .naive_utc()
+                    .wrap(),
                 Some(Expiration::EX(300)),
                 None,
                 false,

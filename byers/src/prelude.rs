@@ -3,7 +3,7 @@ use fred::{
     prelude::{RedisError, RedisErrorKind},
     types::{FromRedis, RedisValue},
 };
-use lazy_static::{__Deref, lazy_static};
+use lazy_static::lazy_static;
 use poise::serenity_prelude as serenity;
 use serenity::GatewayIntents;
 
@@ -17,7 +17,6 @@ lazy_static! {
 pub type Context<'a> = poise::Context<'a, Data, Error>;
 pub type ApplicationContext<'a> = poise::ApplicationContext<'a, Data, Error>;
 pub type Error = anyhow::Error;
-// pub type Telnet = std::sync::Arc<tokio::sync::Mutex<mini_telnet::Telnet>>;
 pub type Telnet = std::sync::Arc<tokio::sync::Mutex<telnet::Telnet>>;
 
 pub struct Data {
@@ -103,10 +102,27 @@ where
 
 pub struct W<T>(pub T);
 
+pub trait Wrappable {
+    fn wrap(self) -> W<Self>
+    where
+        Self: Sized,
+    {
+        W(self)
+    }
+}
+
+impl<T> Wrappable for T where T: Sized {}
+
 impl<T> std::ops::Deref for W<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> AsRef<T> for W<T> {
+    fn as_ref(&self) -> &T {
         &self.0
     }
 }
