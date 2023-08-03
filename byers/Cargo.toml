@@ -32,3 +32,4 @@ async-trait = "0.1.71"
 num-traits = "0.2.15"
 strum = { version = "0.25.0", features = ["derive"] }
 rand = "0.8.5"
+anyhow = "1.0.72"

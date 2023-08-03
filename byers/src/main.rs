@@ -14,6 +14,7 @@ use tracing_unwrap::{OptionExt, ResultExt};
 use crate::{
     commands::{
         currency::{boondollars, pay, pay_menu},
+        minigames::slots,
         songs::song_request,
         version::version,
         youtube::{link_youtube, unlink_youtube},
@@ -43,6 +44,7 @@ async fn main() {
         boondollars(),
         pay(),
         pay_menu(),
+        slots(),
     ];
     info!("Loading {} commands...", commands.len());
 

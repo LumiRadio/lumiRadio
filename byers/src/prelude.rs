@@ -16,7 +16,7 @@ lazy_static! {
 
 pub type Context<'a> = poise::Context<'a, Data, Error>;
 pub type ApplicationContext<'a> = poise::ApplicationContext<'a, Data, Error>;
-pub type Error = Box<dyn std::error::Error + Send + Sync>;
+pub type Error = anyhow::Error;
 // pub type Telnet = std::sync::Arc<tokio::sync::Mutex<mini_telnet::Telnet>>;
 pub type Telnet = std::sync::Arc<tokio::sync::Mutex<telnet::Telnet>>;
 
