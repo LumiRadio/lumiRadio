@@ -259,6 +259,7 @@ pub struct DbServerChannelConfig {
 pub struct DbServerConfig {
     pub id: i64,
     pub slot_jackpot: i32,
+    pub dice_roll: i32,
 }
 
 impl DbServerConfig {
@@ -266,11 +267,26 @@ impl DbServerConfig {
         let config = sqlx::query_as!(
             DbServerConfig,
             r#"
+            SELECT * FROM server_config
+            WHERE id = $1
+            "#,
+            id
+        )
+        .fetch_optional(db)
+        .await?;
+
+        if let Some(config) = config {
+            return Ok(config);
+        }
+
+        let config = sqlx::query_as!(
+            DbServerConfig,
+            r#"
             INSERT INTO server_config (id)
             VALUES ($1)
             ON CONFLICT (id)
             DO NOTHING
-            RETURNING *
+            RETURNING id, slot_jackpot, dice_roll
             "#,
             id
         )
@@ -284,11 +300,12 @@ impl DbServerConfig {
         sqlx::query!(
             r#"
             UPDATE server_config
-            SET slot_jackpot = $2
+            SET slot_jackpot = $2, dice_roll = $3
             WHERE id = $1
             "#,
             self.id,
-            self.slot_jackpot
+            self.slot_jackpot,
+            self.dice_roll
         )
         .execute(db)
         .await?;

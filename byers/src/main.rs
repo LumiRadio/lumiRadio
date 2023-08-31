@@ -14,20 +14,21 @@ use tracing_unwrap::{OptionExt, ResultExt};
 use crate::{
     commands::{
         currency::{boondollars, pay, pay_menu},
-        minigames::slots,
+        minigames::{slots::slots, roll_dice::roll_dice},
         songs::song_request,
         version::version,
-        youtube::{link_youtube, unlink_youtube},
+        youtube::{link_youtube, unlink_youtube}, admin::control::{control_cmd, volume, admin},
     },
+    communication::ByersUnixStream,
     prelude::*,
 };
 
 mod app_config;
 mod commands;
+mod communication;
 mod db;
 mod event_handlers;
 mod prelude;
-mod telnet_communication;
 
 #[tokio::main]
 async fn main() {
@@ -45,6 +46,8 @@ async fn main() {
         pay(),
         pay_menu(),
         slots(),
+        roll_dice(),
+        admin(),
     ];
     info!("Loading {} commands...", commands.len());
 
@@ -60,22 +63,22 @@ async fn main() {
         .await
         .expect_or_log("failed to run migrations");
 
-    info!("Connecting to Liquidsoap...");
-    let telnet = loop {
-        let telnet = telnet::Telnet::connect(
-            (config.liquidsoap.host.to_owned(), config.liquidsoap.port),
-            256,
-        );
-        if let Err(e) = telnet {
-            tracing::error!(
-                "Failed to connect to Liquidsoap, reconnecting in 5 seconds: {}",
-                e
-            );
-            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-        } else {
-            break telnet.unwrap();
-        }
-    };
+    // info!("Connecting to Liquidsoap...");
+    // let telnet = loop {
+    //     let telnet = telnet::Telnet::connect(
+    //         (config.liquidsoap.host.to_owned(), config.liquidsoap.port),
+    //         256,
+    //     );
+    //     if let Err(e) = telnet {
+    //         tracing::error!(
+    //             "Failed to connect to Liquidsoap, reconnecting in 5 seconds: {}",
+    //             e
+    //         );
+    //         tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+    //     } else {
+    //         break telnet.unwrap();
+    //     }
+    // };
 
     info!("Connecting to Redis...");
     let redis_config = RedisConfig::from_url(&config.redis_url).expect_or_log("invalid Redis URL");
@@ -137,7 +140,9 @@ async fn main() {
 
     let context = Data {
         db,
-        telnet: std::sync::Arc::new(tokio::sync::Mutex::new(telnet)),
+        comms: std::sync::Arc::new(tokio::sync::Mutex::new(
+            ByersUnixStream::new().await.unwrap(),
+        )),
         google_config: config.google,
         redis_client: redis_client.clone(),
         subscriber_client: subscriber_client.clone(),

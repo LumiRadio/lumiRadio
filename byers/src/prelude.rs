@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use chrono::{DateTime, TimeZone};
 use fred::{
     prelude::{RedisError, RedisErrorKind},
@@ -6,22 +8,31 @@ use fred::{
 use lazy_static::lazy_static;
 use poise::serenity_prelude as serenity;
 use serenity::GatewayIntents;
+use tokio::sync::Mutex;
 
-use crate::app_config::GoogleConfig;
+use crate::{
+    app_config::GoogleConfig,
+    communication::{ByersUnixStream, LiquidsoapCommunication},
+};
 
 lazy_static! {
     pub static ref INTENTS: GatewayIntents =
         GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT;
 }
 
-pub type Context<'a> = poise::Context<'a, Data, Error>;
-pub type ApplicationContext<'a> = poise::ApplicationContext<'a, Data, Error>;
+pub type Context<'a, C: LiquidsoapCommunication = ByersUnixStream> =
+    poise::Context<'a, Data<C>, Error>;
+pub type ApplicationContext<'a, C: LiquidsoapCommunication = ByersUnixStream> =
+    poise::ApplicationContext<'a, Data<C>, Error>;
 pub type Error = anyhow::Error;
 pub type Telnet = std::sync::Arc<tokio::sync::Mutex<telnet::Telnet>>;
 
-pub struct Data {
+pub struct Data<C>
+where
+    C: LiquidsoapCommunication,
+{
     pub db: sqlx::PgPool,
-    pub telnet: Telnet,
+    pub comms: Arc<Mutex<C>>,
     pub google_config: GoogleConfig,
     pub redis_client: fred::prelude::RedisClient,
     pub subscriber_client: fred::clients::SubscriberClient,

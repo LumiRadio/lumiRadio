@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use rand::seq::IteratorRandom;
 use strum::IntoEnumIterator;
-use tracing_subscriber::fmt::format;
+
 
 use crate::{
     db::{DbServerConfig, DbUser},
@@ -19,6 +19,7 @@ enum SlotReel {
     Seven,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum PayoutOptions {
     Money(i32),
     Jackpot,
@@ -164,4 +165,65 @@ pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     .await?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    mod slots {
+        use super::super::*;
+
+        #[test]
+        fn test_three_bar() {
+            let rolls = [SlotReel::Bar, SlotReel::Bar, SlotReel::Bar];
+            assert_eq!(rolls.determine_payout(), PayoutOptions::Money(250));
+        }
+
+        #[test]
+        fn test_three_bell() {
+            let rolls = [SlotReel::Bell, SlotReel::Bell, SlotReel::Bell];
+            assert_eq!(rolls.determine_payout(), PayoutOptions::Money(20));
+        }
+
+        #[test]
+        fn test_three_plum() {
+            let rolls = [SlotReel::Plum, SlotReel::Plum, SlotReel::Plum];
+            assert_eq!(rolls.determine_payout(), PayoutOptions::Money(14));
+        }
+
+        #[test]
+        fn test_three_orange() {
+            let rolls = [SlotReel::Orange, SlotReel::Orange, SlotReel::Orange];
+            assert_eq!(rolls.determine_payout(), PayoutOptions::Money(10));
+        }
+
+        #[test]
+        fn test_three_cherry() {
+            let rolls = [SlotReel::Cherry, SlotReel::Cherry, SlotReel::Cherry];
+            assert_eq!(rolls.determine_payout(), PayoutOptions::Money(7));
+        }
+
+        #[test]
+        fn test_two_cherry() {
+            let rolls = [SlotReel::Cherry, SlotReel::Cherry, SlotReel::Orange];
+            assert_eq!(rolls.determine_payout(), PayoutOptions::Money(5));
+        }
+
+        #[test]
+        fn test_one_cherry() {
+            let rolls = [SlotReel::Cherry, SlotReel::Orange, SlotReel::Orange];
+            assert_eq!(rolls.determine_payout(), PayoutOptions::Money(2));
+        }
+
+        #[test]
+        fn test_three_seven() {
+            let rolls = [SlotReel::Seven, SlotReel::Seven, SlotReel::Seven];
+            assert_eq!(rolls.determine_payout(), PayoutOptions::Jackpot);
+        }
+
+        #[test]
+        fn test_two_seven() {
+            let rolls = [SlotReel::Seven, SlotReel::Seven, SlotReel::Orange];
+            assert_eq!(rolls.determine_payout(), PayoutOptions::Nothing);
+        }
+    }
 }

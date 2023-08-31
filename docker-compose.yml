@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 services:
   redis:
@@ -29,6 +29,7 @@ services:
       - ./docker/liquidsoap/script.liq:/etc/liquidsoap/script.liq
       - ./docker/liquidsoap/vars.json:/etc/liquidsoap/vars.json
       - ${RADIO_MUSIC:?RADIO_MUSIC is unset}:/music
+      - ls_socket:/etc/liquidsoap
   db:
     image: postgres:12
     volumes:
@@ -41,7 +42,7 @@ services:
       POSTGRES_DB: ${PG_DATABASE}
   byers:
     image: lumiradio/byers
-    build: 
+    build:
       context: ./byers
       dockerfile: Dockerfile
     depends_on:
@@ -55,6 +56,8 @@ services:
       GOOGLE__CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       REDIS_URL: redis://redis/
       RUST_LOG: info
+    volumes:
+      - ls_socket:/usr/src/app/ls
   langley:
     image: lumiradio/langley
     build:
@@ -66,7 +69,23 @@ services:
       ROCKET_ADDRESS: 0.0.0.0
       ROCKET_DATABASES: '{byersdb={url="postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}"}}'
       REDIS_URL: redis://redis/
+  frohike:
+    image: lumiradio/frohike
+    build:
+      context: ./frohike
+      dockerfile: Dockerfile
+    environment:
+      RUST_LOG: debug
+      REDIS_URL: redis://redis/
+    command:
+      - "house-keeping"
+      - "--database-url"
+      - "postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}"
+      - "/music"
+    volumes:
+      - ${RADIO_MUSIC:?RADIO_MUSIC is unset}:/music
 
 volumes:
   pg_data:
   liquidsoap:
+  ls_socket:

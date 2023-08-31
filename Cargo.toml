@@ -1,9 +1,5 @@
 [workspace]
-members = [
-    "xtask",
-    "byers",
-    "langley"
-]
+members = ["xtask", "byers", "langley", "frohike", "xefros"]
 default-members = ["byers"]
 
 [profile.dev.package.sqlx-macros]

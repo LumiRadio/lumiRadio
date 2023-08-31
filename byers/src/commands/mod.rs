@@ -4,3 +4,4 @@ pub mod minigames;
 pub mod songs;
 pub mod version;
 pub mod youtube;
+pub mod admin;

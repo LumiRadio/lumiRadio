@@ -1,7 +1,6 @@
-use poise::futures_util::Stream;
 use tracing_unwrap::{OptionExt, ResultExt};
 
-use crate::{prelude::*, telnet_communication::ByersTelnet};
+use crate::{communication::LiquidsoapCommunication, prelude::*};
 
 pub async fn autocomplete_songs(
     ctx: Context<'_>,
@@ -133,9 +132,10 @@ pub async fn song_request(
     }
 
     let result = {
-        let mut telnet = data.telnet.lock().await;
+        let mut telnet = data.comms.lock().await;
         telnet
             .request_song(&song.file_path)
+            .await
             .expect_or_log("Failed to request song")
     };
 

@@ -9,6 +9,7 @@ use tracing::info;
 use tracing_unwrap::ResultExt;
 
 use crate::{
+    communication::ByersUnixStream,
     db::DbUser,
     prelude::{Data, Error, Wrappable, W},
 };
@@ -101,7 +102,7 @@ impl UserMessageHandlerExt for DbUser {
     }
 }
 
-pub async fn message_handler(message: &Message, data: &Data) -> Result<(), Error> {
+pub async fn message_handler(message: &Message, data: &Data<ByersUnixStream>) -> Result<(), Error> {
     if message.author.bot {
         return Ok(());
     }

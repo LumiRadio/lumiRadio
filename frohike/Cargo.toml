@@ -1,0 +1,28 @@
+[package]
+name = "frohike"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.75"
+audiotags = "0.4.1"
+clap = { version = "4.4.0", features = ["derive"] }
+futures-util = "0.3.28"
+inotify = "0.10.2"
+metadata = "0.1.8"
+notify = "6.1.1"
+sqlx = { version = "0.6", features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "macros",
+    "offline",
+    "chrono",
+    "migrate",
+    "bigdecimal",
+] }
+tokio = { version = "1.32.0", features = ["full"] }
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+walkdir = "2.3.3"

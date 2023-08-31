@@ -1,6 +1,149 @@
 {
   "db": "PostgreSQL",
-  "2b41f1768216e48d4440f36507082d30f32d9029c2716fe8c504fde0d877a540": {
+  "19c1c772cacd5f4106b68d72baeb0e1501edd8711d851d64f20683d01bd42208": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "slot_jackpot",
+          "ordinal": 1,
+          "type_info": "Int4"
+        },
+        {
+          "name": "dice_roll",
+          "ordinal": 2,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM server_config\n            WHERE id = $1\n            "
+  },
+  "2ac2a3967f4f17d9e5285749d8b67d7f19b5ad9073ac44e4892cce5b9bd687b8": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            SELECT COUNT(*) FROM users\n            WHERE boonbucks > $1\n            "
+  },
+  "2e469366a6300f12c1c6acd26a7de9c3ba224509c4a55095e67a06c12a2d95f6": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO song_requests (song_id, user_id)\n        VALUES ($1, $2)\n        "
+  },
+  "41b7af07556ee756ed128fa6ceef68e6c02c321fe793cd187300dba3cdd4346f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "rank_name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "hour_requirement",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "channel_id",
+          "ordinal": 3,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM slcb_rank\n            WHERE hour_requirement > $1\n            AND (channel_id IS NULL OR channel_id = $2)\n            ORDER BY hour_requirement ASC\n            LIMIT 1\n            "
+  },
+  "41ee73fe685b3abe1e4b64f73d0bbe81e54b22d62214a108b3252f2b0a4569c6": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "rank_name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "hour_requirement",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "channel_id",
+          "ordinal": 3,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM slcb_rank\n            WHERE hour_requirement <= $1\n            AND (channel_id IS NULL OR channel_id = $2)\n            ORDER BY hour_requirement DESC\n            LIMIT 1\n            "
+  },
+  "5a1ae4773a0d7c43a3abeca8019fda7fac722e4b07b2c9938bc287ffe789da17": {
     "describe": {
       "columns": [
         {
@@ -24,9 +167,24 @@
           "type_info": "Int4"
         },
         {
-          "name": "last_message_sent",
+          "name": "created_at",
           "ordinal": 4,
           "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "last_message_sent",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "migrated",
+          "ordinal": 7,
+          "type_info": "Bool"
         }
       ],
       "nullable": [
@@ -34,93 +192,18 @@
         true,
         false,
         false,
-        true
-      ],
-      "parameters": {
-        "Left": [
-          "Int8"
-        ]
-      }
-    },
-    "query": "\n        INSERT INTO users (id) VALUES ($1)\n        ON CONFLICT (id) DO NOTHING\n        RETURNING id, youtube_channel_id, watched_time, boonbucks, last_message_sent\n        "
-  },
-  "2e469366a6300f12c1c6acd26a7de9c3ba224509c4a55095e67a06c12a2d95f6": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Int8"
-        ]
-      }
-    },
-    "query": "\n        INSERT INTO song_requests (song_id, user_id)\n        VALUES ($1, $2)\n        "
-  },
-  "4a39f1b68de89aeb9a473f582f882c976572512b4b2a11924c9efc56d222bfca": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Numeric",
-          "Timestamp",
-          "Int8"
-        ]
-      }
-    },
-    "query": "\n        UPDATE users\n        SET watched_time = $1, last_message_sent = $2\n        WHERE id = $3\n        "
-  },
-  "644c9370cd56b6ade92dd81a8ff8e5908889a8ba5b1f3d19d3364af438f55c7e": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "username",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "points",
-          "ordinal": 2,
-          "type_info": "Int4"
-        },
-        {
-          "name": "hours",
-          "ordinal": 3,
-          "type_info": "Int4"
-        }
-      ],
-      "nullable": [
         false,
         false,
-        false,
+        true,
         false
       ],
       "parameters": {
         "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "SELECT * FROM slcb_currency WHERE username = $1"
-  },
-  "696cc7f455fc3ec8b05b9aadc73df1535c6d27a1bad48d3f34caa349f582e404": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Int4",
           "Int8"
         ]
       }
     },
-    "query": "\n        UPDATE users\n        SET boonbucks = $1\n        WHERE id = $2\n        "
+    "query": "\n            INSERT INTO users (id) VALUES ($1)\n            ON CONFLICT (id) DO NOTHING\n            RETURNING id, youtube_channel_id, watched_time, boonbucks, created_at, updated_at, last_message_sent, migrated\n            "
   },
   "78bf93280ab182d8f176a58482cb25c045e1ac3fcef34edd75913d9a0ddf85a5": {
     "describe": {
@@ -166,6 +249,20 @@
     },
     "query": "\n        SELECT title, artist, album, file_path, duration\n        FROM songs\n        WHERE file_path = $1\n        "
   },
+  "7ae59c7abfa2dbcae94d317712b31ce76c68a5a541f2b919d771ebfe4f8a9478": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int4",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            UPDATE server_config\n            SET slot_jackpot = $2, dice_roll = $3\n            WHERE id = $1\n            "
+  },
   "7b25747f084a2335560cc9ccfd91ce6dee1737c63250ffeee9eeaf58f295419e": {
     "describe": {
       "columns": [],
@@ -178,61 +275,22 @@
     },
     "query": "UPDATE users SET youtube_channel_id = NULL WHERE id = $1"
   },
-  "843923b9a0257cf80f1dff554e7dc8fdfc05f489328e8376513124dfb42996e3": {
+  "870f8b67ef09421e83ab0cee2aefbf9153c157c7217bf598b3ada99e58773930": {
     "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int8"
-        },
-        {
-          "name": "youtube_channel_id",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "watched_time",
-          "ordinal": 2,
-          "type_info": "Numeric"
-        },
-        {
-          "name": "boonbucks",
-          "ordinal": 3,
-          "type_info": "Int4"
-        },
-        {
-          "name": "created_at",
-          "ordinal": 4,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at",
-          "ordinal": 5,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "last_message_sent",
-          "ordinal": 6,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        false,
-        false,
-        false,
-        false,
-        true
-      ],
+      "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
-          "Int8"
+          "Int8",
+          "Text",
+          "Numeric",
+          "Int4",
+          "Timestamp",
+          "Bool"
         ]
       }
     },
-    "query": "SELECT * FROM users WHERE id = $1"
+    "query": "\n            INSERT INTO users (id, youtube_channel_id, watched_time, boonbucks, last_message_sent, migrated)\n            VALUES ($1, $2, $3, $4, $5, $6)\n            ON CONFLICT (id)\n            DO UPDATE SET youtube_channel_id = $2, watched_time = $3, boonbucks = $4, last_message_sent = $5, migrated = $6, updated_at = now()\n            "
   },
   "900b903cf1eec03a3d26fd279c05df4d4cc3199b69642456adf3c6e1bb17317f": {
     "describe": {
@@ -272,19 +330,99 @@
     },
     "query": "\n        WITH search AS (\n            SELECT to_tsquery(string_agg(lexeme || ':*', ' & ' ORDER BY positions)) AS query\n            FROM unnest(to_tsvector($1))\n        )\n        SELECT title, artist, album, file_path\n        FROM songs, search\n        WHERE tsvector @@ query\n        "
   },
-  "99bef5da6f0add665cbebf4cd8ce99b47f14e3d781aa11ca9fb3274d0eb24ee7": {
+  "a7da26ab1348cd70027e19dc9e49edc9a1d82133343b144a642d93029a0ae1d4": {
     "describe": {
-      "columns": [],
-      "nullable": [],
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "youtube_channel_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "watched_time",
+          "ordinal": 2,
+          "type_info": "Numeric"
+        },
+        {
+          "name": "boonbucks",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 4,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "last_message_sent",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "migrated",
+          "ordinal": 7,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false
+      ],
       "parameters": {
         "Left": [
-          "Numeric",
-          "Int4",
           "Int8"
         ]
       }
     },
-    "query": "UPDATE users SET watched_time = watched_time + $1, boonbucks = boonbucks + $2 WHERE id = $3"
+    "query": "\n            SELECT * FROM users\n            WHERE id = $1\n            "
+  },
+  "aa137d8b16f61a91bf8e929c6c6f2c5c5d866be3d78f824bc126b7c4b1cdc646": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "slot_jackpot",
+          "ordinal": 1,
+          "type_info": "Int4"
+        },
+        {
+          "name": "dice_roll",
+          "ordinal": 2,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO server_config (id)\n            VALUES ($1)\n            ON CONFLICT (id)\n            DO NOTHING\n            RETURNING id, slot_jackpot, dice_roll\n            "
   },
   "aeefc2c1f25c3dad101265d72be14bb92ba074a73201b61f115767e1522813a4": {
     "describe": {
@@ -306,30 +444,117 @@
     },
     "query": "\n        SELECT created_at\n        FROM song_requests\n        WHERE song_id = $1\n        ORDER BY created_at DESC\n        LIMIT 1\n        "
   },
-  "d01ade5eda1307fd7cd93fbf5f33cc2f941e074ab5c6fb6b24e8e95834cffc40": {
+  "c821ec4db9ca0fa0cc81e9a2855e5ac56ec79708ee83a61c01e60c039dc03f9e": {
     "describe": {
       "columns": [],
       "nullable": [],
       "parameters": {
         "Left": [
-          "Int8",
-          "Text"
-        ]
-      }
-    },
-    "query": "INSERT INTO users (id, youtube_channel_id) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET youtube_channel_id = $2"
-  },
-  "e3eaa70a9856427cb85e1a6196d19f712269bebd95445984e8440ba82adb2d41": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
+          "Text",
+          "Numeric",
+          "Int4",
           "Timestamp",
+          "Bool",
           "Int8"
         ]
       }
     },
-    "query": "\n            UPDATE users\n            SET last_message_sent = $1\n            WHERE id = $2\n            "
+    "query": "\n            UPDATE users\n            SET youtube_channel_id = $1, watched_time = $2, boonbucks = $3, last_message_sent = $4, migrated = $5, updated_at = now()\n            WHERE id = $6\n            "
+  },
+  "cc22d45552ea5d8d041b0dfce766ab45f8dfa5b36b6397f274148a323605b0b6": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Numeric"
+        ]
+      }
+    },
+    "query": "\n            SELECT COUNT(*) FROM users\n            WHERE watched_time > $1\n            "
+  },
+  "d588916133d209cfa0b12f2755fa1933b2281776a9ddcfc70b2b57ed12230e3b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "points",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "hours",
+          "ordinal": 3,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM slcb_currency\n            WHERE id = $1\n            "
+  },
+  "f53e4535f915507d0c0ca5c4f97c7d34465d0a3ce62fe38fcab3db637bb8ffba": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "points",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "hours",
+          "ordinal": 3,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM slcb_currency\n            WHERE username = $1\n            "
   }
 }

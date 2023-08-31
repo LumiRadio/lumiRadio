@@ -28,7 +28,8 @@ RUN apt update && apt upgrade -y && \
 RUN groupadd -g 999 radio && \
     useradd -m -r -u 999 -s /bin/bash -g radio radio && \
     mkdir /etc/liquidsoap /music && \
-    chown -R radio /etc/liquidsoap /music
+    chown -R radio /etc/liquidsoap /music && \
+    chmod -R 755 /etc/liquidsoap
 
 ARG LIQUIDSOAP_VERSION
 ARG OPAM_PACKAGES="liquidsoap${LIQUIDSOAP_VERSION:+.$LIQUIDSOAP_VERSION} taglib mad lame vorbis cry samplerate"
