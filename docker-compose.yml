@@ -4,7 +4,7 @@ services:
   redis:
     image: redis:7.0.11-alpine
   ice:
-    image: lumiradio/icecast2
+    image: ghcr.io/lumiradio/icecast
     build:
       context: ./docker/icecast
       dockerfile: Dockerfile
@@ -14,7 +14,7 @@ services:
     volumes:
       - ./docker/icecast/icecast.xml:/etc/icecast2/icecast.xml
   liquidsoap:
-    image: lumiradio/liquidsoap
+    image: ghcr.io/lumiradio/liquidsoap
     build:
       context: ./docker/liquidsoap
       dockerfile: Dockerfile
@@ -41,7 +41,7 @@ services:
       POSTGRES_PASSWORD: ${PG_PASSWORD}
       POSTGRES_DB: ${PG_DATABASE}
   byers:
-    image: lumiradio/byers
+    image: ghcr.io/lumiradio/byers
     build:
       context: ./byers
       dockerfile: Dockerfile
@@ -59,7 +59,7 @@ services:
     volumes:
       - ls_socket:/usr/src/app/ls
   langley:
-    image: lumiradio/langley
+    image: ghcr.io/lumiradio/langley
     build:
       context: ./langley
       dockerfile: Dockerfile
@@ -70,7 +70,7 @@ services:
       ROCKET_DATABASES: '{byersdb={url="postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}"}}'
       REDIS_URL: redis://redis/
   frohike:
-    image: lumiradio/frohike
+    image: ghcr.io/lumiradio/frohike
     build:
       context: ./frohike
       dockerfile: Dockerfile
