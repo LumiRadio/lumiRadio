@@ -32,6 +32,4 @@ RUN chown -R frohike:frohike ${APP}
 USER frohike
 WORKDIR ${APP}
 
-EXPOSE 8000
-
 ENTRYPOINT ["./frohike"]
