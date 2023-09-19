@@ -33,9 +33,17 @@ async fn played(
         );
     }
 
+    let db_song = sqlx::query!(
+        "SELECT file_hash FROM songs WHERE file_path = $1",
+        song.filename
+    )
+    .fetch_one(&app_state.db)
+    .await
+    .expect("Failed to query database");
+
     sqlx::query!(
         "INSERT INTO played_songs (song_id) VALUES ($1)",
-        song.filename
+        db_song.file_hash
     )
     .execute(&app_state.db)
     .await

@@ -35,18 +35,63 @@ impl Display for DbSong {
 }
 
 impl DbSong {
-    pub async fn last_played_song(db: &sqlx::PgPool) -> Result<Self, sqlx::Error> {
+    pub async fn last_played_song(db: &sqlx::PgPool) -> Result<Option<Self>, sqlx::Error> {
         sqlx::query_as!(
             DbSong,
             r#"
             SELECT songs.title, songs.artist, songs.album, songs.file_path, songs.duration, songs.file_hash
             FROM songs, played_songs
-            WHERE songs.file_path = played_songs.song_id
+            WHERE songs.file_hash = played_songs.song_id
             ORDER BY played_songs.played_at DESC
             LIMIT 1
             "#,
         )
+        .fetch_optional(db)
+        .await
+    }
+
+    pub async fn played(&self, db: &PgPool) -> Result<i64, sqlx::Error> {
+        let played = sqlx::query!(
+            r#"
+            SELECT COUNT(*) FROM played_songs
+            WHERE song_id = $1
+            "#,
+            self.file_hash
+        )
         .fetch_one(db)
+        .await?;
+
+        let played = played.count.unwrap();
+        Ok(played)
+    }
+
+    pub async fn requested(&self, db: &PgPool) -> Result<i64, sqlx::Error> {
+        let requested = sqlx::query!(
+            r#"
+            SELECT COUNT(*) FROM song_requests
+            WHERE song_id = $1
+            "#,
+            self.file_hash
+        )
+        .fetch_one(db)
+        .await?;
+
+        let requested = requested.count.unwrap();
+        Ok(requested)
+    }
+
+    pub async fn last_10_songs(db: &sqlx::PgPool) -> Result<Vec<Self>, sqlx::Error> {
+        sqlx::query_as!(
+            DbSong,
+            r#"
+            SELECT songs.title, songs.artist, songs.album, songs.file_path, songs.duration, songs.file_hash
+            FROM songs, played_songs
+            WHERE songs.file_hash = played_songs.song_id
+            ORDER BY played_songs.played_at DESC
+            LIMIT 10
+            "#,
+        )
+        .fetch_all(db)
         .await
     }
 
@@ -108,7 +153,7 @@ impl DbSong {
             ORDER BY created_at DESC
             LIMIT 1
             "#,
-            self.file_path
+            self.file_hash
         )
         .fetch_optional(db)
         .await
@@ -134,7 +179,7 @@ impl DbSong {
             INSERT INTO song_requests (song_id, user_id)
             VALUES ($1, $2)
             "#,
-            self.file_path,
+            self.file_hash,
             author_id as i64
         )
         .execute(db)

@@ -39,6 +39,14 @@ async fn add_can(db: &PgPool, user_id: u64) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub async fn can(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     if ctx.data.redis_pool.get::<Option<String>, _>("can").await?.is_some() {
+        ctx.send(|m| {
+            m.embed(|e| {
+                e.title("Can Town")
+                    .description("Woah, slow down there! Rome wasn't built in a day!")
+            })
+                .ephemeral(true)
+        }).await?;
+
         return Ok(());
     }
     ctx.data.redis_pool.set("can", "true", Some(Expiration::EX(35)), None, false).await?;
@@ -60,6 +68,14 @@ pub async fn can(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub async fn bear(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     if ctx.data.redis_pool.get::<Option<String>, _>("can").await?.is_some() {
+        ctx.send(|m| {
+            m.embed(|e| {
+                e.title("Can Town")
+                    .description("Woah, slow down there! Rome wasn't built in a day!")
+            })
+                .ephemeral(true)
+        }).await?;
+
         return Ok(());
     }
     ctx.data.redis_pool.set("can", "true", Some(Expiration::EX(35)), None, false).await?;
@@ -69,8 +85,8 @@ pub async fn bear(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let can_count = DbCan::count(&ctx.data().db).await?;
     ctx.send(|m| {
         m.embed(|e| {
-            e.title("Can Town")
-                .description(format!("You place a ~~bear~~ in Can Town. There's now {} bears. Someone can add another in 35 seconds.", can_count))
+            e.title("Bear Town")
+                .description(format!("You place a bear in Bear Town. There's now {} bears. Someone can add another in 35 seconds.", can_count))
         })
     }).await?;
 

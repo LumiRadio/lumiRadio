@@ -196,10 +196,10 @@ async fn main() {
 
                         let current_song = DbSong::last_played_song(&data.db)
                             .await;
-                        if let Ok(current_song) = current_song {
+                        if let Ok(Some(current_song)) = current_song {
                             ctx.set_activity(Activity::listening(format!(
                                 "{} - {}",
-                                current_song.artist, current_song.title
+                                current_song.album, current_song.title
                             )))
                                 .await;
                         }

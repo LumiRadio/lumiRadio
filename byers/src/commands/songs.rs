@@ -5,8 +5,55 @@ use crate::{
 };
 
 /// Song-related commands
-#[poise::command(slash_command, subcommands("request"))]
+#[poise::command(slash_command, subcommands("request", "playing", "history"), subcommand_required)]
 pub async fn song(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    Ok(())
+}
+
+/// Displays the last 10 songs played
+#[poise::command(slash_command, global_cooldown = 180)]
+pub async fn history(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    let data = ctx.data;
+    let last_songs = DbSong::last_10_songs(&data.db).await?;
+
+    let mut description = String::new();
+    for (i, song) in last_songs.into_iter().enumerate() {
+        description.push_str(&format!("{}. {} - {}\n", i + 1, song.album, song.title));
+    }
+
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title("Song History")
+                .description(format!("```\n{}```", description))
+        })
+    }).await?;
+
+    Ok(())
+}
+
+/// Displays the currently playing song
+#[poise::command(slash_command, global_cooldown = 180)]
+pub async fn playing(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    let data = ctx.data;
+    let Some(current_song) = DbSong::last_played_song(&data.db).await? else {
+        ctx.send(|m| {
+            m.embed(|e| {
+                e.title("Currently Playing")
+                    .description("Nothing is currently playing!")
+            })
+        }).await?;
+        return Ok(());
+    };
+    let play_count = current_song.played(&data.db).await?;
+    let request_count = current_song.requested(&data.db).await?;
+
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title("Currently Playing")
+                .description(format!("{} - {}\n\nThis song has been played {} times and requested {} times.", current_song.album, current_song.title, play_count, request_count))
+        })
+    }).await?;
+
     Ok(())
 }
 
@@ -29,7 +76,17 @@ pub async fn request(
         return Ok(());
     };
 
-    let currently_playing = DbSong::last_played_song(&data.db).await?;
+    let Some(currently_playing) = DbSong::last_played_song(&data.db).await? else {
+        ctx.send(|m| {
+            m.embed(|e| {
+                e.title("Song Requests")
+                    .description("Nothing is currently playing!")
+            })
+            .ephemeral(true)
+        })
+        .await?;
+        return Ok(());
+    };
     if currently_playing.file_hash == song.file_hash {
         ctx.send(|b| {
             b.embed(|e| {
@@ -38,11 +95,7 @@ pub async fn request(
             })
             .ephemeral(true)
         })
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to send message: {}", e);
-            e
-        })?;
+        .await?;
         return Ok(());
     }
 
@@ -67,11 +120,7 @@ pub async fn request(
             })
             .ephemeral(true)
         })
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to send message: {}", e);
-            e
-        })?;
+        .await?;
         return Ok(());
     }
 

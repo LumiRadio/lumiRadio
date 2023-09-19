@@ -77,4 +77,4 @@ end
 server.register(usage="song_request_queue", description="Show the song request queue", "song_request_queue", on_song_request_queue)
 
 # Output to Icecast
-output.icecast(%mp3.abr(max_bitrate=128), user = user, host = host, port = port, password = password, mount = mount, send_icy_metadata = true, radio)
+output.icecast(%mp3.abr(max_bitrate=128), id = "lumiradio", user = user, host = host, port = port, password = password, mount = mount, send_icy_metadata = true, radio)

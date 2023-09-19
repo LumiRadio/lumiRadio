@@ -13,6 +13,7 @@ pub mod version;
 pub mod youtube;
 pub mod add_stuff;
 
+/// Displays the link to the radio
 #[poise::command(slash_command)]
 pub async fn listen(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     ctx.send(|m| {

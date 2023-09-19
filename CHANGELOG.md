@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.0.8] - 2023-09-19
+
+### Added
+
+- Added a cooldown message for `/add can`
+- Added 2 new commands: `/song history` and `/song playing`.
+
+### Changed
+
+- Changed song IDs over to use the file hash instead of the file path
+- Display the currently playing song as "album - title" instead of "artist - title"
+
+### Fixed
+
+- Fixed a missing comment in the `/listen` command.
+- Fixed the skip command by setting the ID of the icecast source to "lumiradio".
+
 ## [1.0.7] - 2023-09-19
 
 ### Added
