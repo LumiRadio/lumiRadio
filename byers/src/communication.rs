@@ -71,7 +71,7 @@ impl ByersUnixStream {
 
     pub async fn read_until_end(&mut self) -> Result<String, std::io::Error> {
         let mut buf = Vec::new();
-        let mut read_buffer = Vec::new();
+        let mut read_buffer = [0; 4096];
 
         loop {
             self.stream.readable().await?;
@@ -89,6 +89,8 @@ impl ByersUnixStream {
                 }
             };
             buf.extend_from_slice(&read_buffer[..bytes_read]);
+            // empty the read buffer
+            read_buffer = [0; 4096];
 
             if let Some(end_idx) = buf.windows(3).position(|window| window == b"END") {
                 return Ok(String::from_utf8_lossy(&buf[..end_idx]).to_string());

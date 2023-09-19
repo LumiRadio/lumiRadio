@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.0.3] - 2023-09-19
+
+### Fixed
+
+- Fixed a bug where the bot would try to fill the buffer infinitely when waiting for a response from liquidsoap.
+
 ## [1.0.2] - 2023-09-19
 
 ### Fixed
