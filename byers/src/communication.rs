@@ -89,12 +89,13 @@ impl ByersUnixStream {
                 }
             };
             buf.extend_from_slice(&read_buffer[..bytes_read]);
-            // empty the read buffer
-            read_buffer = [0; 4096];
 
             if let Some(end_idx) = buf.windows(3).position(|window| window == b"END") {
                 return Ok(String::from_utf8_lossy(&buf[..end_idx]).to_string());
             }
+
+            // clear the read buffer in case we didn't read the whole thing
+            read_buffer = [0; 4096];
         }
     }
 
