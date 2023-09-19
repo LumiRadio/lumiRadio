@@ -78,7 +78,7 @@ async fn main() {
     let app_state = AppState { redis_pool, db };
 
     let app = axum::Router::new()
-        .route("/played", axum::routing::get(played))
+        .route("/played", axum::routing::post(played))
         .with_state(app_state);
 
     info!("Listening on 0.0.0.0:8000");

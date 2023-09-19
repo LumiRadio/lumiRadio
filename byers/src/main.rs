@@ -19,6 +19,8 @@ use crate::{
             admin,
             control::{control_cmd, volume},
             import::import,
+            config::config as config_cmd,
+            user::user,
         },
         currency::{boondollars, pay, pay_menu},
         minigames,
@@ -58,6 +60,8 @@ async fn main() {
         pay_menu(),
         admin(),
         import(),
+        config_cmd(),
+        user(),
         minigames::command(),
         add(),
     ];

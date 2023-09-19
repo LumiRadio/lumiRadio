@@ -19,15 +19,3 @@ pub mod user;
 pub async fn admin(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     Ok(())
 }
-
-/// User commands
-#[poise::command(
-    slash_command,
-    ephemeral,
-    owners_only,
-    subcommands("set", "get"),
-    subcommand_required
-)]
-pub async fn user(ctx: ApplicationContext<'_>) -> Result<(), Error> {
-    Ok(())
-}

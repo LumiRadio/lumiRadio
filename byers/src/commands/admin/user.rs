@@ -3,6 +3,18 @@ use sqlx::types::BigDecimal;
 use crate::db::DbUser;
 use crate::prelude::{ApplicationContext, Error};
 
+/// User commands
+#[poise::command(
+slash_command,
+ephemeral,
+owners_only,
+subcommands("set", "get"),
+subcommand_required
+)]
+pub async fn user(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    Ok(())
+}
+
 #[derive(Debug, Clone, poise::ChoiceParameter)]
 pub enum UserParameter {
     #[name = "Watched time"]

@@ -1,5 +1,6 @@
 use crate::prelude::*;
 
+/// Shows the current version of Byers
 #[poise::command(
     slash_command,
     ephemeral,

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.0.2] - 2023-09-19
+
+### Fixed
+
+- Fixed a bug where Langley wouldn't receive any requests because it only listened to GET requests instead of POST requests.
+- Fixed missing commands (e.g. `/config`, `/user`)
+
 ## [1.0.1] - 2023-09-19
 
 ### Fixed
