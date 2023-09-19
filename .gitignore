@@ -3,3 +3,4 @@ icecast/icecast.xml
 target/
 slcb_data
 .prod.env
+.idea/
