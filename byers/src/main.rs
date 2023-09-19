@@ -164,15 +164,6 @@ async fn main() {
                     if let poise::Event::Ready { data_about_bot } = event {
                         info!("Connected as {}", data_about_bot.user.name);
 
-                        let current_song = DbSong::last_played_song(&data.db)
-                            .await
-                            .expect_or_log("failed to query database for last played song");
-                        ctx.set_activity(Activity::listening(format!(
-                            "{} - {}",
-                            current_song.artist, current_song.title
-                        )))
-                        .await;
-
                         info!("Spawning Redis subscriber message handler...");
                         let mut message_rx = data.redis_subscriber.on_message();
                         let context = ctx.clone();
@@ -194,6 +185,16 @@ async fn main() {
                                 }
                             }
                         });
+
+                        let current_song = DbSong::last_played_song(&data.db)
+                            .await;
+                        if let Ok(current_song) = current_song {
+                            ctx.set_activity(Activity::listening(format!(
+                                "{} - {}",
+                                current_song.artist, current_song.title
+                            )))
+                                .await;
+                        }
                     }
 
                     Ok(())

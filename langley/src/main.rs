@@ -33,11 +33,6 @@ async fn played(
         );
     }
 
-    let _ = app_state
-        .redis_pool
-        .publish::<i32, _, _>("byers:status", format!("{} - {}", song.album, song.title))
-        .await;
-
     sqlx::query!(
         "INSERT INTO played_songs (song_id) VALUES ($1)",
         song.filename
@@ -45,6 +40,12 @@ async fn played(
     .execute(&app_state.db)
     .await
     .expect("Failed to query database");
+
+    let _ = app_state
+        .redis_pool
+        .publish::<i32, _, _>("byers:status", format!("{} - {}", song.album, song.title))
+        .await;
+
     debug!("Played song: {}", song.filename);
 
     (StatusCode::OK, Json(SongResponse { success: true }))
