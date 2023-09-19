@@ -6,12 +6,6 @@ name: Build icecast Docker image
 # documentation.
 
 on:
-  push:
-    branches: ["release"]
-    # Publish semver tags as releases.
-    tags: ["v*.*.*"]
-  pull_request:
-    branches: ["release"]
   workflow_dispatch:
 
 env:
