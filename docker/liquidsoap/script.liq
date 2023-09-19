@@ -71,8 +71,32 @@ end
 server.register(usage="current_track", description="Show the currently playing track", "current_track", on_current_track)
 
 def on_song_request_queue(cli)
-    q = list.append(prioq.queue(), srq.queue())
-    json.stringify(q)
+    prioq = prioq.queue()
+    prioq_length = list.length(prioq)
+    srq = srq.queue()
+    srq_length = list.length(srq)
+
+    json_list = []
+    for i = 0 to prioq_length - 1 do
+        elem = list.nth(prioq, i)
+        obj = json()
+        obj.add("artist", elem.metadata["artist"])
+        obj.add("title", elem.metadata["title"])
+        obj.add("album", elem.metadata["album"])
+        obj.add("filename", elem.metadata["filename"])
+        json_list = list.add(obj, json_list)
+    done
+    for i = 0 to srq_length - 1 do
+        elem = list.nth(srq, i)
+        obj = json()
+        obj.add("artist", elem.metadata["artist"])
+        obj.add("title", elem.metadata["title"])
+        obj.add("album", elem.metadata["album"])
+        obj.add("filename", elem.metadata["filename"])
+        json_list = list.add(obj, json_list)
+    done
+
+    json.stringify(json_list)
 end
 server.register(usage="song_request_queue", description="Show the song request queue", "song_request_queue", on_song_request_queue)
 

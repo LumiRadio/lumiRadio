@@ -253,6 +253,26 @@
     },
     "query": "\n            SELECT COUNT(*) FROM users\n            WHERE boonbucks > $1\n            "
   },
+  "2c335e4d2554f6eb4d01c946a938066926ecb41955ea45557dcc0a432e8633e5": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT COUNT(*) FROM song_requests\n            WHERE song_id = $1\n            "
+  },
   "2e1bce21d4954d7937f174c3d8095980de21028404c9b872bd3c787acb2a3812": {
     "describe": {
       "columns": [
@@ -291,6 +311,74 @@
       }
     },
     "query": "\n            INSERT INTO server_channel_config (id, server_id)\n            VALUES ($1, $2)\n            ON CONFLICT (id)\n            DO NOTHING\n            RETURNING id, server_id, allow_watch_time_accumulation, allow_point_accumulation\n            "
+  },
+  "32908da057e1ef073671730cc6c1008cb2c125e07ac0f819b367c0d759384ace": {
+    "describe": {
+      "columns": [
+        {
+          "name": "title",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "artist",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "album",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "file_path",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "duration",
+          "ordinal": 4,
+          "type_info": "Float8"
+        },
+        {
+          "name": "file_hash",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            SELECT songs.title, songs.artist, songs.album, songs.file_path, songs.duration, songs.file_hash\n            FROM songs, played_songs\n            WHERE songs.file_hash = played_songs.song_id\n            ORDER BY played_songs.played_at DESC\n            LIMIT 10\n            "
+  },
+  "32c41fbc1ff0cf0b72e194e20f375d18695b1e67400f887fd012c34456d3ef1b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT COUNT(*) FROM played_songs\n            WHERE song_id = $1\n            "
   },
   "35d8954b7a08cc9a2966a11ac122e5da8b48018f9797a973c3dbf60b9fdb795c": {
     "describe": {
@@ -494,54 +582,6 @@
       }
     },
     "query": "\n            SELECT title, artist, album, file_path, duration, file_hash\n            FROM songs\n            WHERE file_hash = $1\n            "
-  },
-  "9db3d45908284dff762d183952a9bd128c0c35661f4dc6575ebf108242d15ef8": {
-    "describe": {
-      "columns": [
-        {
-          "name": "title",
-          "ordinal": 0,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "artist",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "album",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "file_path",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "duration",
-          "ordinal": 4,
-          "type_info": "Float8"
-        },
-        {
-          "name": "file_hash",
-          "ordinal": 5,
-          "type_info": "Varchar"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": []
-      }
-    },
-    "query": "\n            SELECT songs.title, songs.artist, songs.album, songs.file_path, songs.duration, songs.file_hash\n            FROM songs, played_songs\n            WHERE songs.file_path = played_songs.song_id\n            ORDER BY played_songs.played_at DESC\n            LIMIT 1\n            "
   },
   "a020f9828cb34aab2f8cb3e90bfea5b0a91eaffb98ceaeb44201ceaa0606c8be": {
     "describe": {
@@ -802,6 +842,54 @@
       }
     },
     "query": "\n            INSERT INTO server_config (id)\n            VALUES ($1)\n            ON CONFLICT (id)\n            DO NOTHING\n            RETURNING id, slot_jackpot, dice_roll\n            "
+  },
+  "b044e02893b46facc1115d41d5033ad42f56ac262a318b0efb2d46509518ea4e": {
+    "describe": {
+      "columns": [
+        {
+          "name": "title",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "artist",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "album",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "file_path",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "duration",
+          "ordinal": 4,
+          "type_info": "Float8"
+        },
+        {
+          "name": "file_hash",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            SELECT songs.title, songs.artist, songs.album, songs.file_path, songs.duration, songs.file_hash\n            FROM songs, played_songs\n            WHERE songs.file_hash = played_songs.song_id\n            ORDER BY played_songs.played_at DESC\n            LIMIT 1\n            "
   },
   "b6b7b161e3721c9f53fc2bbb3d9ef076b1d8fbd7fb3fcd6d9c85e6375eda0277": {
     "describe": {
