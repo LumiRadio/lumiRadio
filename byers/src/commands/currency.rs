@@ -1,4 +1,5 @@
 use poise::{serenity_prelude::User, Modal};
+use sqlx::types::BigDecimal;
 
 use crate::{
     db::{DbSlcbRank, DbUser},
@@ -20,10 +21,10 @@ pub async fn boondollars(ctx: Context<'_>) -> Result<(), Error> {
     let rank_name = DbSlcbRank::fetch_rank_for_user(&user, &data.db).await?;
     let next_rank = DbSlcbRank::fetch_next_rank_for_user(&user, &data.db)
         .await?
-        .map(|r| r.hour_requirement)
-        .unwrap_or(0);
+        .map(|r| BigDecimal::from(r.hour_requirement) - user.watched_time)
+        .unwrap_or(BigDecimal::from(0));
 
-    let message = format!("{username} - Hours: {hours:.2} (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank} hours. - You can check again in 5 minutes.", username = username, hours = hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
+    let message = format!("{username} - Hours: {hours:.2} (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank:.0} hours. - You can check again in 5 minutes.", username = username, hours = hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
     ctx.say(message).await?;
 
     Ok(())

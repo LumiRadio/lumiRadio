@@ -1,10 +1,31 @@
+use fred::prelude::{Expiration, KeysInterface};
 use sqlx::PgPool;
 use crate::db::DbCan;
-use crate::prelude::{ApplicationContext, Error};
+use crate::prelude::{ApplicationContext, Context, Error};
 
 /// Adds... things
-#[poise::command(slash_command, subcommands("can", "bear", "john"), subcommand_required, global_cooldown = 35)]
+#[poise::command(slash_command, subcommands("can", "bear", "john"), subcommand_required)]
 pub async fn add(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    Ok(())
+}
+
+#[poise::command(prefix_command, aliases("addbear"))]
+pub async fn addcan(ctx: Context<'_>) -> Result<(), Error> {
+    if ctx.data().redis_pool.get::<Option<String>, _>("can").await?.is_some() {
+        return Ok(());
+    }
+    ctx.data().redis_pool.set("can", "true", Some(Expiration::EX(35)), None, false).await?;
+
+    add_can(&ctx.data().db, ctx.author().id.0).await?;
+
+    let can_count = DbCan::count(&ctx.data().db).await?;
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title("Can Town")
+                .description(format!("You place a can in Can Town. There's now {} cans. Someone can add another in 35 seconds.", can_count))
+        })
+    }).await?;
+
     Ok(())
 }
 
@@ -17,6 +38,11 @@ async fn add_can(db: &PgPool, user_id: u64) -> Result<(), Error> {
 /// Add a can to can town
 #[poise::command(slash_command)]
 pub async fn can(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    if ctx.data.redis_pool.get::<Option<String>, _>("can").await?.is_some() {
+        return Ok(());
+    }
+    ctx.data.redis_pool.set("can", "true", Some(Expiration::EX(35)), None, false).await?;
+
     add_can(&ctx.data().db, ctx.author().id.0).await?;
 
     let can_count = DbCan::count(&ctx.data().db).await?;
@@ -33,13 +59,18 @@ pub async fn can(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 /// Add a... bear...? to can town...?
 #[poise::command(slash_command)]
 pub async fn bear(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    if ctx.data.redis_pool.get::<Option<String>, _>("can").await?.is_some() {
+        return Ok(());
+    }
+    ctx.data.redis_pool.set("can", "true", Some(Expiration::EX(35)), None, false).await?;
+
     add_can(&ctx.data().db, ctx.author().id.0).await?;
 
     let can_count = DbCan::count(&ctx.data().db).await?;
     ctx.send(|m| {
         m.embed(|e| {
             e.title("Can Town")
-                .description(format!("You place a ~~bear~~ can in Can Town. There's now {} cans. Someone can add another in 35 seconds.", can_count))
+                .description(format!("You place a ~~bear~~ in Can Town. There's now {} bears. Someone can add another in 35 seconds.", can_count))
         })
     }).await?;
 

@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.0.7] - 2023-09-19
+
+### Added
+
+- Added a prefix command variant for !addcan and !addbear
+  - These are currently disabled while the bot is still in beta.
+- Added a `/listen` command which displays the link to the radio.
+- Added an automatic rollover of the dice roll from 666 to 111.
+
+### Changed
+
+- Changed the cooldown message to also use a relative string.
+- Made `/strife` send a new message and only edit the old message to remove the buttons.
+
+### Fixed
+
+- Fixed next rank hours not being displayed correctly.
+- Fixed not being able to add a can without a user account.
+- Fixed the starting dice roll being 1 instead of 111.
+
 ## [1.0.6]
 
 ### Changed

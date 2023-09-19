@@ -657,6 +657,8 @@ pub struct DbCan {
 
 impl DbCan {
     pub async fn add_one(db: &PgPool, added_by: i64, legit: bool) -> Result<(), sqlx::Error> {
+        DbUser::fetch_or_insert(db, added_by).await?;
+
         sqlx::query!(
             r#"
             INSERT INTO cans (added_by, legit)

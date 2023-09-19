@@ -83,7 +83,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let mut guild_config = DbServerConfig::fetch_or_insert(&data.db, guild_id.0 as i64).await?;
 
     if guild_config.dice_roll == 0 {
-        guild_config.dice_roll = 1;
+        guild_config.dice_roll = 111;
         guild_config.update(&data.db).await?;
     }
 
@@ -107,7 +107,11 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 
     match result {
         DiceRollResult::WinSecret(total_winnings) => {
+            let old_roll = guild_config.dice_roll;
             guild_config.dice_roll += 1;
+            if guild_config.dice_roll > 666 {
+                guild_config.dice_roll = 111;
+            }
             guild_config.update(&data.db).await?;
             user.boonbucks += total_winnings;
 
@@ -118,7 +122,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     
                         Additionally, you rolled the server's roll of {}! The next number is {}"#,
                         game.player_roll(),
-                        guild_config.dice_roll - 1,
+                        old_roll,
                         guild_config.dice_roll
                     ))
                 })

@@ -13,6 +13,7 @@ use crate::{
     db::DbUser,
     prelude::{ApplicationContext, Data, DiscordTimestamp, Error},
 };
+use crate::prelude::Context;
 
 static STRIFE_ENEMIES_BY_PLAYER_COUNT: Lazy<HashMap<i32, StrifeEnemyType>> = Lazy::new(|| {
     vec![
@@ -418,13 +419,15 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         message
             .to_mut()
             .edit(ctx.serenity_context(), |e| {
-                e.embed(|e| {
-                    Strife::prepare_embed(e)
-                        .description("There weren't enough players to start a strife!")
-                })
-                .components(|c| c)
+                e.components(|c| c)
             })
             .await?;
+        ctx.send(|m| {
+            m.embed(|e| {
+                Strife::prepare_embed(e)
+                    .description("There weren't enough players to start a strife!")
+            })
+        }).await?;
         user.boonbucks += 50;
         user.update(&data.db).await?;
         return Ok(());
@@ -432,37 +435,36 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let result = game.play().await?;
     match result.result {
         StrifeResult::Wipeout => {
-            message
-                .to_mut()
-                .edit(ctx.serenity_context(), |e| {
-                    e.embed(|e| {
-                        Strife::prepare_embed(e)
-                            .description(format!("The battle against the **{}** resulted in a total wipeout! No one survived!", game.enemy_name()))
-                    })
-                    .components(|c| c)
+            handle.edit(Context::Application(ctx), |e| {
+                e.components(|c| c)
+            }).await?;
+            ctx.send(|m| {
+                m.embed(|e| {
+                    Strife::prepare_embed(e)
+                        .description(format!("The battle against the **{}** resulted in a total wipeout! No one survived!", game.enemy_name()))
                 })
-                .await?;
+            })
+            .await?;
         }
         StrifeResult::WinSingle => {
             let winner = result.winners.first().unwrap();
             payout_multiple(&data.db, &result.winners, &result).await?;
 
-            message
-                .to_mut()
-                .edit(ctx.serenity_context(), |e| {
-                    e.embed(|e| {
-                        Strife::prepare_embed(e).description(format!(
-                            "In the battle against the **{}**, {} survived and beat the enemy! They won {} boonbucks and {} {} grist!",
-                            game.enemy_name(),
-                            winner.user,
-                            result.boonbucks_per_player.unwrap(),
-                            result.grist_per_player.unwrap(),
-                            result.grist_type.unwrap()
-                        ))
-                    })
-                    .components(|c| c)
+            handle.edit(Context::Application(ctx), |e| {
+                e.components(|c| c)
+            }).await?;
+            ctx.send(|m| {
+                m.embed(|e| {
+                    Strife::prepare_embed(e).description(format!(
+                        "In the battle against the **{}**, {} survived and beat the enemy! They won {} boonbucks and {} {} grist!",
+                        game.enemy_name(),
+                        winner.user,
+                        result.boonbucks_per_player.unwrap(),
+                        result.grist_per_player.unwrap(),
+                        result.grist_type.unwrap()
+                    ))
                 })
-                .await?;
+            }).await?;
         }
         StrifeResult::WinHalf => {
             payout_multiple(&data.db, &result.winners, &result).await?;
@@ -473,41 +475,40 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                 .map(|m| m.user.to_string())
                 .collect::<Vec<_>>()
                 .join(", ");
-            message
-                .to_mut()
-                .edit(ctx.serenity_context(), |e| {
-                    e.embed(|e| {
-                        Strife::prepare_embed(e).description(format!(
-                            "The fierce battle against **{}** is over and the following people survived and beat the enemy:\n\n{}\n\nThey won {} boonbucks and {} {} grist each!",
-                            game.enemy_name(),
-                            winners,
-                            result.boonbucks_per_player.unwrap(),
-                            result.grist_per_player.unwrap(),
-                            result.grist_type.unwrap()
-                        ))
-                    })
-                    .components(|c| c)
+
+            handle.edit(Context::Application(ctx), |e| {
+                e.components(|c| c)
+            }).await?;
+            ctx.send(|m| {
+                m.embed(|e| {
+                    Strife::prepare_embed(e).description(format!(
+                        "The fierce battle against **{}** is over and the following people survived and beat the enemy:\n\n{}\n\nThey won {} boonbucks and {} {} grist each!",
+                        game.enemy_name(),
+                        winners,
+                        result.boonbucks_per_player.unwrap(),
+                        result.grist_per_player.unwrap(),
+                        result.grist_type.unwrap()
+                    ))
                 })
-                .await?;
+            }).await?;
         }
         StrifeResult::WinFull => {
             payout_multiple(&data.db, &result.winners, &result).await?;
 
-            message
-                .to_mut()
-                .edit(ctx.serenity_context(), |e| {
-                    e.embed(|e| {
-                        Strife::prepare_embed(e).description(format!(
-                            "The combatants wiped the floor with the **{}**! They won {} boonbucks and {} {} grist each!",
-                            game.enemy_name(),
-                            result.boonbucks_per_player.unwrap(),
-                            result.grist_per_player.unwrap(),
-                            result.grist_type.unwrap()
-                        ))
-                    })
-                    .components(|c| c)
+            handle.edit(Context::Application(ctx), |e| {
+                e.components(|c| c)
+            }).await?;
+            ctx.send(|m| {
+                m.embed(|e| {
+                    Strife::prepare_embed(e).description(format!(
+                        "The combatants wiped the floor with the **{}**! They won {} boonbucks and {} {} grist each!",
+                        game.enemy_name(),
+                        result.boonbucks_per_player.unwrap(),
+                        result.grist_per_player.unwrap(),
+                        result.grist_type.unwrap()
+                    ))
                 })
-                .await?;
+            }).await?;
         }
     }
 
