@@ -1,5 +1,22 @@
 {
   "db": "PostgreSQL",
+  "409d3e48562ff227ff4854d15ffec620e4079e436940634bd62b1fc26ec83aee": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Float8",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "INSERT INTO songs (title, artist, album, file_path, duration, file_hash) VALUES ($1, $2, $3, $4, $5, $6)"
+  },
   "4398458117d085b108aba417a4664e3fb56c730769035fd5772b45e144fe1fde": {
     "describe": {
       "columns": [],
@@ -21,41 +38,5 @@
       }
     },
     "query": "DELETE FROM songs"
-  },
-  "507ed880e8fafbf799ca84050fe1a11f2b831b8200b5701bd8d7ece400ea44fb": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": []
-      }
-    },
-    "query": "DELETE FROM played_songs"
-  },
-  "c00239bae2aad559555dba6e9e84b127ad0719f30d175e70c92dddc5dd629699": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Varchar",
-          "Varchar",
-          "Varchar",
-          "Float8"
-        ]
-      }
-    },
-    "query": "INSERT INTO songs (title, artist, album, file_path, duration) VALUES ($1, $2, $3, $4, $5)"
-  },
-  "d129328d7e5b6de142b7b3f29ba1908473c370595149c5a3f8494eb4d13c1ef2": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": []
-      }
-    },
-    "query": "DELETE FROM song_requests"
   }
 }

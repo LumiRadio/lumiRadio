@@ -3,16 +3,6 @@ version: "3"
 services:
   redis:
     image: redis:7.0.11-alpine
-  ice:
-    image: ghcr.io/lumiradio/icecast
-    build:
-      context: ./docker/icecast
-      dockerfile: Dockerfile
-    command: ["/bin/sh", "-c", "/usr/bin/icecast2 -c /etc/icecast2/icecast.xml"]
-    ports:
-      - 8000:8000
-    volumes:
-      - ./docker/icecast/icecast.xml:/etc/icecast2/icecast.xml
   liquidsoap:
     image: ghcr.io/lumiradio/liquidsoap
     build:
@@ -20,16 +10,18 @@ services:
       dockerfile: Dockerfile
       args:
         - OPAM_PACKAGES=liquidsoap.2.0.0 taglib mad lame vorbis cry samplerate ocurl
-    ports:
-      - 1234:1234
-      - 127.0.0.1:8001:8000
-    depends_on:
-      - ice
     volumes:
       - ./docker/liquidsoap/script.liq:/etc/liquidsoap/script.liq
       - ./docker/liquidsoap/vars.json:/etc/liquidsoap/vars.json
       - ${RADIO_MUSIC:?RADIO_MUSIC is unset}:/music
       - ls_socket:/etc/liquidsoap
+    environment:
+      ICECAST_HOST: ${ICECAST_HOST}
+      ICECAST_PORT: ${ICECAST_PORT}
+      ICECAST_USER: ${ICECAST_USER}
+      ICECAST_PASSWORD: ${ICECAST_PASSWORD}
+      ICECAST_MOUNT: ${ICECAST_MOUNT}
+      LANGLEY_URL: http://langley:8000/played
   db:
     image: postgres:12
     volumes:
@@ -63,8 +55,6 @@ services:
     build:
       context: ./langley
       dockerfile: Dockerfile
-    ports:
-      - 8002:8000
     environment:
       ROCKET_ADDRESS: 0.0.0.0
       ROCKET_DATABASES: '{byersdb={url="postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}"}}'

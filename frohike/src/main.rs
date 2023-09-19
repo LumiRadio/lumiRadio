@@ -3,12 +3,18 @@ use std::{
     sync::Arc,
 };
 
+use audiotags::{AudioTagEdit, Id3v2Tag};
 use clap::{Parser, Subcommand};
 use futures_util::StreamExt;
 use notify::{PollWatcher, Watcher};
+use sha2::{Digest, Sha256};
 use sqlx::{pool::PoolOptions, PgPool};
 use tokio::sync::{mpsc::Receiver, Mutex};
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
+
+use crate::custom_metadata::WavTag;
+
+mod custom_metadata;
 
 #[derive(Parser)]
 #[command(author, about, version)]
@@ -21,6 +27,7 @@ struct CliArgs {
 enum SubCommand {
     HouseKeeping(HouseKeeping),
     Indexing(Indexing),
+    Import(Import),
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -43,6 +50,27 @@ struct Indexing {
     path: PathBuf,
 }
 
+#[derive(Parser, Debug, Clone)]
+struct Import {
+    #[clap(short, long)]
+    dry_run: bool,
+    #[clap(short = 'D', long)]
+    database_url: String,
+
+    #[clap(subcommand)]
+    subcmd: ImportSubCommand,
+}
+
+#[derive(Subcommand, Debug, Clone)]
+enum ImportSubCommand {
+    Streamlabs(StreamlabsImport),
+}
+
+#[derive(Parser, Debug, Clone)]
+struct StreamlabsImport {
+    path: PathBuf,
+}
+
 fn rewrite_music_path(path: &Path, music_path: &Path) -> anyhow::Result<PathBuf> {
     Ok(Path::new("/music").join(path.strip_prefix(music_path)?))
 }
@@ -53,7 +81,18 @@ async fn index(db: PgPool, directory: PathBuf) -> anyhow::Result<()> {
     let files = walkdir::WalkDir::new(&directory)
         .into_iter()
         .filter_map(|e| e.ok())
-        .filter(|e| e.file_type().is_file())
+        .filter(|e| {
+            e.file_type().is_file()
+                && e.path().extension().is_some()
+                && vec!["mp3", "flac", "ogg", "wav"].contains(
+                    &e.path()
+                        .extension()
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_lowercase()
+                        .as_str(),
+                )
+        })
         .map(|e| e.path().to_owned())
         .collect::<Vec<_>>();
 
@@ -62,10 +101,19 @@ async fn index(db: PgPool, directory: PathBuf) -> anyhow::Result<()> {
     sqlx::query!("DELETE FROM songs").execute(&db).await?;
 
     let len = files.len();
+    let mut failed_files = vec![];
     for file in files {
-        index_file(db.clone(), &file, &directory).await?;
+        let result = index_file(db.clone(), &file, &directory).await;
+        if let Err(e) = result {
+            error!("failed to index file: {}", e);
+            failed_files.push(file);
+        }
     }
     info!("Indexed {} files", len);
+    if !failed_files.is_empty() {
+        warn!("Failed to index {} files", failed_files.len());
+        warn!("Failed files: {:#?}", failed_files);
+    }
 
     Ok(())
 }
@@ -73,15 +121,32 @@ async fn index(db: PgPool, directory: PathBuf) -> anyhow::Result<()> {
 #[tracing::instrument(skip(db))]
 async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> anyhow::Result<()> {
     let (title, artist, album) = {
-        let tag = audiotags::Tag::new().read_from_path(path)?;
-        (
-            tag.title().unwrap_or("").to_owned(),
-            tag.artist().unwrap_or("").to_owned(),
-            tag.album().map(|a| a.title).unwrap_or("").to_owned(),
-        )
+        if path.extension().unwrap().to_ascii_lowercase() == "wav" {
+            let Ok(tag) = Id3v2Tag::read_from_wav_path(path) else {
+                return Err(anyhow::anyhow!("failed to read wav tag"));
+            };
+
+            (
+                tag.title().unwrap_or("").to_owned(),
+                tag.artist().unwrap_or("").to_owned(),
+                tag.album().map(|a| a.title).unwrap_or("").to_owned(),
+            )
+        } else {
+            let tag = audiotags::Tag::new().read_from_path(path)?;
+            (
+                tag.title().unwrap_or("").to_owned(),
+                tag.artist().unwrap_or("").to_owned(),
+                tag.album().map(|a| a.title).unwrap_or("").to_owned(),
+            )
+        }
     };
     let meta = metadata::media_file::MediaFileMetadata::new(&path)?;
     let duration = meta._duration.unwrap_or(0_f64);
+
+    let mut hasher: Sha256 = Digest::new();
+    hasher.update(path.canonicalize()?.to_string_lossy().as_bytes());
+    let hash = hasher.finalize();
+    let hash_str = format!("{:x}", hash);
 
     let path = rewrite_music_path(path, music_path)?;
 
@@ -90,12 +155,13 @@ async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> anyhow::Resul
         path.display()
     );
     sqlx::query!(
-        "INSERT INTO songs (title, artist, album, file_path, duration) VALUES ($1, $2, $3, $4, $5)",
-        title,
-        artist,
-        album,
+        "INSERT INTO songs (title, artist, album, file_path, duration, file_hash) VALUES ($1, $2, $3, $4, $5, $6)",
+        title.replace(char::from(0), ""),
+        artist.replace(char::from(0), ""),
+        album.replace(char::from(0), ""),
         path.display().to_string(),
-        duration
+        duration,
+        hash_str,
     )
     .execute(&db)
     .await?;
@@ -243,6 +309,7 @@ async fn main() -> anyhow::Result<()> {
                 debug!("received");
             }
         }
+        SubCommand::Import(import) => {}
     }
 
     Ok(())

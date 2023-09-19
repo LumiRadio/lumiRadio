@@ -1,5 +1,5 @@
 .env
 icecast/icecast.xml
-liquidsoap/script.liq
 target/
 slcb_data
+.prod.env

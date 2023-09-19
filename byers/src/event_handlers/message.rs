@@ -10,7 +10,7 @@ use tracing_unwrap::ResultExt;
 
 use crate::{
     communication::ByersUnixStream,
-    db::DbUser,
+    db::{DbServerChannelConfig, DbUser},
     prelude::{Data, Error, Wrappable, W},
 };
 
@@ -107,12 +107,22 @@ pub async fn message_handler(message: &Message, data: &Data<ByersUnixStream>) ->
         return Ok(());
     }
 
-    // check if a user exists in the database, if not, add them
+    let Some(guild_id) = message.guild_id else {
+        return Ok(());
+    };
+
+    let Some(channel_config) = DbServerChannelConfig::fetch(&data.db, message.channel_id.0 as i64, guild_id.0 as i64).await? else {
+        return Ok(());
+    };
+
     let mut user = DbUser::fetch_or_insert(&data.db, message.author.id.0 as i64).await?;
 
-    user.update_watched_time(&data.db).await?;
-    user.update_boondollars(&data.redis_client, &data.db)
-        .await?;
+    if channel_config.allow_watch_time_accumulation {
+        user.update_watched_time(&data.db).await?;
+    }
+    if channel_config.allow_point_accumulation {
+        user.update_boondollars(&data.redis_pool, &data.db).await?;
+    }
 
     Ok(())
 }

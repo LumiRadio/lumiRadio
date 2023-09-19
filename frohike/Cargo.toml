@@ -7,12 +7,15 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
-audiotags = "0.4.1"
+audiotags = { git = "https://github.com/lumiRadio/audiotags" }
 clap = { version = "4.4.0", features = ["derive"] }
 futures-util = "0.3.28"
+id3 = "1.7.0"
 inotify = "0.10.2"
 metadata = "0.1.8"
 notify = "6.1.1"
+oggvorbismeta = "0.1.0"
+sha2 = "0.10.7"
 sqlx = { version = "0.6", features = [
     "runtime-tokio-rustls",
     "postgres",

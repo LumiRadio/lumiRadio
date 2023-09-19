@@ -1,2 +1,0 @@
-[default.databases.byersdb]
-url = "postgres://byers:byers@localhost/byers"

@@ -1,46 +1,40 @@
+use axum::extract::State;
+use axum::http::StatusCode;
+use axum::Json;
+use fred::pool::RedisPool;
 use fred::prelude::{ClientLike, PubsubInterface, RedisClient};
 use fred::types::{PerformanceConfig, ReconnectPolicy, RedisConfig};
-use rocket::fairing::AdHoc;
-use rocket::log::private::info;
-use rocket::serde::{json::Json, Deserialize, Serialize};
-use rocket::State;
 
-use rocket_db_pools::sqlx;
-use rocket_db_pools::{Connection, Database};
-
-#[macro_use]
-extern crate rocket;
-
-#[derive(Database)]
-#[database("byersdb")]
-struct ByersDb(sqlx::PgPool);
+use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
+use tracing::{debug, info};
 
 #[derive(Deserialize, Debug)]
-#[serde(crate = "rocket::serde")]
-struct Song<'r> {
-    filename: &'r str,
-    title: &'r str,
-    artist: &'r str,
-    album: &'r str,
+struct Song {
+    filename: String,
+    title: String,
+    artist: String,
+    album: String,
 }
 
 #[derive(Serialize, Debug)]
-#[serde(crate = "rocket::serde")]
 struct SongResponse {
     success: bool,
 }
 
-#[post("/played", data = "<song>")]
 async fn played(
-    mut db: Connection<ByersDb>,
-    redis_state: &State<RedisClient>,
-    song: Json<Song<'_>>,
-) -> Json<SongResponse> {
+    State(app_state): State<AppState>,
+    Json(song): Json<Song>,
+) -> (StatusCode, Json<SongResponse>) {
     if song.filename.is_empty() {
-        return Json(SongResponse { success: false });
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(SongResponse { success: false }),
+        );
     }
 
-    let _ = redis_state
+    let _ = app_state
+        .redis_pool
         .publish::<i32, _, _>("byers:status", format!("{} - {}", song.album, song.title))
         .await;
 
@@ -48,40 +42,47 @@ async fn played(
         "INSERT INTO played_songs (song_id) VALUES ($1)",
         song.filename
     )
-    .execute(&mut *db)
+    .execute(&app_state.db)
     .await
     .expect("Failed to query database");
-    println!("Played song: {}", song.filename);
+    debug!("Played song: {}", song.filename);
 
-    Json(SongResponse { success: true })
+    (StatusCode::OK, Json(SongResponse { success: true }))
 }
 
-#[launch]
-async fn rocket() -> _ {
+#[derive(Clone)]
+struct AppState {
+    redis_pool: RedisPool,
+    db: PgPool,
+}
+
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt::init();
+
     let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
 
     let config = RedisConfig::from_url(&redis_url).expect("Failed to parse redis url");
     let perf = PerformanceConfig::default();
     let policy = ReconnectPolicy::new_exponential(0, 100, 30_000, 2);
-    let redis_client = RedisClient::new(config, Some(perf), Some(policy));
+    let redis_pool =
+        RedisPool::new(config, Some(perf), Some(policy), 1).expect("Failed to create redis pool");
+    redis_pool.connect();
 
-    let connect_handle = redis_client.connect();
-    redis_client
-        .wait_for_connect()
+    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let db = PgPool::connect(&db_url)
         .await
-        .expect("Failed to connect to redis");
+        .expect("Failed to connect to database");
 
-    rocket::build()
-        .manage(redis_client.clone())
-        .attach(ByersDb::init())
-        .attach(AdHoc::on_shutdown("shutdown redis", |_| {
-            Box::pin(async move {
-                redis_client.quit().await.expect("Failed to quit redis");
-                connect_handle
-                    .await
-                    .expect("Failed to wait for redis to quit")
-                    .expect("Failed to quit redis");
-            })
-        }))
-        .mount("/", routes![played])
+    let app_state = AppState { redis_pool, db };
+
+    let app = axum::Router::new()
+        .route("/played", axum::routing::get(played))
+        .with_state(app_state);
+
+    info!("Listening on 0.0.0.0:8000");
+    axum::Server::bind(&"0.0.0.0:8000".parse().unwrap())
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 }

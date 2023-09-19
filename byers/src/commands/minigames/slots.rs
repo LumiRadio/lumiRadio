@@ -1,9 +1,11 @@
 use anyhow::anyhow;
+use async_trait::async_trait;
 use rand::seq::IteratorRandom;
 use strum::IntoEnumIterator;
 
-
 use crate::{
+    commands::minigames::Minigame,
+    communication::ByersUnixStream,
     db::{DbServerConfig, DbUser},
     prelude::*,
 };
@@ -20,7 +22,7 @@ enum SlotReel {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-enum PayoutOptions {
+pub enum PayoutOptions {
     Money(i32),
     Jackpot,
     Nothing,
@@ -92,7 +94,35 @@ impl SlotReel {
     }
 }
 
-#[poise::command(slash_command, user_cooldown = 300)]
+pub struct SlotMachine {
+    rolls: [SlotReel; 3],
+}
+
+impl SlotMachine {
+    fn new() -> Self {
+        Self {
+            rolls: SlotReel::generate_roll(),
+        }
+    }
+}
+
+#[async_trait]
+impl Minigame for SlotMachine {
+    type MinigameResult = PayoutOptions;
+
+    const NAME: &'static str = "Slots";
+
+    async fn play(&self) -> Result<Self::MinigameResult, Error> {
+        Ok(self.rolls.determine_payout())
+    }
+
+    fn command() -> Vec<poise::Command<Data<ByersUnixStream>, anyhow::Error>> {
+        vec![slots()]
+    }
+}
+
+/// Are you feeling lucky?
+#[poise::command(slash_command, user_cooldown = 300, guild_only)]
 pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data();
     let Some(guild_id) = ctx.guild_id() else {
@@ -104,7 +134,7 @@ pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     if user.boonbucks < 5 {
         ctx.send(|m| {
             m.embed(|e| {
-                e.title("Not enough Boonbucks")
+                SlotMachine::prepare_embed(e)
                     .description("You need at least 5 boonbucks to play slots")
                     .color(0xFF0000)
             })
@@ -117,8 +147,8 @@ pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     server_config.slot_jackpot += 5;
     server_config.update(&data.db).await?;
 
-    let rolls = SlotReel::generate_roll();
-    let payout = rolls.determine_payout();
+    let machine = SlotMachine::new();
+    let payout = machine.play().await?;
 
     match payout {
         PayoutOptions::Money(amount) => {
@@ -142,9 +172,9 @@ pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                     "Rolls",
                     format!(
                         "{} {} {}",
-                        rolls[0].emoji(),
-                        rolls[1].emoji(),
-                        rolls[2].emoji()
+                        machine.rolls[0].emoji(),
+                        machine.rolls[1].emoji(),
+                        machine.rolls[2].emoji()
                     ),
                     false,
                 )

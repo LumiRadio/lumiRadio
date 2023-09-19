@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-/// Shows help
+/// there is no help
 #[poise::command(slash_command)]
 pub async fn help(
     ctx: Context<'_>,

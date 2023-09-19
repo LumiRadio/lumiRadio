@@ -5,6 +5,7 @@ use crate::{
     prelude::*,
 };
 
+/// Check your boondollars and hours
 #[poise::command(slash_command, user_cooldown = 300, ephemeral)]
 pub async fn boondollars(ctx: Context<'_>) -> Result<(), Error> {
     let data = ctx.data();
@@ -65,6 +66,7 @@ async fn pay_user(
     Ok(())
 }
 
+/// Pay another user some boondollars
 #[poise::command(slash_command, user_cooldown = 300, ephemeral)]
 pub async fn pay(ctx: ApplicationContext<'_>, target_user: User, amount: i32) -> Result<(), Error> {
     pay_user(ctx, target_user, amount).await

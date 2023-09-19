@@ -4,6 +4,22 @@ use serde::Deserialize;
 use sqlite::Connection;
 
 #[derive(Deserialize, Debug, Clone)]
+pub struct UserDataEntry {
+    pub user_name: String,
+    pub points: i32,
+    pub time_watched: i32,
+    pub rank: String,
+    pub user_id: String,
+}
+
+impl UserDataEntry {
+    pub fn load(path: &Path) -> Vec<Self> {
+        let mut file = std::fs::File::open(path).expect("failed to open user data json");
+        serde_json::from_reader(&mut file).expect("failed to deserialize user data json")
+    }
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct CurrencyCsvEntry {
     #[serde(rename = "Name")]
     pub name: String,

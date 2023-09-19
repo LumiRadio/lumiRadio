@@ -1,0 +1,96 @@
+version: "3"
+
+services:
+  ice:
+    image: ghcr.io/lumiradio/icecast
+    build:
+      context: ./docker/icecast
+      dockerfile: Dockerfile
+    command: ["/bin/sh", "-c", "/usr/bin/icecast2 -c /etc/icecast2/icecast.xml"]
+    ports:
+      - 8000:8000
+    volumes:
+      - ./docker/icecast/icecast.xml:/etc/icecast2/icecast.xml
+  redis:
+    image: redis:7.0.11-alpine
+  liquidsoap:
+    image: ghcr.io/lumiradio/liquidsoap
+    build:
+      context: ./docker/liquidsoap
+      dockerfile: Dockerfile
+    command: ["/usr/share/liquidsoap/script.liq"]
+    volumes:
+      - ./docker/liquidsoap/script.liq:/usr/share/liquidsoap/script.liq
+      - ${RADIO_MUSIC:?RADIO_MUSIC is unset}:/music
+      - ls_socket:/usr/share/liquidsoap
+    environment:
+      ICECAST_HOST: ice
+      ICECAST_PORT: 8000
+      ICECAST_USER: source
+      ICECAST_PASSWORD: hackme
+      ICECAST_MOUNT: lumiradio
+      LANGLEY_URL: http://langley:8000/played
+    depends_on:
+      - ice
+  db:
+    image: postgres:12
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DATABASE}
+  byers:
+    image: ghcr.io/lumiradio/byers
+    build:
+      context: ./byers
+      dockerfile: Dockerfile
+    ports:
+      - 8181:8000
+    depends_on:
+      - liquidsoap
+    environment:
+      DISCORD_TOKEN: ${BYERS_DISCORD_TOKEN}
+      DATABASE_URL: postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}
+      LIQUIDSOAP__HOST: liquidsoap
+      LIQUIDSOAP__PORT: 1234
+      GOOGLE__CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE__CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      DISCORD__CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD__CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      SECRET: ${SECRET}
+      REDIS_URL: redis://redis/
+      RUST_LOG: info
+    volumes:
+      - ls_socket:/usr/src/app/ls
+  langley:
+    image: ghcr.io/lumiradio/langley
+    build:
+      context: ./langley
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}
+      REDIS_URL: redis://redis/
+      RUST_LOG: info
+  frohike:
+    image: ghcr.io/lumiradio/frohike
+    build:
+      context: ./frohike
+      dockerfile: Dockerfile
+    environment:
+      RUST_LOG: debug
+      REDIS_URL: redis://redis/
+    command:
+      - "house-keeping"
+      - "--database-url"
+      - "postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}"
+      - "/music"
+    volumes:
+      - ${RADIO_MUSIC:?RADIO_MUSIC is unset}:/music
+
+volumes:
+  pg_data:
+  liquidsoap:
+  ls_socket:

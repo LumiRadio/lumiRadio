@@ -9,6 +9,8 @@ pub struct AppConfig {
     pub liquidsoap: LiquidsoapConfig,
 
     pub google: GoogleConfig,
+    pub discord: DiscordConfig,
+    pub secret: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -19,6 +21,12 @@ pub struct LiquidsoapConfig {
 
 #[derive(Deserialize, Debug)]
 pub struct GoogleConfig {
+    pub client_id: String,
+    pub client_secret: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct DiscordConfig {
     pub client_id: String,
     pub client_secret: String,
 }

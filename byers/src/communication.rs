@@ -71,7 +71,7 @@ impl ByersUnixStream {
 
     pub async fn read_until_end(&mut self) -> Result<String, std::io::Error> {
         let mut buf = Vec::new();
-        let mut read_buffer = [0; 4096];
+        let mut read_buffer = Vec::new();
 
         loop {
             self.stream.readable().await?;

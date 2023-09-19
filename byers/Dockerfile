@@ -35,5 +35,7 @@ RUN chown -R byers:byers ${APP}
 USER byers
 WORKDIR ${APP}
 
+EXPOSE 8000
+
 ENTRYPOINT [ "./docker-entrypoint.sh" ]
 CMD ["./byers"]

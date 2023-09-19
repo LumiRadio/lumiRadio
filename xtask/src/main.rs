@@ -92,12 +92,12 @@ async fn import(database_url: String, directory: PathBuf) {
     let db = sqlx::PgPool::connect(&database_url)
         .await
         .expect("failed to connect to database");
-    let currency_csv = directory.join("Currency.csv");
+    let user_data_json = directory.join("data_export.json");
     let ranks_csv = directory.join("Ranks.csv");
     let byers_plus_db = directory.join("byers_plus.db");
     let byers_plus_db = sqlite::open(&byers_plus_db).expect("failed to open byers_plus.db");
 
-    let currency_entries = slcb::CurrencyCsvEntry::load(&currency_csv);
+    let currency_entries = slcb::UserDataEntry::load(&user_data_json);
     let ranks_entries = slcb::RanksCsvEntry::load(&ranks_csv);
     let placeholder_entries = slcb::PlaceholderEntry::load(&byers_plus_db);
 
@@ -118,10 +118,11 @@ async fn import(database_url: String, directory: PathBuf) {
     println!("Importing currency data");
     for entry in currency_entries {
         sqlx::query!(
-            "INSERT INTO slcb_currency (username, points, hours) VALUES ($1, $2, $3)",
-            entry.name,
+            "INSERT INTO slcb_currency (username, points, hours, user_id) VALUES ($1, $2, $3, $4)",
+            entry.user_name,
             entry.points,
-            entry.hours
+            entry.time_watched / 60,
+            entry.user_id
         )
         .execute(&db)
         .await

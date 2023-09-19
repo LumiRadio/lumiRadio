@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use chrono::{DateTime, TimeZone};
+use chrono::{DateTime, NaiveDateTime, TimeZone};
 use fred::{
     prelude::{RedisError, RedisErrorKind},
     types::{FromRedis, RedisValue},
@@ -20,12 +20,10 @@ lazy_static! {
         GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT;
 }
 
-pub type Context<'a, C: LiquidsoapCommunication = ByersUnixStream> =
-    poise::Context<'a, Data<C>, Error>;
-pub type ApplicationContext<'a, C: LiquidsoapCommunication = ByersUnixStream> =
+pub type Context<'a, C = ByersUnixStream> = poise::Context<'a, Data<C>, Error>;
+pub type ApplicationContext<'a, C = ByersUnixStream> =
     poise::ApplicationContext<'a, Data<C>, Error>;
 pub type Error = anyhow::Error;
-pub type Telnet = std::sync::Arc<tokio::sync::Mutex<telnet::Telnet>>;
 
 pub struct Data<C>
 where
@@ -34,8 +32,8 @@ where
     pub db: sqlx::PgPool,
     pub comms: Arc<Mutex<C>>,
     pub google_config: GoogleConfig,
-    pub redis_client: fred::prelude::RedisClient,
-    pub subscriber_client: fred::clients::SubscriberClient,
+    pub redis_pool: fred::pool::RedisPool,
+    pub redis_subscriber: fred::clients::SubscriberClient,
 }
 
 pub trait DiscordTimestamp {
@@ -75,6 +73,36 @@ impl DiscordTimestamp for i64 {
 
     fn relative_time(&self) -> String {
         format!("<t:{}:R>", self)
+    }
+}
+
+impl DiscordTimestamp for NaiveDateTime {
+    fn short_time(&self) -> String {
+        format!("<t:{}:t>", self.timestamp())
+    }
+
+    fn long_time(&self) -> String {
+        format!("<t:{}:T>", self.timestamp())
+    }
+
+    fn short_date(&self) -> String {
+        format!("<t:{}:d>", self.timestamp())
+    }
+
+    fn long_date(&self) -> String {
+        format!("<t:{}:D>", self.timestamp())
+    }
+
+    fn long_date_short_time(&self) -> String {
+        format!("<t:{}:f>", self.timestamp())
+    }
+
+    fn long_date_with_dow_short_time(&self) -> String {
+        format!("<t:{}:F>", self.timestamp())
+    }
+
+    fn relative_time(&self) -> String {
+        format!("<t:{}:R>", self.timestamp())
     }
 }
 
