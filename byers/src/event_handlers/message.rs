@@ -72,10 +72,12 @@ impl UserMessageHandlerExt for DbUser {
     ) -> Result<(), Error> {
         let cooldown_key = self.redis_message_cooldown_key();
         if let Some(cooldown) = redis_client
-            .get::<Option<W<NaiveDateTime>>, _>(&cooldown_key)
+            .get::<Option<String>, _>(&cooldown_key)
             .await?
         {
-            if *cooldown > chrono::Utc::now().naive_utc() {
+            let cooldown = NaiveDateTime::parse_from_str(&cooldown, "%Y-%m-%d %H:%M:%S%.f")?;
+
+            if cooldown > chrono::Utc::now().naive_utc() {
                 return Ok(());
             }
         }
@@ -85,7 +87,7 @@ impl UserMessageHandlerExt for DbUser {
                 &cooldown_key,
                 (chrono::Utc::now() + chrono::Duration::minutes(5))
                     .naive_utc()
-                    .wrap(),
+                    .to_string(),
                 Some(Expiration::EX(300)),
                 None,
                 false,
@@ -125,4 +127,19 @@ pub async fn message_handler(message: &Message, data: &Data<ByersUnixStream>) ->
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_parse_datetime() {
+        let now = chrono::Utc::now().naive_utc();
+        let now_str = now.to_string();
+        println!("{}", now_str);
+
+        // parse 2023-09-19 12:39:33.359969291 as UTC
+        let parsed = chrono::NaiveDateTime::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S%.f").unwrap();
+
+        assert_eq!(now, parsed);
+    }
 }

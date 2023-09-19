@@ -6,7 +6,7 @@ use crate::{
 };
 
 /// Check your boondollars and hours
-#[poise::command(slash_command, user_cooldown = 300, ephemeral)]
+#[poise::command(slash_command, user_cooldown = 300)]
 pub async fn boondollars(ctx: Context<'_>) -> Result<(), Error> {
     let data = ctx.data();
     let user = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
@@ -23,7 +23,7 @@ pub async fn boondollars(ctx: Context<'_>) -> Result<(), Error> {
         .map(|r| r.hour_requirement)
         .unwrap_or(0);
 
-    let message = format!("{username} - Hours: {hours} (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank} hours. - You can check again in 5 minutes.", username = username, hours = hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
+    let message = format!("{username} - Hours: {hours:.2} (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank} hours. - You can check again in 5 minutes.", username = username, hours = hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
     ctx.say(message).await?;
 
     Ok(())
@@ -57,17 +57,22 @@ async fn pay_user(
 
     transaction.commit().await?;
 
-    ctx.say(format!(
-        "You paid {} {} boondollars.",
-        target_user.name, amount
-    ))
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title("Payment successful")
+                .description(format!(
+                    "You paid {} {} boonbucks.",
+                    target_user.name, amount
+                ))
+        })
+    })
     .await?;
 
     Ok(())
 }
 
 /// Pay another user some boondollars
-#[poise::command(slash_command, user_cooldown = 300, ephemeral)]
+#[poise::command(slash_command, user_cooldown = 300)]
 pub async fn pay(ctx: ApplicationContext<'_>, target_user: User, amount: i32) -> Result<(), Error> {
     pay_user(ctx, target_user, amount).await
 }
@@ -81,8 +86,7 @@ struct PayModal {
 
 #[poise::command(
     context_menu_command = "Give this user money",
-    user_cooldown = 300,
-    ephemeral
+    user_cooldown = 300
 )]
 pub async fn pay_menu(ctx: ApplicationContext<'_>, target_user: User) -> Result<(), Error> {
     let data = PayModal::execute(ctx).await?;

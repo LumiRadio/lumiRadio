@@ -11,7 +11,7 @@ pub async fn song(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 }
 
 /// Requests a song for the radio
-#[poise::command(slash_command, ephemeral, user_cooldown = 5400)]
+#[poise::command(slash_command, user_cooldown = 5400)]
 pub async fn request(
     ctx: ApplicationContext<'_>,
     #[description = "The song to request"]

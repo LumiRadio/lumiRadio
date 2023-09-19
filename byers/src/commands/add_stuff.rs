@@ -3,7 +3,7 @@ use crate::db::DbCan;
 use crate::prelude::{ApplicationContext, Error};
 
 /// Adds... things
-#[poise::command(slash_command, subcommands("can"), subcommand_required, global_cooldown = 35)]
+#[poise::command(slash_command, subcommands("can", "bear", "john"), subcommand_required, global_cooldown = 35)]
 pub async fn add(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     Ok(())
 }

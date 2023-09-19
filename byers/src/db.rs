@@ -127,6 +127,8 @@ impl DbSong {
     }
 
     pub async fn request(&self, db: &sqlx::PgPool, author_id: u64) -> Result<(), sqlx::Error> {
+        DbUser::fetch_or_insert(db, author_id as i64).await?;
+
         sqlx::query!(
             r#"
             INSERT INTO song_requests (song_id, user_id)

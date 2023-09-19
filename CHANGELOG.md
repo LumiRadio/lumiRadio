@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.0.5]
+
+### Changed
+
+- Made most embeds non-ephemeral.
+
+### Fixed
+
+- Fixed decimal formatting in `/boondollars`.
+- Fixed point accumulation not working because of unparseable dates.
+- Check if user exists before trying to request a song.
+- Fix missing add commands.
+
+## [1.0.4] - 2023-09-19
+
+### Fixed
+
+- Hot fix: empty buffer is not emptied after checking if the message has ended.
+
 ## [1.0.3] - 2023-09-19
 
 ### Fixed
