@@ -77,9 +77,20 @@ pub async fn queue(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
 
     let mut comms = data.comms.lock().await;
-    let queue = comms
-        .song_requests()
-        .await?
+    let requests = comms.song_requests().await?;
+
+    if requests.is_empty() {
+        ctx.send(|m| {
+            m.embed(|e| {
+                e.title("Song Queue")
+                    .description("There are no songs in the queue!")
+            })
+        })
+        .await?;
+        return Ok(());
+    }
+
+    let queue = requests
         .into_iter()
         .enumerate()
         .map(|(i, song)| {
