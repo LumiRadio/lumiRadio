@@ -1,17 +1,21 @@
-FROM rust:1.70 as builder
+FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
+WORKDIR /app
+
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS builder
 
 ENV SQLX_OFFLINE=true
 
-RUN USER=root cargo new --bin frohike
-WORKDIR /frohike
-COPY ./Cargo.toml ./Cargo.toml
 RUN apt update && apt install -y libavutil-dev libavformat-dev libavfilter-dev libclang-dev
-RUN cargo build --release
-RUN rm src/*.rs
 
-ADD . ./
+COPY --from=planner /app/recipe.json recipe.json
 
-RUN rm ./target/release/deps/frohike*
+RUN cargo chef cook --release --recipe-path recipe.json
+
+COPY . .
 RUN cargo build --release
 
 FROM debian:bullseye-slim
@@ -25,7 +29,7 @@ RUN apt-get update \
 RUN groupadd -r frohike && useradd -g frohike frohike
 RUN mkdir -p ${APP}
 
-COPY --from=builder /frohike/target/release/frohike ${APP}/frohike
+COPY --from=builder /app/target/release/frohike ${APP}/frohike
 
 RUN chown -R frohike:frohike ${APP}
 

@@ -1,16 +1,19 @@
-FROM rust:1.70 as builder
+FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
+WORKDIR /app
+
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS builder
 
 ENV SQLX_OFFLINE=true
 
-RUN USER=root cargo new --bin byers
-WORKDIR /byers
-COPY ./Cargo.toml ./Cargo.toml
-RUN cargo build --release
-RUN rm src/*.rs
+COPY --from=planner /app/recipe.json recipe.json
 
-ADD . ./
+RUN cargo chef cook --release --recipe-path recipe.json
 
-RUN rm ./target/release/deps/byers*
+COPY . .
 RUN cargo build --release
 
 FROM debian:bullseye-slim
@@ -24,7 +27,7 @@ RUN apt-get update \
 RUN groupadd -r byers && useradd -g byers byers
 RUN mkdir -p ${APP}
 
-COPY --from=builder /byers/target/release/byers ${APP}/byers
+COPY --from=builder /app/target/release/byers ${APP}/byers
 COPY ./scripts/wait-for-it.sh /usr/local/bin/wait-for-it.sh
 COPY ./scripts/docker-entrypoint.sh ${APP}/docker-entrypoint.sh
 
