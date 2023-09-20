@@ -7,13 +7,13 @@ use rand::{distributions::Standard, prelude::Distribution, seq::IteratorRandom, 
 use sqlx::PgPool;
 use tokio_stream::StreamExt;
 
+use crate::prelude::Context;
 use crate::{
     commands::minigames::Minigame,
     communication::ByersUnixStream,
     db::DbUser,
     prelude::{ApplicationContext, Data, DiscordTimestamp, Error},
 };
-use crate::prelude::Context;
 
 static STRIFE_ENEMIES_BY_PLAYER_COUNT: Lazy<HashMap<i32, StrifeEnemyType>> = Lazy::new(|| {
     vec![
@@ -145,7 +145,7 @@ impl Strife {
         }
 
         let enemy_type = *STRIFE_ENEMIES_BY_PLAYER_COUNT
-            .get(&(players.len() as i32).max(10))
+            .get(&(players.len() as i32).min(10))
             .unwrap();
         let enemy_variant = rand::random();
 
@@ -259,65 +259,36 @@ impl Minigame for Strife {
     }
 }
 
-async fn payout_multiple(db: &PgPool, players: &[Member], result: &StrifeLoot) -> Result<(), Error> {
+async fn payout_multiple(
+    db: &PgPool,
+    players: &[Member],
+    result: &StrifeLoot,
+) -> Result<(), Error> {
     for winner in &result.winners {
-        let mut winner_user =
-            DbUser::fetch_or_insert(db, winner.user.id.0 as i64).await?;
+        let mut winner_user = DbUser::fetch_or_insert(db, winner.user.id.0 as i64).await?;
         winner_user.boonbucks += result.boonbucks_per_player.unwrap();
 
         match result.grist_type.unwrap() {
-            EnemyGristVariant::Amber => {
-                winner_user.amber += result.grist_per_player.unwrap()
-            }
-            EnemyGristVariant::Amethyst => {
-                winner_user.amethyst += result.grist_per_player.unwrap()
-            }
-            EnemyGristVariant::Artifact => {
-                winner_user.artifact += result.grist_per_player.unwrap()
-            }
-            EnemyGristVariant::Caulk => {
-                winner_user.caulk += result.grist_per_player.unwrap()
-            }
-            EnemyGristVariant::Chalk => {
-                winner_user.chalk += result.grist_per_player.unwrap()
-            }
-            EnemyGristVariant::Cobalt => {
-                winner_user.cobalt += result.grist_per_player.unwrap()
-            }
-            EnemyGristVariant::Diamond => {
-                winner_user.diamond += result.grist_per_player.unwrap()
-            }
-            EnemyGristVariant::Garnet => {
-                winner_user.garnet += result.grist_per_player.unwrap()
-            }
+            EnemyGristVariant::Amber => winner_user.amber += result.grist_per_player.unwrap(),
+            EnemyGristVariant::Amethyst => winner_user.amethyst += result.grist_per_player.unwrap(),
+            EnemyGristVariant::Artifact => winner_user.artifact += result.grist_per_player.unwrap(),
+            EnemyGristVariant::Caulk => winner_user.caulk += result.grist_per_player.unwrap(),
+            EnemyGristVariant::Chalk => winner_user.chalk += result.grist_per_player.unwrap(),
+            EnemyGristVariant::Cobalt => winner_user.cobalt += result.grist_per_player.unwrap(),
+            EnemyGristVariant::Diamond => winner_user.diamond += result.grist_per_player.unwrap(),
+            EnemyGristVariant::Garnet => winner_user.garnet += result.grist_per_player.unwrap(),
             EnemyGristVariant::Gold => winner_user.gold += result.grist_per_player.unwrap(),
-            EnemyGristVariant::Iodine => {
-                winner_user.iodine += result.grist_per_player.unwrap()
-            }
-            EnemyGristVariant::Marble => {
-                winner_user.marble += result.grist_per_player.unwrap()
-            }
-            EnemyGristVariant::Mercury => {
-                winner_user.mercury += result.grist_per_player.unwrap()
-            }
-            EnemyGristVariant::Quartz => {
-                winner_user.quartz += result.grist_per_player.unwrap()
-            }
+            EnemyGristVariant::Iodine => winner_user.iodine += result.grist_per_player.unwrap(),
+            EnemyGristVariant::Marble => winner_user.marble += result.grist_per_player.unwrap(),
+            EnemyGristVariant::Mercury => winner_user.mercury += result.grist_per_player.unwrap(),
+            EnemyGristVariant::Quartz => winner_user.quartz += result.grist_per_player.unwrap(),
             EnemyGristVariant::Ruby => winner_user.ruby += result.grist_per_player.unwrap(),
             EnemyGristVariant::Rust => winner_user.rust += result.grist_per_player.unwrap(),
-            EnemyGristVariant::Shale => {
-                winner_user.shale += result.grist_per_player.unwrap()
-            }
-            EnemyGristVariant::Sulfur => {
-                winner_user.sulfur += result.grist_per_player.unwrap()
-            }
+            EnemyGristVariant::Shale => winner_user.shale += result.grist_per_player.unwrap(),
+            EnemyGristVariant::Sulfur => winner_user.sulfur += result.grist_per_player.unwrap(),
             EnemyGristVariant::Tar => winner_user.tar += result.grist_per_player.unwrap(),
-            EnemyGristVariant::Uranium => {
-                winner_user.uranium += result.grist_per_player.unwrap()
-            }
-            EnemyGristVariant::Zillium => {
-                winner_user.zillium += result.grist_per_player.unwrap()
-            }
+            EnemyGristVariant::Uranium => winner_user.uranium += result.grist_per_player.unwrap(),
+            EnemyGristVariant::Zillium => winner_user.zillium += result.grist_per_player.unwrap(),
         }
         winner_user.update(db).await?;
     }
@@ -435,9 +406,9 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let result = game.play().await?;
     match result.result {
         StrifeResult::Wipeout => {
-            handle.edit(Context::Application(ctx), |e| {
-                e.components(|c| c)
-            }).await?;
+            handle
+                .edit(Context::Application(ctx), |e| e.components(|c| c))
+                .await?;
             ctx.send(|m| {
                 m.embed(|e| {
                     Strife::prepare_embed(e)
@@ -450,9 +421,9 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             let winner = result.winners.first().unwrap();
             payout_multiple(&data.db, &result.winners, &result).await?;
 
-            handle.edit(Context::Application(ctx), |e| {
-                e.components(|c| c)
-            }).await?;
+            handle
+                .edit(Context::Application(ctx), |e| e.components(|c| c))
+                .await?;
             ctx.send(|m| {
                 m.embed(|e| {
                     Strife::prepare_embed(e).description(format!(
@@ -476,9 +447,9 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                 .collect::<Vec<_>>()
                 .join(", ");
 
-            handle.edit(Context::Application(ctx), |e| {
-                e.components(|c| c)
-            }).await?;
+            handle
+                .edit(Context::Application(ctx), |e| e.components(|c| c))
+                .await?;
             ctx.send(|m| {
                 m.embed(|e| {
                     Strife::prepare_embed(e).description(format!(
@@ -495,9 +466,9 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         StrifeResult::WinFull => {
             payout_multiple(&data.db, &result.winners, &result).await?;
 
-            handle.edit(Context::Application(ctx), |e| {
-                e.components(|c| c)
-            }).await?;
+            handle
+                .edit(Context::Application(ctx), |e| e.components(|c| c))
+                .await?;
             ctx.send(|m| {
                 m.embed(|e| {
                     Strife::prepare_embed(e).description(format!(
