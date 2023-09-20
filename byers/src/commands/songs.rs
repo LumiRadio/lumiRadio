@@ -5,7 +5,11 @@ use crate::{
 };
 
 /// Song-related commands
-#[poise::command(slash_command, subcommands("request", "playing", "history"), subcommand_required)]
+#[poise::command(
+    slash_command,
+    subcommands("request", "playing", "history"),
+    subcommand_required
+)]
 pub async fn song(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     Ok(())
 }
@@ -26,7 +30,8 @@ pub async fn history(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             e.title("Song History")
                 .description(format!("```\n{}```", description))
         })
-    }).await?;
+    })
+    .await?;
 
     Ok(())
 }
@@ -49,10 +54,13 @@ pub async fn playing(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 
     ctx.send(|m| {
         m.embed(|e| {
-            e.title("Currently Playing")
-                .description(format!("{} - {}\n\nThis song has been played {} times and requested {} times.", current_song.album, current_song.title, play_count, request_count))
+            e.title("Currently Playing").description(format!(
+                "{} - {}\n\nThis song has been played {} times and requested {} times.",
+                current_song.album, current_song.title, play_count, request_count
+            ))
         })
-    }).await?;
+    })
+    .await?;
 
     Ok(())
 }
@@ -118,7 +126,6 @@ pub async fn request(
                     over.relative_time()
                 ))
             })
-            .ephemeral(true)
         })
         .await?;
         return Ok(());
@@ -142,7 +149,6 @@ pub async fn request(
             e.title("Song Requests")
             .description(format!(r#""{} - {}" requested! You can request again in 1 and 1/2 hours ({discord_relative})."#, &song.album, &song.title))
         })
-        .ephemeral(true)
     })
         .await
         .map_err(|e| {
