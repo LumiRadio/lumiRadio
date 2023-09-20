@@ -1,7 +1,11 @@
 use tracing_unwrap::{OptionExt, ResultExt};
 
 use crate::{
-    commands::autocomplete_songs, communication::LiquidsoapCommunication, db::DbSong, prelude::*,
+    commands::autocomplete_songs,
+    communication::LiquidsoapCommunication,
+    cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
+    db::DbSong,
+    prelude::*,
 };
 
 /// Song-related commands
@@ -75,6 +79,20 @@ pub async fn request(
     song: String,
 ) -> Result<(), Error> {
     let data = ctx.data();
+
+    let user_cooldown = UserCooldownKey::new(ctx.author().id.0 as i64, "song_request");
+    if let Some(over) = is_on_cooldown(&data.redis_pool, user_cooldown).await? {
+        ctx.send(|m| {
+            m.embed(|e| {
+                e.title("Song Requests").description(format!(
+                    "You can request a song again {}.",
+                    over.relative_time(),
+                ))
+            })
+        })
+        .await?;
+        return Ok(());
+    }
 
     let song = DbSong::fetch_from_hash(&data.db, &song).await?;
 
@@ -155,6 +173,8 @@ pub async fn request(
             tracing::error!("Failed to send message: {}", e);
             e
         })?;
+
+    set_cooldown(&data.redis_pool, user_cooldown, 90 * 60).await?;
 
     Ok(())
 }

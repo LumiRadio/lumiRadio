@@ -4,8 +4,9 @@ use rand::Rng;
 use crate::{
     commands::minigames::Minigame,
     communication::ByersUnixStream,
+    cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
     db::{DbServerConfig, DbUser},
-    prelude::{ApplicationContext, Data, Error},
+    prelude::{ApplicationContext, Data, DiscordTimestamp, Error},
 };
 
 pub struct DiceRoll {
@@ -96,7 +97,7 @@ fn roll_over(mut roll: i32) -> i32 {
 }
 
 /// Roll a dice and win boonbucks
-#[poise::command(slash_command, user_cooldown = 300, guild_only)]
+#[poise::command(slash_command, guild_only)]
 pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data();
     let Some(guild_id) = ctx.guild_id() else {
@@ -107,6 +108,20 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     if guild_config.dice_roll == 0 {
         guild_config.dice_roll = 111;
         guild_config.update(&data.db).await?;
+    }
+
+    let user_cooldown = UserCooldownKey::new(ctx.author().id.0 as i64, "roll_dice");
+    if let Some(over) = is_on_cooldown(&data.redis_pool, user_cooldown).await? {
+        ctx.send(|m| {
+            m.embed(|e| {
+                DiceRoll::prepare_embed(e).description(format!(
+                    "The dice are being polished for you. You can roll the dice again {}.",
+                    over.relative_time()
+                ))
+            })
+        })
+        .await?;
+        return Ok(());
     }
 
     let mut user = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
@@ -179,6 +194,8 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             .await?;
         }
     }
+
+    set_cooldown(&data.redis_pool, user_cooldown, 5 * 60).await?;
 
     Ok(())
 }

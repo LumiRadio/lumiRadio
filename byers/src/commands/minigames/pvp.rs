@@ -7,8 +7,9 @@ use rand::{distributions::Standard, prelude::Distribution};
 use crate::{
     commands::minigames::Minigame,
     communication::ByersUnixStream,
+    cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
     db::DbUser,
-    prelude::{ApplicationContext, Data, Error},
+    prelude::{ApplicationContext, Data, DiscordTimestamp, Error},
 };
 
 pub enum PvPResult {
@@ -43,11 +44,7 @@ impl Minigame for PvP {
 }
 
 /// [S] Make them pay!
-#[poise::command(
-    slash_command,
-    user_cooldown = 300,
-    context_menu_command = "Minigame: PvP"
-)]
+#[poise::command(slash_command, context_menu_command = "Minigame: PvP")]
 pub async fn pvp(
     ctx: ApplicationContext<'_>,
     #[description = "The player to challenge"] user: User,
@@ -55,6 +52,21 @@ pub async fn pvp(
     let data = ctx.data;
     let mut challenger = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
     let mut challenged = DbUser::fetch_or_insert(&data.db, user.id.0 as i64).await?;
+
+    let challenger_key = UserCooldownKey::new(challenger.id, "pvp");
+    let challenged_key = UserCooldownKey::new(challenged.id, "pvp");
+    if let Some(over) = is_on_cooldown(&data.redis_pool, challenger_key).await? {
+        ctx.send(|m| {
+            m.embed(|e| {
+                PvP::prepare_embed(e).description(format!(
+                    "You need to rest! You can challenge someone again {}.",
+                    over.relative_time(),
+                ))
+            })
+        })
+        .await?;
+        return Ok(());
+    }
 
     if challenger.id == challenged.id {
         ctx.send(|m| {
@@ -206,6 +218,9 @@ pub async fn pvp(
             .await?;
         }
     }
+
+    set_cooldown(&data.redis_pool, challenger_key, 5 * 60).await?;
+    set_cooldown(&data.redis_pool, challenged_key, 5 * 60).await?;
 
     Ok(())
 }
