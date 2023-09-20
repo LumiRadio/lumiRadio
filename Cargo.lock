@@ -509,6 +509,7 @@ dependencies = [
  "rand",
  "reqwest",
  "serde",
+ "serde_json",
  "serde_repr",
  "situwaition",
  "sqlx",
