@@ -73,6 +73,28 @@ impl Minigame for DiceRoll {
     }
 }
 
+fn roll_over(mut roll: i32) -> i32 {
+    if roll == 666 {
+        return 111;
+    }
+
+    let hundreds = roll / 100;
+    let tens = (roll % 100) / 10;
+    let ones = roll % 10;
+
+    if ones == 6 {
+        if tens == 6 {
+            roll = (hundreds + 1) * 100 + 11;
+        } else {
+            roll = hundreds * 100 + (tens + 1) * 10 + 1;
+        }
+    } else {
+        roll += 1;
+    }
+
+    roll
+}
+
 /// Roll a dice and win boonbucks
 #[poise::command(slash_command, user_cooldown = 300, guild_only)]
 pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
@@ -108,10 +130,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     match result {
         DiceRollResult::WinSecret(total_winnings) => {
             let old_roll = guild_config.dice_roll;
-            guild_config.dice_roll += 1;
-            if guild_config.dice_roll > 666 {
-                guild_config.dice_roll = 111;
-            }
+            guild_config.dice_roll += roll_over(guild_config.dice_roll);
             guild_config.update(&data.db).await?;
             user.boonbucks += total_winnings;
 
@@ -162,4 +181,19 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_dice_rollover() {
+        assert_eq!(super::roll_over(111), 112);
+        assert_eq!(super::roll_over(666), 111);
+        assert_eq!(super::roll_over(116), 121);
+        assert_eq!(super::roll_over(126), 131);
+        assert_eq!(super::roll_over(136), 141);
+        assert_eq!(super::roll_over(146), 151);
+        assert_eq!(super::roll_over(156), 161);
+        assert_eq!(super::roll_over(166), 211);
+    }
 }
