@@ -13,7 +13,6 @@ pub async fn boondollars(ctx: Context<'_>) -> Result<(), Error> {
     let user = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
 
     // $username - Hours: $hours (Rank #$hourspos) - $currencyname: $points (Rank #$pointspos) - Echeladder: $rank • Next rung in $nxtrankreq hours. - You can check again in 5 minutes.
-    let username = &ctx.author().name;
     let hours = user.watched_time.clone();
     let hours_pos = user.fetch_position_in_hours(&data.db).await?;
     let points = user.boonbucks;
@@ -24,8 +23,19 @@ pub async fn boondollars(ctx: Context<'_>) -> Result<(), Error> {
         .map(|r| BigDecimal::from(r.hour_requirement) - user.watched_time)
         .unwrap_or(BigDecimal::from(0));
 
-    let message = format!("{username} - Hours: {hours:.2} (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank:.0} hours. - You can check again in 5 minutes.", username = username, hours = hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
-    ctx.say(message).await?;
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title("Boondollars")
+                .field("User", ctx.author().to_string(), false)
+                .field("Hours", format!("{hours:.2}"), true)
+                .field("Rank", format!("#{}", hours_pos), true)
+                .field("Boondollars", format!("{points:.0}"), true)
+                .field("Rank", format!("#{}", points_pos), true)
+                .field("Echeladder", rank_name, true)
+                .field("Next rung in", format!("{next_rank:.0} hours"), true)
+        })
+    })
+    .await?;
 
     Ok(())
 }
@@ -60,11 +70,10 @@ async fn pay_user(
 
     ctx.send(|m| {
         m.embed(|e| {
-            e.title("Payment successful")
-                .description(format!(
-                    "You paid {} {} boonbucks.",
-                    target_user.name, amount
-                ))
+            e.title("Payment successful").description(format!(
+                "You paid {} {} boonbucks.",
+                target_user.name, amount
+            ))
         })
     })
     .await?;
@@ -85,10 +94,7 @@ struct PayModal {
     amount: String,
 }
 
-#[poise::command(
-    context_menu_command = "Give this user money",
-    user_cooldown = 300
-)]
+#[poise::command(context_menu_command = "Give this user money", user_cooldown = 300)]
 pub async fn pay_menu(ctx: ApplicationContext<'_>, target_user: User) -> Result<(), Error> {
     let data = PayModal::execute(ctx).await?;
     if let Some(data) = data {

@@ -6,6 +6,7 @@ use strum::IntoEnumIterator;
 use crate::{
     commands::minigames::Minigame,
     communication::ByersUnixStream,
+    cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
     db::{DbServerConfig, DbUser},
     prelude::*,
 };
@@ -122,13 +123,27 @@ impl Minigame for SlotMachine {
 }
 
 /// Are you feeling lucky?
-#[poise::command(slash_command, user_cooldown = 300, guild_only)]
+#[poise::command(slash_command, guild_only)]
 pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data();
     let Some(guild_id) = ctx.guild_id() else {
         return Err(anyhow!("This command can only be used in a server"));
     };
     let mut server_config = DbServerConfig::fetch_or_insert(&data.db, guild_id.0 as i64).await?;
+
+    let user_cooldown = UserCooldownKey::new(ctx.author().id.0 as i64, "slots");
+    if let Some(over) = is_on_cooldown(&data.redis_pool, user_cooldown).await? {
+        ctx.send(|m| {
+            m.embed(|e| {
+                SlotMachine::prepare_embed(e).description(format!(
+                    "The slot machine is broken. Come back {}.",
+                    over.relative_time(),
+                ))
+            })
+        })
+        .await?;
+        return Ok(());
+    }
 
     let mut user = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
     if user.boonbucks < 5 {
@@ -193,6 +208,8 @@ pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         })
     })
     .await?;
+
+    set_cooldown(&data.redis_pool, user_cooldown, 5 * 60).await?;
 
     Ok(())
 }

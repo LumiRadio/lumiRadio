@@ -1,5 +1,5 @@
-use std::net::ToSocketAddrs;
 use chrono::Utc;
+use std::net::ToSocketAddrs;
 
 use commands::help::help;
 use fred::{
@@ -8,39 +8,39 @@ use fred::{
     prelude::{ClientLike, PubsubInterface, RedisClient},
     types::{PerformanceConfig, ReconnectPolicy, RedisConfig, RedisValue},
 };
-use poise::FrameworkError;
 use poise::serenity_prelude::Activity;
+use poise::FrameworkError;
 use sqlx::postgres::PgPoolOptions;
 use tokio::task::JoinSet;
 use tracing::{debug, error, info};
 use tracing_unwrap::{OptionExt, ResultExt};
 
+use crate::commands::add_stuff::add;
 use crate::{
     commands::{
         admin::{
             admin,
+            config::config as config_cmd,
             control::{control_cmd, volume},
             import::import,
-            config::config as config_cmd,
             user::user,
         },
         currency::{boondollars, pay, pay_menu},
-        minigames,
+        listen, minigames,
         songs::song,
         version::version,
         youtube::youtube,
-        listen
     },
     communication::ByersUnixStream,
     db::DbSong,
     oauth2::oauth2_server,
     prelude::*,
 };
-use crate::commands::add_stuff::add;
 
 mod app_config;
 mod commands;
 mod communication;
+mod cooldowns;
 mod db;
 mod discord;
 mod event_handlers;
@@ -194,14 +194,13 @@ async fn main() {
                             }
                         });
 
-                        let current_song = DbSong::last_played_song(&data.db)
-                            .await;
+                        let current_song = DbSong::last_played_song(&data.db).await;
                         if let Ok(Some(current_song)) = current_song {
                             ctx.set_activity(Activity::listening(format!(
                                 "{} - {}",
                                 current_song.album, current_song.title
                             )))
-                                .await;
+                            .await;
                         }
                     }
 
@@ -211,17 +210,25 @@ async fn main() {
             on_error: |error| {
                 Box::pin(async move {
                     match error {
-                        FrameworkError::CooldownHit { remaining_cooldown, ctx } => {
+                        FrameworkError::CooldownHit {
+                            remaining_cooldown,
+                            ctx,
+                        } => {
                             ctx.send(|m| {
                                 m.embed(|e| {
-                                    e.title("You are too fast!")
-                                        .description(format!(
-                                            "You can use that command again {}.",
-                                            (Utc::now().naive_utc() + chrono::Duration::from_std(remaining_cooldown).unwrap()).relative_time()
-                                        ))
-                                }).ephemeral(true)
-                            }).await.expect_or_log("unable to send cooldown message");
-                        },
+                                    e.title("You are too fast!").description(format!(
+                                        "You can use that command again {}.",
+                                        (Utc::now().naive_utc()
+                                            + chrono::Duration::from_std(remaining_cooldown)
+                                                .unwrap())
+                                        .relative_time()
+                                    ))
+                                })
+                                .ephemeral(true)
+                            })
+                            .await
+                            .expect_or_log("unable to send cooldown message");
+                        }
                         _ => {
                             let result = poise::builtins::on_error(error).await;
                             if let Err(error) = result {

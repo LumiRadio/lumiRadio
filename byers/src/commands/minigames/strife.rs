@@ -7,6 +7,7 @@ use rand::{distributions::Standard, prelude::Distribution, seq::IteratorRandom, 
 use sqlx::PgPool;
 use tokio_stream::StreamExt;
 
+use crate::cooldowns::{is_on_cooldown, set_cooldown, GlobalCooldownKey};
 use crate::prelude::Context;
 use crate::{
     commands::minigames::Minigame,
@@ -264,7 +265,7 @@ async fn payout_multiple(
     players: &[Member],
     result: &StrifeLoot,
 ) -> Result<(), Error> {
-    for winner in &result.winners {
+    for winner in players {
         let mut winner_user = DbUser::fetch_or_insert(db, winner.user.id.0 as i64).await?;
         winner_user.boonbucks += result.boonbucks_per_player.unwrap();
 
@@ -297,9 +298,24 @@ async fn payout_multiple(
 }
 
 /// Join a co-op fight against a monster and win boonbucks and grist!
-#[poise::command(slash_command, global_cooldown = 300)]
+#[poise::command(slash_command)]
 pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
+
+    let cooldown = GlobalCooldownKey::new("strife");
+    if let Some(over) = is_on_cooldown(&data.redis_pool, cooldown).await? {
+        ctx.send(|m| {
+            m.embed(|e| {
+                Strife::prepare_embed(e).description(format!(
+                    "The arena is being cleaned up! Come back {}.",
+                    over.relative_time(),
+                ))
+            })
+        })
+        .await?;
+        return Ok(());
+    }
+
     let mut user = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
 
     if user.boonbucks < 50 {
@@ -482,6 +498,8 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             }).await?;
         }
     }
+
+    set_cooldown(&data.redis_pool, cooldown, 5 * 60).await?;
 
     Ok(())
 }
