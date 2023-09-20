@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.1.0] - 2023-09-20
+
+### Added
+
+- Add `/song queue` as a command - This will show the current song request queue
+
+### Changed
+
+- Changed message for boondollars to be an embed instead
+
+### Fixed
+
+- Fixed song requests still being ephemeral
+- Fixed roll dice minigame being able to produce unobtainable server rolls
+- Fixed cooldowns triggering even if the songs weren't successful
+- Fixed PvP cooldown only triggering for the challenger
+- Fixed strife always producing a lich queen to fight
+
 ## [1.0.8] - 2023-09-19
 
 ### Added
