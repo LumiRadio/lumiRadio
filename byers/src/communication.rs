@@ -1,14 +1,25 @@
 use std::path::PathBuf;
 
+use serde::Deserialize;
 use tokio::io::AsyncReadExt;
 use tracing::debug;
 use tracing_unwrap::ResultExt;
+
+#[derive(Deserialize, Debug)]
+pub struct QueueItem {
+    pub album: Option<String>,
+    pub artist: String,
+    pub title: String,
+    pub filename: String,
+    pub queue: String,
+}
 
 #[async_trait::async_trait]
 pub trait LiquidsoapCommunication {
     type Error;
     async fn send(&mut self, command: &str) -> Result<(), Self::Error>;
     async fn send_wait(&mut self, command: &str) -> Result<String, Self::Error>;
+    async fn song_requests(&mut self) -> Result<Vec<QueueItem>, Self::Error>;
 
     async fn request_song(&mut self, song: &str) -> Result<String, Self::Error> {
         self.send_wait(&format!("srq.push {}", song)).await
@@ -45,6 +56,11 @@ impl LiquidsoapCommunication for telnet::Telnet {
 
         Ok(())
     }
+
+    async fn song_requests(&mut self) -> Result<Vec<QueueItem>, Self::Error> {
+        let result = self.send_wait("song_request_queue").await?;
+        Ok(serde_json::from_str(&result).expect_or_log("Failed to parse json"))
+    }
 }
 
 pub struct ByersUnixStream {
@@ -58,7 +74,8 @@ impl ByersUnixStream {
             if PathBuf::from("/usr/src/app/ls/lumiradio.sock").exists() {
                 let stream_result = tokio::net::UnixStream::connect(PathBuf::from(
                     "/usr/src/app/ls/lumiradio.sock",
-                )).await;
+                ))
+                .await;
                 if let Ok(stream) = stream_result {
                     break stream;
                 }
@@ -79,11 +96,11 @@ impl ByersUnixStream {
                 Ok(n) => {
                     debug!("Read {} bytes from liquidsoap", n);
                     n
-                },
+                }
                 Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                     debug!("Would block, reading from liquidsoap");
                     continue;
-                },
+                }
                 Err(e) => {
                     return Err(e);
                 }
@@ -106,10 +123,10 @@ impl ByersUnixStream {
                 Ok(n) => {
                     debug!("Wrote {} bytes to liquidsoap", n);
                     break;
-                },
+                }
                 Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                     debug!("Would block, writing to liquidsoap");
-                },
+                }
                 Err(e) => {
                     return Err(e);
                 }
@@ -137,7 +154,7 @@ impl ByersUnixStream {
     ) -> Result<String, std::io::Error> {
         let data_with_newline = format!("{}\n", data);
         self.write_str(&data_with_newline).await?;
-        
+
         let result = self.read_until_end().await?;
         Ok(result)
     }
@@ -153,5 +170,10 @@ impl LiquidsoapCommunication for ByersUnixStream {
 
     async fn send(&mut self, command: &str) -> Result<(), Self::Error> {
         self.write_line(command).await
+    }
+
+    async fn song_requests(&mut self) -> Result<Vec<QueueItem>, Self::Error> {
+        let result = self.send_wait("song_request_queue").await?;
+        Ok(serde_json::from_str(&result).expect_or_log("Failed to parse json"))
     }
 }

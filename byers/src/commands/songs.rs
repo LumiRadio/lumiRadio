@@ -11,7 +11,7 @@ use crate::{
 /// Song-related commands
 #[poise::command(
     slash_command,
-    subcommands("request", "playing", "history"),
+    subcommands("request", "playing", "history", "queue"),
     subcommand_required
 )]
 pub async fn song(ctx: ApplicationContext<'_>) -> Result<(), Error> {
@@ -19,20 +19,22 @@ pub async fn song(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 }
 
 /// Displays the last 10 songs played
-#[poise::command(slash_command, global_cooldown = 180)]
+#[poise::command(slash_command)]
 pub async fn history(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
     let last_songs = DbSong::last_10_songs(&data.db).await?;
 
-    let mut description = String::new();
-    for (i, song) in last_songs.into_iter().enumerate() {
-        description.push_str(&format!("{}. {} - {}\n", i + 1, song.album, song.title));
-    }
+    let description = last_songs
+        .into_iter()
+        .enumerate()
+        .map(|(i, song)| format!("{}. {} - {}\n", i + 1, song.album, song.title))
+        .collect::<Vec<_>>()
+        .join("\n");
 
     ctx.send(|m| {
         m.embed(|e| {
             e.title("Song History")
-                .description(format!("```\n{}```", description))
+                .description(format!("```\n{}\n```", description))
         })
     })
     .await?;
@@ -41,7 +43,7 @@ pub async fn history(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 }
 
 /// Displays the currently playing song
-#[poise::command(slash_command, global_cooldown = 180)]
+#[poise::command(slash_command)]
 pub async fn playing(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
     let Some(current_song) = DbSong::last_played_song(&data.db).await? else {
@@ -69,8 +71,41 @@ pub async fn playing(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+/// Displays the current queue
+#[poise::command(slash_command)]
+pub async fn queue(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    let data = ctx.data;
+
+    let mut comms = data.comms.lock().await;
+    let queue = comms
+        .song_requests()
+        .await?
+        .into_iter()
+        .enumerate()
+        .map(|(i, song)| {
+            format!(
+                "{}. {} - {}",
+                i + 1,
+                song.album.unwrap_or("<no album>".to_string()),
+                song.title
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title("Song Queue")
+                .description(format!("```\n{}\n```", queue))
+        })
+    })
+    .await?;
+
+    Ok(())
+}
+
 /// Requests a song for the radio
-#[poise::command(slash_command, user_cooldown = 5400)]
+#[poise::command(slash_command)]
 pub async fn request(
     ctx: ApplicationContext<'_>,
     #[description = "The song to request"]
