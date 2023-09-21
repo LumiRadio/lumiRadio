@@ -3,6 +3,7 @@ use sqlx::types::BigDecimal;
 
 use crate::{
     db::{DbSlcbRank, DbUser},
+    event_handlers::message::update_activity,
     prelude::*,
 };
 
@@ -10,6 +11,11 @@ use crate::{
 #[poise::command(slash_command, user_cooldown = 300)]
 pub async fn boondollars(ctx: Context<'_>) -> Result<(), Error> {
     let data = ctx.data();
+
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
+
     let user = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
 
     // $username - Hours: $hours (Rank #$hourspos) - $currencyname: $points (Rank #$pointspos) - Echeladder: $rank • Next rung in $nxtrankreq hours. - You can check again in 5 minutes.
@@ -46,6 +52,11 @@ async fn pay_user(
     amount: i32,
 ) -> Result<(), Error> {
     let data = ctx.data();
+
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
+
     let mut source_db_user = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
     let mut target_db_user = DbUser::fetch_or_insert(&data.db, target_user.id.0 as i64).await?;
 

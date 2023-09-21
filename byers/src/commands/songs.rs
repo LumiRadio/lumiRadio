@@ -8,6 +8,7 @@ use crate::{
     communication::LiquidsoapCommunication,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
     db::DbSong,
+    event_handlers::message::update_activity,
     prelude::*,
 };
 
@@ -25,6 +26,11 @@ pub async fn song(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub async fn history(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
+
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
+
     let last_songs = DbSong::last_10_songs(&data.db).await?;
 
     let description = last_songs
@@ -49,6 +55,11 @@ pub async fn history(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub async fn playing(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
+
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
+
     let Some(current_song) = DbSong::last_played_song(&data.db).await? else {
         ctx.send(|m| {
             m.embed(|e| {
@@ -78,6 +89,10 @@ pub async fn playing(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub async fn queue(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
+
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
 
     let mut comms = data.comms.lock().await;
     let requests = comms.song_requests().await?;
@@ -125,6 +140,10 @@ pub async fn search(
     #[description = "The song to search for"] search: String,
 ) -> Result<(), Error> {
     let data = ctx.data;
+
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
 
     let suggestions = DbSong::search(&data.db, &search)
         .await?
@@ -258,6 +277,10 @@ pub async fn request(
     song: String,
 ) -> Result<(), Error> {
     let data = ctx.data();
+
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
 
     let user_cooldown = UserCooldownKey::new(ctx.author().id.0 as i64, "song_request");
     if let Some(over) = is_on_cooldown(&data.redis_pool, user_cooldown).await? {

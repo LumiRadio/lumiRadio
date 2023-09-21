@@ -1,4 +1,5 @@
 use crate::db::DbCan;
+use crate::event_handlers::message::update_activity;
 use crate::prelude::{ApplicationContext, Context, Error};
 use fred::prelude::{Expiration, KeysInterface};
 use sqlx::PgPool;
@@ -10,6 +11,10 @@ pub async fn add(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 }
 
 async fn addcan_action(ctx: Context<'_>) -> Result<(), Error> {
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(ctx.data(), ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
+
     if ctx
         .data()
         .redis_pool
@@ -38,6 +43,10 @@ async fn addcan_action(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(ctx.data(), ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
+
     if ctx
         .data()
         .redis_pool
@@ -107,6 +116,10 @@ pub async fn bear(ctx: Context<'_>) -> Result<(), Error> {
 /// no
 #[poise::command(slash_command)]
 pub async fn john(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(ctx.data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
+
     ctx.send(|m| m.embed(|e| e.title("no").description("just no")))
         .await?;
 

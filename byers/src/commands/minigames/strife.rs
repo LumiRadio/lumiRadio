@@ -8,6 +8,7 @@ use sqlx::PgPool;
 use tokio_stream::StreamExt;
 
 use crate::cooldowns::{is_on_cooldown, set_cooldown, GlobalCooldownKey};
+use crate::event_handlers::message::update_activity;
 use crate::prelude::Context;
 use crate::{
     commands::minigames::Minigame,
@@ -302,6 +303,10 @@ async fn payout_multiple(
 pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
 
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
+
     let cooldown = GlobalCooldownKey::new("strife");
     if let Some(over) = is_on_cooldown(&data.redis_pool, cooldown).await? {
         ctx.send(|m| {
@@ -387,6 +392,11 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             .await?;
             continue;
         }
+
+        if let Some(guild_id) = ctx.guild_id() {
+            update_activity(data, mci.user.id, ctx.channel_id(), guild_id).await?;
+        }
+
         db_player.boonbucks -= 50;
         db_player.update(&data.db).await?;
 
