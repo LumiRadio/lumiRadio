@@ -23,7 +23,7 @@ ARG APP=/usr/src/app
 
 # Install SSL certificates, timezone data, libpq, libav
 RUN apt-get update \
-    && apt-get install -y ca-certificates tzdata libpq5 libavutil56 libavformat58 libavfilter7 openssl \
+    && apt-get install -y ca-certificates tzdata libpq5 libavutil56 libavformat58 libavfilter7 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -r frohike && useradd -g frohike frohike
