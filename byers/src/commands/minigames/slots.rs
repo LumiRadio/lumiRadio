@@ -172,6 +172,7 @@ pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 
     let machine = SlotMachine::new();
     let payout = machine.play().await?;
+    let jackpot = server_config.slot_jackpot;
 
     match payout {
         PayoutOptions::Money(amount) => {
@@ -206,7 +207,7 @@ pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                     match payout {
                         PayoutOptions::Money(amount) => format!("{} Boonbucks", amount),
                         PayoutOptions::Jackpot => {
-                            format!("{} Boonbucks", server_config.slot_jackpot)
+                            format!("{} Boonbucks", jackpot)
                         }
                         PayoutOptions::Nothing => "Nothing".to_string(),
                     },
