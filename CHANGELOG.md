@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.1.4] - 2023-09-21
+
+### Changed
+
+- Changed encoding from ABR to CBR
+
+### Fixed
+
+- Fixed slots jackpot being displayed as 0
+- Fixed formatting in `/boondollars` command
+
 ## [1.1.3] - 2023-09-21
 
 ### Changed
