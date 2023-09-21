@@ -8,6 +8,7 @@ use crate::{
     communication::ByersUnixStream,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
     db::{DbServerConfig, DbUser},
+    event_handlers::message::update_activity,
     prelude::*,
 };
 
@@ -126,6 +127,11 @@ impl Minigame for SlotMachine {
 #[poise::command(slash_command, guild_only)]
 pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data();
+
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
+
     let Some(guild_id) = ctx.guild_id() else {
         return Err(anyhow!("This command can only be used in a server"));
     };

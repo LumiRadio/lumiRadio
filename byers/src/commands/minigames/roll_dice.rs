@@ -6,6 +6,7 @@ use crate::{
     communication::ByersUnixStream,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
     db::{DbServerConfig, DbUser},
+    event_handlers::message::update_activity,
     prelude::{ApplicationContext, Data, DiscordTimestamp, Error},
 };
 
@@ -100,6 +101,11 @@ fn roll_over(mut roll: i32) -> i32 {
 #[poise::command(slash_command, guild_only)]
 pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data();
+
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
+
     let Some(guild_id) = ctx.guild_id() else {
         return Err(anyhow::anyhow!("This command can only be used in a server"));
     };

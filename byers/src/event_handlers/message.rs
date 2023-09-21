@@ -3,7 +3,7 @@ use fred::{
     prelude::{KeysInterface, RedisClient},
     types::Expiration,
 };
-use poise::serenity_prelude::{self as serenity, Message};
+use poise::serenity_prelude::{self as serenity, ChannelId, GuildId, Message, UserId};
 use sqlx::{types::BigDecimal, PgPool};
 use tracing::info;
 use tracing_unwrap::ResultExt;
@@ -71,10 +71,7 @@ impl UserMessageHandlerExt for DbUser {
         db: &PgPool,
     ) -> Result<(), Error> {
         let cooldown_key = self.redis_message_cooldown_key();
-        if let Some(cooldown) = redis_client
-            .get::<Option<String>, _>(&cooldown_key)
-            .await?
-        {
+        if let Some(cooldown) = redis_client.get::<Option<String>, _>(&cooldown_key).await? {
             let cooldown = NaiveDateTime::parse_from_str(&cooldown, "%Y-%m-%d %H:%M:%S%.f")?;
 
             if cooldown > chrono::Utc::now().naive_utc() {
@@ -104,6 +101,28 @@ impl UserMessageHandlerExt for DbUser {
     }
 }
 
+pub async fn update_activity(
+    data: &Data<ByersUnixStream>,
+    author: UserId,
+    channel_id: ChannelId,
+    guild_id: GuildId,
+) -> Result<(), Error> {
+    let Some(channel_config) = DbServerChannelConfig::fetch(&data.db, channel_id.0 as i64, guild_id.0 as i64).await? else {
+        return Ok(());
+    };
+
+    let mut user = DbUser::fetch_or_insert(&data.db, author.0 as i64).await?;
+
+    if channel_config.allow_watch_time_accumulation {
+        user.update_watched_time(&data.db).await?;
+    }
+    if channel_config.allow_point_accumulation {
+        user.update_boondollars(&data.redis_pool, &data.db).await?;
+    }
+
+    Ok(())
+}
+
 pub async fn message_handler(message: &Message, data: &Data<ByersUnixStream>) -> Result<(), Error> {
     if message.author.bot {
         return Ok(());
@@ -113,18 +132,7 @@ pub async fn message_handler(message: &Message, data: &Data<ByersUnixStream>) ->
         return Ok(());
     };
 
-    let Some(channel_config) = DbServerChannelConfig::fetch(&data.db, message.channel_id.0 as i64, guild_id.0 as i64).await? else {
-        return Ok(());
-    };
-
-    let mut user = DbUser::fetch_or_insert(&data.db, message.author.id.0 as i64).await?;
-
-    if channel_config.allow_watch_time_accumulation {
-        user.update_watched_time(&data.db).await?;
-    }
-    if channel_config.allow_point_accumulation {
-        user.update_boondollars(&data.redis_pool, &data.db).await?;
-    }
+    update_activity(data, message.author.id, message.channel_id, guild_id).await?;
 
     Ok(())
 }
@@ -138,7 +146,8 @@ mod tests {
         println!("{}", now_str);
 
         // parse 2023-09-19 12:39:33.359969291 as UTC
-        let parsed = chrono::NaiveDateTime::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S%.f").unwrap();
+        let parsed =
+            chrono::NaiveDateTime::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S%.f").unwrap();
 
         assert_eq!(now, parsed);
     }

@@ -9,6 +9,7 @@ use crate::{
     communication::ByersUnixStream,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
     db::DbUser,
+    event_handlers::message::update_activity,
     prelude::{ApplicationContext, Data, DiscordTimestamp, Error},
 };
 
@@ -45,6 +46,11 @@ impl Minigame for PvP {
 
 async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error> {
     let data = ctx.data;
+
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
+
     let mut challenger = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
     let mut challenged = DbUser::fetch_or_insert(&data.db, user.id.0 as i64).await?;
 

@@ -15,6 +15,7 @@ use tracing_unwrap::{OptionExt, ResultExt};
 
 use crate::{
     db::{DbSlcbUser, DbUser},
+    event_handlers::message::update_activity,
     prelude::*,
 };
 
@@ -70,6 +71,10 @@ enum YoutubeError {
 #[poise::command(slash_command, ephemeral)]
 pub async fn link(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data();
+
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
 
     let mut user = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
 
@@ -156,11 +161,13 @@ pub async fn link(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 
     let mut slcb_account = None;
     for youtube_channel in channels {
-        if let Some(account) = DbSlcbUser::fetch_by_user_id(&data.db, &youtube_channel.youtube_channel_id).await? {
+        if let Some(account) =
+            DbSlcbUser::fetch_by_user_id(&data.db, &youtube_channel.youtube_channel_id).await?
+        {
             slcb_account = Some(account);
             break;
         }
-    };
+    }
 
     let Some(slcb_account) = slcb_account else {
         handle.edit(poise::Context::Application(ctx), |b| {
@@ -179,14 +186,17 @@ pub async fn link(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 
     user.update(&data.db).await?;
 
-    handle.edit(Context::Application(ctx), |b| {
-        b.embed(|e| {
-            e.title("Successfully imported data!").description(format!(
-                "Successfully imported data from {}!",
-                slcb_account.username
-            ))
-        }).components(|c| c)
-    }).await?;
+    handle
+        .edit(Context::Application(ctx), |b| {
+            b.embed(|e| {
+                e.title("Successfully imported data!").description(format!(
+                    "Successfully imported data from {}!",
+                    slcb_account.username
+                ))
+            })
+            .components(|c| c)
+        })
+        .await?;
 
     Ok(())
 }
