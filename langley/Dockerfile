@@ -1,19 +1,16 @@
-FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
-WORKDIR /app
-
-FROM chef AS planner
-COPY . .
-RUN cargo chef prepare --recipe-path recipe.json
-
-FROM chef AS builder
+FROM rust:1.70 as builder
 
 ENV SQLX_OFFLINE=true
 
-COPY --from=planner /app/recipe.json recipe.json
+RUN USER=root cargo new --bin langley
+WORKDIR /langley
+COPY ./Cargo.toml ./Cargo.toml
+RUN cargo build --release
+RUN rm src/*.rs
 
-RUN cargo chef cook --release --recipe-path recipe.json
+ADD . ./
 
-COPY . .
+RUN rm ./target/release/deps/langley*
 RUN cargo build --release
 
 FROM debian:bullseye-slim
@@ -27,7 +24,7 @@ RUN apt-get update \
 RUN groupadd -r langley && useradd -g langley langley
 RUN mkdir -p ${APP}
 
-COPY --from=builder /app/target/release/langley ${APP}/langley
+COPY --from=builder /langley/target/release/langley ${APP}/langley
 
 RUN chown -R langley:langley ${APP}
 
