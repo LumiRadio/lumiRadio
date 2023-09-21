@@ -21,7 +21,7 @@ ARG APP=/usr/src/app
 
 # Install SSL certificates, timezone data, libpq
 RUN apt-get update \
-    && apt-get install -y ca-certificates tzdata libpq5 \
+    && apt-get install -y ca-certificates tzdata libpq5 openssl \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -r langley && useradd -g langley langley
