@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.1.3] - 2023-09-21
+
+### Changed
+
+- Changed server's roll to quest roll
+
+### Fixed
+
+- Fixed the strife cooldown triggering too late
+- Fixed the payout of the dice minigame
+
 ## [1.1.2] - 2023-09-21
 
 ### Changed
