@@ -53,15 +53,17 @@ impl Minigame for DiceRoll {
         let sum = self.player_roll.iter().sum::<u8>();
         let winnings = match sum {
             0..=11 => 0,
-            12..=15 => 1,
-            16..=17 => 2,
-            18 => 5,
+            12..=14 => 2,
+            15 => 3,
+            16 => 4,
+            17 => 5,
+            18 => 10,
             _ => unreachable!(),
         } * 5;
         let mut total_winnings = winnings;
 
         if roll == self.server_roll {
-            total_winnings += 5 * 5;
+            total_winnings += 75;
             return Ok(DiceRollResult::WinSecret(total_winnings));
         } else if total_winnings > 0 {
             return Ok(DiceRollResult::Win(total_winnings));
@@ -160,7 +162,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                     x.title("You won!").description(format!(
                         r#"You rolled {} and won {total_winnings} boonbucks!
     
-                        Additionally, you rolled the server's roll of {}! The next number is {}"#,
+                        Additionally, you rolled the quest roll of {}! The next number is {}"#,
                         game.player_roll(),
                         old_roll,
                         guild_config.dice_roll
@@ -177,7 +179,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                     x.title("You won!").description(format!(
                         r#"You rolled {} and won {total_winnings} boonbucks!
 
-                    The server's roll is {}"#,
+                    The quest roll is {}"#,
                         game.player_roll(),
                         guild_config.dice_roll
                     ))
@@ -191,7 +193,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                     x.title("You lost!").description(format!(
                         r#"You rolled {} and lost 5 boonbucks!
 
-                    The server's roll is {}"#,
+                    The quest roll is {}"#,
                         game.player_roll(),
                         guild_config.dice_roll
                     ))

@@ -76,27 +76,35 @@ def on_song_request_queue(cli)
     srq = srq.queue()
     srq_length = list.length(srq)
 
-    json_list = []
+    json_list = ref([])
     for i = 0 to prioq_length - 1 do
         elem = list.nth(prioq, i)
         obj = json()
-        obj.add("artist", elem.metadata["artist"])
-        obj.add("title", elem.metadata["title"])
-        obj.add("album", elem.metadata["album"])
-        obj.add("filename", elem.metadata["filename"])
-        json_list = list.add(obj, json_list)
-    done
+        request.read_metadata(elem)
+        elem_meta = request.metadata(elem)
+        obj.add("artist", elem_meta["artist"])
+        obj.add("title", elem_meta["title"])
+        obj.add("album", elem_meta["album"])
+        obj.add("filename", elem_meta["filename"])
+        obj.add("queue", "prioq")
+        print(json.stringify(obj))
+        json_list := list.add(obj, json_list())
+    end
     for i = 0 to srq_length - 1 do
         elem = list.nth(srq, i)
+        request.read_metadata(elem)
         obj = json()
-        obj.add("artist", elem.metadata["artist"])
-        obj.add("title", elem.metadata["title"])
-        obj.add("album", elem.metadata["album"])
-        obj.add("filename", elem.metadata["filename"])
-        json_list = list.add(obj, json_list)
-    done
+        elem_meta = request.metadata(elem)
+       	obj.add("artist", elem_meta["artist"])
+       	obj.add("title", elem_meta["title"])
+        obj.add("album", elem_meta["album"])
+        obj.add("filename", elem_meta["filename"])  
+        obj.add("queue", "srq")
+        print(json.stringify(obj))
+        json_list := list.add(obj, json_list())
+    end
 
-    json.stringify(json_list)
+    json.stringify(json_list())
 end
 server.register(usage="song_request_queue", description="Show the song request queue", "song_request_queue", on_song_request_queue)
 

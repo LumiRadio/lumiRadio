@@ -336,6 +336,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     }
     user.boonbucks -= 50;
     user.update(&data.db).await?;
+    set_cooldown(&data.redis_pool, cooldown, 5 * 60).await?;
 
     let now_in_2_minutes = chrono::Utc::now() + chrono::Duration::minutes(2);
     let handle = ctx.send(|m| {
@@ -508,8 +509,6 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             }).await?;
         }
     }
-
-    set_cooldown(&data.redis_pool, cooldown, 5 * 60).await?;
 
     Ok(())
 }
