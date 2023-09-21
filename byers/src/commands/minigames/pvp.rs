@@ -43,12 +43,7 @@ impl Minigame for PvP {
     }
 }
 
-/// [S] Make them pay!
-#[poise::command(slash_command, context_menu_command = "Minigame: PvP")]
-pub async fn pvp(
-    ctx: ApplicationContext<'_>,
-    #[description = "The player to challenge"] user: User,
-) -> Result<(), Error> {
+async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error> {
     let data = ctx.data;
     let mut challenger = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
     let mut challenged = DbUser::fetch_or_insert(&data.db, user.id.0 as i64).await?;
@@ -223,4 +218,22 @@ pub async fn pvp(
     set_cooldown(&data.redis_pool, challenged_key, 5 * 60).await?;
 
     Ok(())
+}
+
+/// [S] Make them pay!
+#[poise::command(slash_command)]
+pub async fn pvp(
+    ctx: ApplicationContext<'_>,
+    #[description = "The player to challenge"] user: User,
+) -> Result<(), Error> {
+    pvp_action(ctx, user).await
+}
+
+/// [S] Make them pay!
+#[poise::command(context_menu_command = "Minigame: PvP")]
+pub async fn pvp_context(
+    ctx: ApplicationContext<'_>,
+    #[description = "The player to challenge"] user: User,
+) -> Result<(), Error> {
+    pvp_action(ctx, user).await
 }

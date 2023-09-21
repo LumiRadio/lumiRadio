@@ -336,7 +336,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let handle = ctx.send(|m| {
         m.embed(|e| {
             Strife::prepare_embed(e)
-                .description(format!("{} gathers up a crew to **STRIFE**!\n\nPress the button below to join the crew! (50 boondollars to enter) There are currently {} waiting to fight!\n\nThe battle starts {}", ctx.author(), 1, now_in_2_minutes.relative_time()))
+                .description(format!("{} gathers up a crew to **STRIFE**!\n\nPress the button below to join the crew! (50 boondollars to enter) There are currently {} waiting to fight!\n\nThe battle should start {}", ctx.author(), 1, now_in_2_minutes.relative_time()))
         })
         .components(|c| {
             c.create_action_row(|r| {
@@ -396,7 +396,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                 .interaction_response_data(|d| {
                     d.embed(|e| {
                         Strife::prepare_embed(e)
-                            .description(format!("{} gathers up a crew to **STRIFE**!\n\nPress the button below to join the crew! (50 boondollars to enter) There are currently {} waiting to fight!\n\nThe battle starts in {}", ctx.author(), players.len(), now_in_2_minutes.relative_time()))
+                            .description(format!("{} gathers up a crew to **STRIFE**!\n\nPress the button below to join the crew! (50 boondollars to enter) There are currently {} waiting to fight!\n\nThe battle should start {}", ctx.author(), players.len(), now_in_2_minutes.relative_time()))
                     })
                 })
         }).await?;

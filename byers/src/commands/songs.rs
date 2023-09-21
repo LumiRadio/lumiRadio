@@ -1,3 +1,6 @@
+use std::time::Duration;
+
+use poise::serenity_prelude::{CreateSelectMenuOption, InteractionResponseType, SelectMenuOption};
 use tracing_unwrap::{OptionExt, ResultExt};
 
 use crate::{
@@ -11,7 +14,7 @@ use crate::{
 /// Song-related commands
 #[poise::command(
     slash_command,
-    subcommands("request", "playing", "history", "queue"),
+    subcommands("request", "playing", "history", "queue", "search"),
     subcommand_required
 )]
 pub async fn song(ctx: ApplicationContext<'_>) -> Result<(), Error> {
@@ -111,6 +114,136 @@ pub async fn queue(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         })
     })
     .await?;
+
+    Ok(())
+}
+
+/// Lets you search for a song and then request it
+#[poise::command(slash_command)]
+pub async fn search(
+    ctx: ApplicationContext<'_>,
+    #[description = "The song to search for"] search: String,
+) -> Result<(), Error> {
+    let data = ctx.data;
+
+    let suggestions = DbSong::search(&data.db, &search)
+        .await?
+        .into_iter()
+        .take(20)
+        .collect::<Vec<_>>();
+
+    if suggestions.is_empty() {
+        ctx.send(|m| {
+            m.embed(|e| {
+                e.title("Song Search")
+                    .description("No songs were found matching your search.")
+            })
+        })
+        .await?;
+        return Ok(());
+    }
+
+    let suggestion_str = suggestions
+        .iter()
+        .enumerate()
+        .map(|(i, song)| format!("{}. {} - {}", i + 1, song.album, song.title))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let results = suggestions.len();
+
+    let user_cooldown = UserCooldownKey::new(ctx.author().id.0 as i64, "song_request");
+    let has_cooldown = is_on_cooldown(&data.redis_pool, user_cooldown).await?;
+    let mut song_selection = vec![];
+    for song in &suggestions {
+        if !song.is_on_cooldown(&data.db).await? {
+            let mut option = CreateSelectMenuOption::default();
+            option.label(format!("{} - {}", song.album, song.title));
+            option.value(song.file_hash.clone());
+
+            song_selection.push(option);
+        }
+    }
+
+    let handle = ctx.send(|m| {
+        let reply = m.embed(|e| {
+            let mut description = format!(
+                "Here are the top {results} results for your search.\n\n{suggestion_str}\n\n```"
+            );
+            if let Some(over) = has_cooldown.as_ref() {
+                description.push_str(&format!(
+                    "\n\nYou can request a song again {}.",
+                    over.relative_time()
+                ));
+            } else {
+                description.push_str("\n\nYou may request one of them now by selecting them below within 2 minutes. Songs that are currently on cooldown will not be selectable.");
+            }
+
+            e.title("Song Search").description(description)
+        });
+
+        if has_cooldown.is_none() {
+            reply.components(|c| {
+                c.create_action_row(|ar| {
+                    ar.create_select_menu(|sm| {
+                        sm.custom_id("song_request")
+                            .placeholder("Select a song")
+                            .min_values(1)
+                            .max_values(1)
+                            .options(|o| {
+                                o.set_options(song_selection)
+                            })
+                    })
+                })
+            });
+        }
+
+        reply
+    })
+    .await?;
+    let message = handle.message().await?;
+    let Some(mci) = message
+        .await_component_interaction(ctx.serenity_context())
+        .author_id(ctx.author().id)
+        .timeout(Duration::from_secs(120))
+        .await else {
+            handle.edit(poise::Context::Application(ctx), |m| {
+                m.components(|c| c)
+            }).await?;
+
+            return Ok(());
+        };
+
+    let song = suggestions
+        .into_iter()
+        .find(|song| song.file_hash == mci.data.values[0])
+        .expect_or_log("Failed to find song");
+
+    let _ = {
+        let mut comms = data.comms.lock().await;
+        comms
+            .request_song(&song.file_path)
+            .await
+            .expect_or_log("Failed to request song")
+    };
+
+    song.request(&data.db, ctx.author().id.0).await?;
+
+    let cooldown_time = chrono::Duration::seconds(5400);
+    let over = chrono::Utc::now() + cooldown_time;
+    let discord_relative = over.relative_time();
+
+    mci.create_interaction_response(ctx.serenity_context(), |r| {
+        r.kind(InteractionResponseType::UpdateMessage)
+            .interaction_response_data(|b| {
+                b.embed(|e| {
+                    e.title("Song Requests")
+                    .description(format!(r#""{} - {}" requested! You can request again in 1 and 1/2 hours ({discord_relative})."#, &song.album, &song.title))
+                })
+                .components(|c| c)
+            })
+    }).await?;
+
+    set_cooldown(&data.redis_pool, user_cooldown, 90 * 60).await?;
 
     Ok(())
 }

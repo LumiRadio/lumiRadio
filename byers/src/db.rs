@@ -171,6 +171,25 @@ impl DbSong {
         Ok(last_played)
     }
 
+    pub async fn is_on_cooldown(&self, db: &PgPool) -> Result<bool, sqlx::Error> {
+        let last_played = self.last_requested(db).await?;
+        let cooldown_time = if self.duration < 300.0 {
+            chrono::Duration::seconds(1800)
+        } else if self.duration < 600.0 {
+            chrono::Duration::seconds(3600)
+        } else {
+            chrono::Duration::seconds(5413)
+        };
+
+        let over = last_played + cooldown_time;
+
+        if over > chrono::Utc::now().naive_utc() {
+            return Ok(true);
+        }
+
+        Ok(false)
+    }
+
     pub async fn request(&self, db: &sqlx::PgPool, author_id: u64) -> Result<(), sqlx::Error> {
         DbUser::fetch_or_insert(db, author_id as i64).await?;
 
@@ -514,7 +533,7 @@ impl DbSlcbUser {
         .fetch_optional(db)
         .await
     }
-    
+
     pub async fn fetch_by_user_id(db: &PgPool, user_id: &str) -> Result<Option<Self>, sqlx::Error> {
         sqlx::query_as!(
             DbSlcbUser,

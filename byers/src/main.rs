@@ -8,14 +8,17 @@ use fred::{
     prelude::{ClientLike, PubsubInterface, RedisClient},
     types::{PerformanceConfig, ReconnectPolicy, RedisConfig, RedisValue},
 };
-use poise::serenity_prelude::Activity;
 use poise::FrameworkError;
+use poise::{serenity_prelude::Activity, PrefixFrameworkOptions};
 use sqlx::postgres::PgPoolOptions;
 use tokio::task::JoinSet;
 use tracing::{debug, error, info};
 use tracing_unwrap::{OptionExt, ResultExt};
 
-use crate::commands::add_stuff::add;
+use crate::commands::{
+    add_stuff::{add, addbear, addcan},
+    minigames::pvp::pvp_context,
+};
 use crate::{
     commands::{
         admin::{
@@ -68,6 +71,9 @@ async fn main() {
         minigames::command(),
         add(),
         listen(),
+        pvp_context(),
+        addcan(),
+        addbear(),
     ];
 
     info!("Loading {} commands...", commands.len());
@@ -237,6 +243,12 @@ async fn main() {
                         }
                     }
                 })
+            },
+            prefix_options: PrefixFrameworkOptions {
+                prefix: Some("!".to_string()),
+                ignore_bots: true,
+                case_insensitive_commands: true,
+                ..Default::default()
             },
             ..Default::default()
         })
