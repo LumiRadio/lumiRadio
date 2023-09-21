@@ -186,7 +186,7 @@ pub async fn search(
     let handle = ctx.send(|m| {
         let reply = m.embed(|e| {
             let mut description = format!(
-                "Here are the top {results} results for your search.\n\n{suggestion_str}\n\n```"
+                "Here are the top {results} results for your search for `{search}`.\n\n```\n{suggestion_str}\n```"
             );
             if let Some(over) = has_cooldown.as_ref() {
                 description.push_str(&format!(
