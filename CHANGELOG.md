@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.1.1] - 2023-09-21
+
+### Added
+
+- Added `/song search` - Allows you to search songs and additionally request one of them
+
+### Changed
+
+- Byers now sends a message when the song request queue is empty
+- Switched to cargo-chef for caching dependencies and speed up future builds
+
+### Fixed
+
+- Fix inlining problems with `/boondollars`
+
 ## [1.1.0] - 2023-09-20
 
 ### Added
