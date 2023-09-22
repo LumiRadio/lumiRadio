@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.1.6] - 2023-09-22
+
+### Changed
+
+- Allow !addcan with a comment
+
+### Fixed
+
+- Fixed being able to pay negative boondollars
+
 ## [1.1.5] - 2023-09-22
 
 ### Fixed
