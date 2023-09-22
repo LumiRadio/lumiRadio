@@ -6,6 +6,7 @@ use poise::serenity_prelude::{InteractionResponseType, Member};
 use rand::{distributions::Standard, prelude::Distribution, seq::IteratorRandom, Rng};
 use sqlx::PgPool;
 use tokio_stream::StreamExt;
+use tracing::info;
 
 use crate::cooldowns::{is_on_cooldown, set_cooldown, GlobalCooldownKey};
 use crate::event_handlers::message::update_activity;
@@ -303,6 +304,16 @@ async fn payout_multiple(
 pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
 
+    ctx.send(|m| {
+        m.embed(|e| {
+            Strife::prepare_embed(e)
+                .description("Strife is currently being rewritten. It will be back soon!")
+        })
+    })
+    .await?;
+
+    return Ok(());
+
     if let Some(guild_id) = ctx.guild_id() {
         update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
     }
@@ -320,6 +331,8 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         .await?;
         return Ok(());
     }
+
+    info!("Strife interaction ID: {}", ctx.interaction.id().0);
 
     let mut user = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
 
@@ -356,6 +369,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     }).await?;
     let mut message = handle.message().await?;
     let mut players: Vec<Member> = vec![ctx.author_member().await.unwrap().into_owned()];
+
     while let Some(mci) = message
         .await_component_interactions(ctx.serenity_context())
         .timeout(Duration::from_secs(2 * 60))
