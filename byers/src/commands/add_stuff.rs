@@ -85,13 +85,23 @@ async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
 
 /// Add a can to can town
 #[poise::command(prefix_command, slash_command)]
-pub async fn addcan(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn addcan(
+    ctx: Context<'_>,
+    #[description = "A comment for adding the can"]
+    #[rest]
+    comment: Option<String>,
+) -> Result<(), Error> {
     addcan_action(ctx).await
 }
 
 /// Add a... bear...? to bear town...?
 #[poise::command(prefix_command, slash_command)]
-pub async fn addbear(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn addbear(
+    ctx: Context<'_>,
+    #[description = "A comment for adding the can"]
+    #[rest]
+    comment: Option<String>,
+) -> Result<(), Error> {
     addbear_action(ctx).await
 }
 
@@ -103,13 +113,23 @@ async fn add_can(db: &PgPool, user_id: u64) -> Result<(), Error> {
 
 /// Add a can to can town
 #[poise::command(slash_command)]
-pub async fn can(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn can(
+    ctx: Context<'_>,
+    #[description = "A comment for adding the can"]
+    #[rest]
+    comment: Option<String>,
+) -> Result<(), Error> {
     addcan_action(ctx).await
 }
 
 /// Add a... bear...? to bear town...?
 #[poise::command(slash_command)]
-pub async fn bear(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn bear(
+    ctx: Context<'_>,
+    #[description = "A comment for adding the can"]
+    #[rest]
+    comment: Option<String>,
+) -> Result<(), Error> {
     addbear_action(ctx).await
 }
 
