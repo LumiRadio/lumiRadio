@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.1.5] - 2023-09-22
+
+### Fixed
+
+- Fixed the quest roll not increasing properly
+- Fixed strife cooldown a little bit more
+
 ## [1.1.4] - 2023-09-21
 
 ### Changed
