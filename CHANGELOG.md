@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.1.7] - 2023-09-22
+
+### Removed
+
+- Disabled the strife minigame for now due to serenity not being able to properly process interactions.
+
 ## [1.1.6] - 2023-09-22
 
 ### Changed
