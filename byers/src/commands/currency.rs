@@ -71,6 +71,11 @@ async fn pay_user(
         return Ok(());
     }
 
+    if amount < 0 {
+        ctx.say("You can't pay negative boondollars!").await?;
+        return Ok(());
+    }
+
     let transaction = data.db.begin().await?;
 
     source_db_user.boonbucks -= amount;
