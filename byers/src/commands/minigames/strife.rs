@@ -229,7 +229,7 @@ impl Minigame for Strife {
                 let additional_loot = self.enemy_type.loot();
                 Ok(StrifeLoot {
                     boonbucks_per_player: Some(
-                        (self.base_pot() + additional_loot) / (self.players.len() as i32 / 2),
+                        self.base_pot() / (self.players.len() as i32 / 2) + additional_loot,
                     ),
                     grist_per_player: Some(rand::thread_rng().gen_range(1..=10)),
                     grist_type: Some(self.enemy_variant),
@@ -245,7 +245,7 @@ impl Minigame for Strife {
                 let additional_loot = self.enemy_type.loot();
                 Ok(StrifeLoot {
                     boonbucks_per_player: Some(
-                        (self.base_pot() + additional_loot) / (self.players.len() as i32),
+                        self.base_pot() / (self.players.len() as i32) + additional_loot,
                     ),
                     grist_per_player: Some(rand::thread_rng().gen_range(1..=10)),
                     grist_type: Some(self.enemy_variant),
@@ -358,10 +358,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let mut players: Vec<Member> = vec![ctx.author_member().await.unwrap().into_owned()];
     while let Some(mci) = message
         .await_component_interactions(ctx.serenity_context())
-        .channel_id(ctx.channel_id())
-        .message_id(message.id)
         .timeout(Duration::from_secs(2 * 60))
-        .filter(|i| i.data.custom_id == "strife_join")
         .build()
         .next()
         .await
@@ -509,6 +506,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             }).await?;
         }
     }
+    set_cooldown(&data.redis_pool, cooldown, 5 * 60).await?;
 
     Ok(())
 }

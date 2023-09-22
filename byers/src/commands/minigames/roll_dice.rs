@@ -153,7 +153,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     match result {
         DiceRollResult::WinSecret(total_winnings) => {
             let old_roll = guild_config.dice_roll;
-            guild_config.dice_roll += roll_over(guild_config.dice_roll);
+            guild_config.dice_roll = roll_over(guild_config.dice_roll);
             guild_config.update(&data.db).await?;
             user.boonbucks += total_winnings;
 

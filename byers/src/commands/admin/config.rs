@@ -10,7 +10,7 @@ use crate::{
     slash_command,
     owners_only,
     ephemeral,
-    subcommands("manage_channel", "set_can_count"),
+    subcommands("manage_channel", "set_can_count", "set_quest_roll"),
     subcommand_required
 )]
 pub async fn config(ctx: ApplicationContext<'_>) -> Result<(), Error> {
@@ -28,6 +28,27 @@ pub async fn set_can_count(ctx: ApplicationContext<'_>, can_count: i32) -> Resul
         m.embed(|e| {
             e.title("Can Count Set")
                 .description(format!("Can count set to {}", can_count))
+        })
+    })
+    .await?;
+
+    Ok(())
+}
+
+/// Sets the quest roll
+#[poise::command(slash_command, owners_only, ephemeral, guild_only)]
+pub async fn set_quest_roll(ctx: ApplicationContext<'_>, roll: i32) -> Result<(), Error> {
+    let data = ctx.data;
+
+    let mut server_config =
+        DbServerConfig::fetch_or_insert(&data.db, ctx.guild_id().unwrap().0 as i64).await?;
+    server_config.dice_roll = roll;
+    server_config.update(&data.db).await?;
+
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title("Quest Roll Set")
+                .description(format!("Quest roll set to {}", roll))
         })
     })
     .await?;
