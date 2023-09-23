@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Changed
+
+- Allow Byers to be challenged to PvP
+
+### Fixed
+
+- Fixed slots not being winnable with 3 oranges or lemons
+- Fixed critical bug where rolling dices would not award money because it was never written to the database
+
 ## [1.1.7] - 2023-09-22
 
 ### Removed

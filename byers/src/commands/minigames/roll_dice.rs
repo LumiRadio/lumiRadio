@@ -52,8 +52,8 @@ impl Minigame for DiceRoll {
             + self.player_roll[2] as i32;
         let sum = self.player_roll.iter().sum::<u8>();
         let winnings = match sum {
-            0..=11 => 0,
-            12..=14 => 2,
+            0..=10 => 0,
+            11..=14 => 2,
             15 => 3,
             16 => 4,
             17 => 5,
@@ -156,6 +156,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             guild_config.dice_roll = roll_over(guild_config.dice_roll);
             guild_config.update(&data.db).await?;
             user.boonbucks += total_winnings;
+            user.update(&data.db).await?;
 
             ctx.send(|m| {
                 m.embed(|x| {
@@ -173,6 +174,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         }
         DiceRollResult::Win(total_winnings) => {
             user.boonbucks += total_winnings;
+            user.update(&data.db).await?;
 
             ctx.send(|m| {
                 m.embed(|x| {

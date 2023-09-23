@@ -69,6 +69,40 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
         return Ok(());
     }
 
+    if user.id == ctx.framework.bot_id {
+        let bot_won = rand::random::<f64>() < 0.9;
+
+        if bot_won {
+            ctx.send(|m| {
+                m.embed(|e| {
+                    PvP::prepare_embed(e)
+                        .description(format!("Byers wiped the floor with {}! They will need to rest for at least 10 minutes!", ctx.author()))
+                })
+            })
+            .await?;
+            set_cooldown(&data.redis_pool, challenger_key, 10 * 60).await?;
+
+            challenger.boonbucks -= 10;
+        } else {
+            ctx.send(|m| {
+                m.embed(|e| {
+                    PvP::prepare_embed(e).description(format!(
+                        "Against all odds, {} came out victorious against Byers!",
+                        ctx.author()
+                    ))
+                })
+            })
+            .await?;
+            set_cooldown(&data.redis_pool, challenger_key, 5 * 60).await?;
+
+            challenged.boonbucks += 20;
+        }
+
+        challenger.update(&data.db).await?;
+
+        return Ok(());
+    }
+
     if challenger.id == challenged.id {
         ctx.send(|m| {
             m.embed(|e| {
