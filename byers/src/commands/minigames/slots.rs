@@ -48,14 +48,12 @@ impl Roll for [SlotReel; 3] {
             && (self[2] == SlotReel::Plum || self[2] == SlotReel::Bar)
         {
             PayoutOptions::Money(14)
-        } else if self[0] == SlotReel::Orange
-            && self[1] == SlotReel::Orange
-            && (self[2] == SlotReel::Orange || self[2] == SlotReel::Bar)
-        {
-            PayoutOptions::Money(10)
         } else if self[0] == SlotReel::Lemon
             && self[1] == SlotReel::Lemon
             && (self[2] == SlotReel::Lemon || self[2] == SlotReel::Bar)
+            || self[0] == SlotReel::Orange
+                && self[1] == SlotReel::Orange
+                && (self[2] == SlotReel::Orange || self[2] == SlotReel::Bar)
         {
             PayoutOptions::Money(10)
         } else if self[0] == SlotReel::Cherry

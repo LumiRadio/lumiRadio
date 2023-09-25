@@ -237,6 +237,7 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
             challenger.boonbucks -= 10;
             challenged.update(&data.db).await?;
             challenger.update(&data.db).await?;
+
             mci.create_interaction_response(ctx.serenity_context(), |r| {
                 r.kind(InteractionResponseType::UpdateMessage)
                     .interaction_response_data(|d| {
