@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use poise::serenity_prelude::{ButtonStyle, InteractionResponseType, Member, User};
+use poise::serenity_prelude::{ButtonStyle, InteractionResponseType, User};
 use rand::{distributions::Standard, prelude::Distribution};
 
 use crate::{

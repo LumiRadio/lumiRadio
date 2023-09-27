@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use poise::serenity_prelude::{CreateSelectMenuOption, InteractionResponseType, SelectMenuOption};
+use poise::serenity_prelude::{CreateSelectMenuOption, InteractionResponseType};
 use tracing_unwrap::{OptionExt, ResultExt};
 
 use crate::{
@@ -18,7 +18,7 @@ use crate::{
     subcommands("request", "playing", "history", "queue", "search"),
     subcommand_required
 )]
-pub async fn song(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+pub async fn song(_: ApplicationContext<'_>) -> Result<(), Error> {
     Ok(())
 }
 

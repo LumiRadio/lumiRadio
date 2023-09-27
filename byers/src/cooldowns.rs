@@ -69,7 +69,7 @@ where
     };
 
     let value: i64 = value.parse()?;
-    let over = NaiveDateTime::from_timestamp(value, 0);
+    let over = NaiveDateTime::from_timestamp_opt(value, 0).unwrap();
     let now = chrono::Utc::now().naive_utc();
 
     if over < now {

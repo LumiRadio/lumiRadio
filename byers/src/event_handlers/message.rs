@@ -6,12 +6,11 @@ use fred::{
 use poise::serenity_prelude::{self as serenity, ChannelId, GuildId, Message, UserId};
 use sqlx::{types::BigDecimal, PgPool};
 use tracing::info;
-use tracing_unwrap::ResultExt;
 
 use crate::{
     communication::ByersUnixStream,
     db::{DbServerChannelConfig, DbUser},
-    prelude::{Data, Error, Wrappable, W},
+    prelude::{Data, Error},
 };
 
 #[async_trait::async_trait]

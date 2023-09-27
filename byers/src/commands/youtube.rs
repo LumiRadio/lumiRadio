@@ -1,17 +1,11 @@
-use std::{str::FromStr, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
-use anyhow::anyhow;
 use google_youtube3::oauth2::authenticator_delegate::DeviceFlowDelegate;
-use poise::serenity_prelude::{
-    self as serenity, ApplicationCommandInteraction, CreateSelectMenuOption,
-};
-use situwaition::{
-    runtime::{tokio::wait_for, AsyncWaiter},
-    SituwaitionError, TokioAsyncSituwaition,
-};
+use poise::serenity_prelude::{self as serenity, ApplicationCommandInteraction};
+use situwaition::{runtime::AsyncWaiter, SituwaitionError, TokioAsyncSituwaition};
 use sqlx::types::BigDecimal;
 use tracing::error;
-use tracing_unwrap::{OptionExt, ResultExt};
+use tracing_unwrap::ResultExt;
 
 use crate::{
     db::{DbSlcbUser, DbUser},
@@ -55,7 +49,7 @@ impl DeviceFlowDelegate for DeviceFlowDiscordDelegate {
 
 /// Commands related to importing data from YouTube
 #[poise::command(slash_command, subcommands("link"))]
-pub async fn youtube(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+pub async fn youtube(_: ApplicationContext<'_>) -> Result<(), Error> {
     Ok(())
 }
 

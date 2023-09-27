@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use anyhow::{anyhow, bail};
+use anyhow::bail;
 use chrono::NaiveDateTime;
 use num_traits::cast::ToPrimitive;
 use sqlx::{types::BigDecimal, PgPool};

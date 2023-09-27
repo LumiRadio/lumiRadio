@@ -1,19 +1,17 @@
 use chrono::Utc;
-use std::net::ToSocketAddrs;
 
 use commands::help::help;
 use fred::{
     clients::SubscriberClient,
     pool::RedisPool,
-    prelude::{ClientLike, PubsubInterface, RedisClient},
+    prelude::{ClientLike, PubsubInterface},
     types::{PerformanceConfig, ReconnectPolicy, RedisConfig, RedisValue},
 };
 use poise::FrameworkError;
 use poise::{serenity_prelude::Activity, PrefixFrameworkOptions};
 use sqlx::postgres::PgPoolOptions;
-use tokio::task::JoinSet;
 use tracing::{debug, error, info};
-use tracing_unwrap::{OptionExt, ResultExt};
+use tracing_unwrap::ResultExt;
 
 use crate::commands::{
     add_stuff::{add, addbear, addcan},
@@ -21,13 +19,7 @@ use crate::commands::{
 };
 use crate::{
     commands::{
-        admin::{
-            admin,
-            config::config as config_cmd,
-            control::{control_cmd, volume},
-            import::import,
-            user::user,
-        },
+        admin::{admin, config::config as config_cmd, import::import, user::user},
         currency::{boondollars, pay, pay_menu},
         listen, minigames,
         songs::song,
@@ -56,7 +48,7 @@ async fn main() {
 
     info!("Loading config from environment...");
     let config = app_config::AppConfig::from_env();
-    let mut commands = vec![
+    let commands = vec![
         help(),
         song(),
         youtube(),
@@ -134,7 +126,7 @@ async fn main() {
         }
     });
 
-    let connection_tasks = redis_pool.connect();
+    let _ = redis_pool.connect();
     redis_pool
         .wait_for_connect()
         .await
@@ -170,7 +162,7 @@ async fn main() {
                     debug!("Event received: {}", event.name());
 
                     if let poise::Event::Message { new_message } = event {
-                        event_handlers::message::message_handler(&new_message, data)
+                        event_handlers::message::message_handler(new_message, data)
                             .await
                             .expect_or_log("Failed to handle message");
                     }

@@ -99,6 +99,39 @@ fn roll_over(mut roll: i32) -> i32 {
     roll
 }
 
+fn roll_to_emoji(roll: i32) -> String {
+    // transform each digit into the dice emoji
+    let hundreds = match roll / 100 {
+        1 => "1️⃣",
+        2 => "2️⃣",
+        3 => "3️⃣",
+        4 => "4️⃣",
+        5 => "5️⃣",
+        6 => "6️⃣",
+        _ => unreachable!(),
+    };
+    let tens = match (roll % 100) / 10 {
+        1 => "1️⃣",
+        2 => "2️⃣",
+        3 => "3️⃣",
+        4 => "4️⃣",
+        5 => "5️⃣",
+        6 => "6️⃣",
+        _ => unreachable!(),
+    };
+    let ones = match roll % 10 {
+        1 => "1️⃣",
+        2 => "2️⃣",
+        3 => "3️⃣",
+        4 => "4️⃣",
+        5 => "5️⃣",
+        6 => "6️⃣",
+        _ => unreachable!(),
+    };
+
+    format!("{}{}{}", hundreds, tens, ones)
+}
+
 /// Roll a dice and win boonbucks
 #[poise::command(slash_command, guild_only)]
 pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
@@ -164,9 +197,9 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                         r#"You rolled {} and won {total_winnings} boonbucks!
     
                         Additionally, you rolled the quest roll of {}! The next number is {}"#,
-                        game.player_roll(),
-                        old_roll,
-                        guild_config.dice_roll
+                        roll_to_emoji(game.player_roll()),
+                        roll_to_emoji(old_roll),
+                        roll_to_emoji(guild_config.dice_roll)
                     ))
                 })
             })
@@ -182,8 +215,8 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                         r#"You rolled {} and won {total_winnings} boonbucks!
 
                     The quest roll is {}"#,
-                        game.player_roll(),
-                        guild_config.dice_roll
+                        roll_to_emoji(game.player_roll()),
+                        roll_to_emoji(guild_config.dice_roll)
                     ))
                 })
             })
@@ -196,8 +229,8 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                         r#"You rolled {} and lost 5 boonbucks!
 
                     The quest roll is {}"#,
-                        game.player_roll(),
-                        guild_config.dice_roll
+                        roll_to_emoji(game.player_roll()),
+                        roll_to_emoji(guild_config.dice_roll)
                     ))
                 })
             })

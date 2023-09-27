@@ -6,7 +6,7 @@ use sqlx::PgPool;
 
 /// Adds... things
 #[poise::command(slash_command, subcommands("can", "bear", "john"), subcommand_required)]
-pub async fn add(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+pub async fn add(_: ApplicationContext<'_>) -> Result<(), Error> {
     Ok(())
 }
 
@@ -83,6 +83,7 @@ async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+#[allow(unused_variables)]
 /// Add a can to can town
 #[poise::command(prefix_command, slash_command)]
 pub async fn addcan(
@@ -94,6 +95,7 @@ pub async fn addcan(
     addcan_action(ctx).await
 }
 
+#[allow(unused_variables)]
 /// Add a... bear...? to bear town...?
 #[poise::command(prefix_command, slash_command)]
 pub async fn addbear(
@@ -111,6 +113,7 @@ async fn add_can(db: &PgPool, user_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
+#[allow(unused_variables)]
 /// Add a can to can town
 #[poise::command(slash_command)]
 pub async fn can(
@@ -122,6 +125,7 @@ pub async fn can(
     addcan_action(ctx).await
 }
 
+#[allow(unused_variables)]
 /// Add a... bear...? to bear town...?
 #[poise::command(slash_command)]
 pub async fn bear(

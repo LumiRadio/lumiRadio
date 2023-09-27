@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased] - 2023-09-27
+
+### Changed
+
+- Refactored some chunks of the codebase
+- Reworked slots minigame to use "Easy Vegas" slot machine as base
+- Made roll dice minigame use emojis
+
 ## [1.1.8] - 2023-09-23
 
 ### Changed

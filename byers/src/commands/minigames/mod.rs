@@ -1,26 +1,22 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::Utc;
 use poise::{
-    serenity_prelude::{CreateEmbed, Embed, Permissions},
+    serenity_prelude::{CreateEmbed, Permissions},
     Command,
 };
 
 use crate::{
     communication::ByersUnixStream,
-    prelude::{ApplicationContext, Data, Error},
+    prelude::{Data, Error},
 };
 
+pub mod new_slots;
 pub mod pvp;
 pub mod roll_dice;
 pub mod slots;
 pub mod strife;
-
-// a minigame should be playable and testable
-// this means it needs to be agnostic to the context in which it is played
-// so no specific discord functions
-// which also means we need a trait for discord communication with the user
 
 #[async_trait]
 pub trait Minigame {
@@ -41,7 +37,7 @@ pub fn commands() -> Vec<poise::Command<Data<ByersUnixStream>, anyhow::Error>> {
     let mut commands = Vec::new();
     commands.extend(pvp::PvP::command());
     commands.extend(roll_dice::DiceRoll::command());
-    commands.extend(slots::SlotMachine::command());
+    commands.extend(new_slots::NewSlots::command());
     commands.extend(strife::Strife::command());
     commands
 }

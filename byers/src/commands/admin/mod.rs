@@ -1,5 +1,5 @@
 use crate::{
-    commands::admin::{control::{control_cmd, queue, skip, volume}, user::{set, get}},
+    commands::admin::control::{control_cmd, queue, skip, volume},
     prelude::{ApplicationContext, Error},
 };
 
@@ -16,6 +16,6 @@ pub mod user;
     subcommands("volume", "control_cmd", "skip", "queue"),
     subcommand_required
 )]
-pub async fn admin(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+pub async fn admin(_: ApplicationContext<'_>) -> Result<(), Error> {
     Ok(())
 }

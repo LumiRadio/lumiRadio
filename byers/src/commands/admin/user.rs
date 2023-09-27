@@ -1,17 +1,17 @@
-use poise::serenity_prelude::User;
-use sqlx::types::BigDecimal;
 use crate::db::DbUser;
 use crate::prelude::{ApplicationContext, Error};
+use poise::serenity_prelude::User;
+use sqlx::types::BigDecimal;
 
 /// User commands
 #[poise::command(
-slash_command,
-ephemeral,
-owners_only,
-subcommands("set", "get"),
-subcommand_required
+    slash_command,
+    ephemeral,
+    owners_only,
+    subcommands("set", "get"),
+    subcommand_required
 )]
-pub async fn user(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+pub async fn user(_: ApplicationContext<'_>) -> Result<(), Error> {
     Ok(())
 }
 
@@ -67,9 +67,10 @@ pub enum UserParameter {
 
 /// Gets a user's property
 #[poise::command(slash_command, ephemeral, owners_only)]
-pub async fn get(ctx: ApplicationContext<'_>,
-                 #[description = "The user to inspect"] user: User,
-                    #[description = "The property to inspect"] property: UserParameter
+pub async fn get(
+    ctx: ApplicationContext<'_>,
+    #[description = "The user to inspect"] user: User,
+    #[description = "The property to inspect"] property: UserParameter,
 ) -> Result<(), Error> {
     let data = ctx.data();
 
@@ -97,7 +98,7 @@ pub async fn get(ctx: ApplicationContext<'_>,
         UserParameter::SulfurGrist => db_user.sulfur.to_string(),
         UserParameter::TarGrist => db_user.tar.to_string(),
         UserParameter::UraniumGrist => db_user.uranium.to_string(),
-        UserParameter::ZilliumGrist => db_user.zillium.to_string()
+        UserParameter::ZilliumGrist => db_user.zillium.to_string(),
     };
 
     ctx.send(|m| {
@@ -106,17 +107,19 @@ pub async fn get(ctx: ApplicationContext<'_>,
                 .field("Property", property.to_string(), true)
                 .field("Value", value, true)
         })
-    }).await?;
+    })
+    .await?;
 
     Ok(())
 }
 
 /// Sets a user's property
 #[poise::command(slash_command, ephemeral, owners_only)]
-pub async fn set(ctx: ApplicationContext<'_>,
-                 #[description = "The user to edit"] user: User,
-                 #[description = "The property to set"] property: UserParameter,
-                 #[description = "The value to set the property to"] value: String
+pub async fn set(
+    ctx: ApplicationContext<'_>,
+    #[description = "The user to edit"] user: User,
+    #[description = "The property to set"] property: UserParameter,
+    #[description = "The value to set the property to"] value: String,
 ) -> Result<(), Error> {
     let data = ctx.data();
 
@@ -124,70 +127,70 @@ pub async fn set(ctx: ApplicationContext<'_>,
     match property {
         UserParameter::WatchedTime => {
             db_user.watched_time = value.parse::<BigDecimal>()?;
-        },
+        }
         UserParameter::Boonbucks => {
             db_user.boonbucks = value.parse::<i32>()?;
-        },
+        }
         UserParameter::Migrated => {
             db_user.migrated = value.parse::<bool>()?;
-        },
+        }
         UserParameter::AmberGrist => {
             db_user.amber = value.parse::<i32>()?;
-        },
+        }
         UserParameter::AmethystGrist => {
             db_user.amethyst = value.parse::<i32>()?;
-        },
+        }
         UserParameter::ArtifactGrist => {
             db_user.artifact = value.parse::<i32>()?;
-        },
+        }
         UserParameter::CaulkGrist => {
             db_user.caulk = value.parse::<i32>()?;
-        },
+        }
         UserParameter::ChalkGrist => {
             db_user.chalk = value.parse::<i32>()?;
-        },
+        }
         UserParameter::CobaltGrist => {
             db_user.cobalt = value.parse::<i32>()?;
-        },
+        }
         UserParameter::DiamondGrist => {
             db_user.diamond = value.parse::<i32>()?;
-        },
+        }
         UserParameter::GarnetGrist => {
             db_user.garnet = value.parse::<i32>()?;
-        },
+        }
         UserParameter::GoldGrist => {
             db_user.gold = value.parse::<i32>()?;
-        },
+        }
         UserParameter::IodineGrist => {
             db_user.iodine = value.parse::<i32>()?;
-        },
+        }
         UserParameter::MarbleGrist => {
             db_user.marble = value.parse::<i32>()?;
-        },
+        }
         UserParameter::MercuryGrist => {
             db_user.mercury = value.parse::<i32>()?;
-        },
+        }
         UserParameter::QuartzGrist => {
             db_user.quartz = value.parse::<i32>()?;
-        },
+        }
         UserParameter::RubyGrist => {
             db_user.ruby = value.parse::<i32>()?;
-        },
+        }
         UserParameter::RustGrist => {
             db_user.rust = value.parse::<i32>()?;
-        },
+        }
         UserParameter::ShaleGrist => {
             db_user.shale = value.parse::<i32>()?;
-        },
+        }
         UserParameter::SulfurGrist => {
             db_user.sulfur = value.parse::<i32>()?;
-        },
+        }
         UserParameter::TarGrist => {
             db_user.tar = value.parse::<i32>()?;
-        },
+        }
         UserParameter::UraniumGrist => {
             db_user.uranium = value.parse::<i32>()?;
-        },
+        }
         UserParameter::ZilliumGrist => {
             db_user.zillium = value.parse::<i32>()?;
         }
@@ -199,7 +202,8 @@ pub async fn set(ctx: ApplicationContext<'_>,
             e.title("Successfully set user property")
                 .description(format!("Successfully set {} to {}", property, value))
         })
-    }).await?;
+    })
+    .await?;
 
     Ok(())
 }

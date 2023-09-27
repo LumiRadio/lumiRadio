@@ -14,7 +14,6 @@ use oauth2::{
 };
 use sqlx::PgPool;
 use tokio::sync::oneshot::Receiver;
-use tracing::info;
 use tracing_unwrap::ResultExt;
 
 use crate::{app_config::DiscordConfig, prelude::Error, discord::{DiscordConnection, MinimalDiscordUser}, db::DbUser};

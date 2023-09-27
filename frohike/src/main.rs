@@ -5,10 +5,9 @@ use std::{
 
 use audiotags::{AudioTagEdit, Id3v2Tag};
 use clap::{Parser, Subcommand};
-use futures_util::StreamExt;
-use notify::{PollWatcher, Watcher};
+use notify::Watcher;
 use sha2::{Digest, Sha256};
-use sqlx::{pool::PoolOptions, PgPool};
+use sqlx::PgPool;
 use tokio::sync::{mpsc::Receiver, Mutex};
 use tracing::{debug, error, info, warn};
 
@@ -309,7 +308,7 @@ async fn main() -> anyhow::Result<()> {
                 debug!("received");
             }
         }
-        SubCommand::Import(import) => {}
+        SubCommand::Import(_) => {}
     }
 
     Ok(())

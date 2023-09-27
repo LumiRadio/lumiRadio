@@ -2,7 +2,7 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::Json;
 use fred::pool::RedisPool;
-use fred::prelude::{ClientLike, PubsubInterface, RedisClient};
+use fred::prelude::PubsubInterface;
 use fred::types::{PerformanceConfig, ReconnectPolicy, RedisConfig};
 
 use serde::{Deserialize, Serialize};
@@ -51,7 +51,10 @@ async fn played(
 
     let _ = app_state
         .redis_pool
-        .publish::<i32, _, _>("byers:status", format!("{} - {}", song.album, song.title))
+        .publish::<i32, _, _>(
+            "byers:status",
+            format!("{} - {} - {}", song.album, song.artist, song.title),
+        )
         .await;
 
     debug!("Played song: {}", song.filename);

@@ -13,7 +13,7 @@ use crate::{
     subcommands("manage_channel", "set_can_count", "set_quest_roll"),
     subcommand_required
 )]
-pub async fn config(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+pub async fn config(_: ApplicationContext<'_>) -> Result<(), Error> {
     Ok(())
 }
 
