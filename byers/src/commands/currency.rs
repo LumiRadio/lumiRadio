@@ -7,7 +7,7 @@ use crate::{
     prelude::*,
 };
 
-/// Check your boondollars and hours
+/// Check your Boondollars and hours
 #[poise::command(slash_command, user_cooldown = 300)]
 pub async fn boondollars(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data();
@@ -51,7 +51,7 @@ async fn pay_user(
 
     if source_db_user.boonbucks < amount {
         ctx.say(format!(
-            "You don't have enough boondollars to pay that much! You have {}.",
+            "You don't have enough Boondollars to pay that much! You have {}.",
             source_db_user.boonbucks
         ))
         .await?;
@@ -59,7 +59,7 @@ async fn pay_user(
     }
 
     if amount < 0 {
-        ctx.say("You can't pay negative boondollars!").await?;
+        ctx.say("You can't pay negative Boondollars!").await?;
         return Ok(());
     }
 
@@ -76,7 +76,7 @@ async fn pay_user(
     ctx.send(|m| {
         m.embed(|e| {
             e.title("Payment successful").description(format!(
-                "You paid {} {} boonbucks.",
+                "You paid {} {} Boondollars.",
                 target_user.name, amount
             ))
         })
@@ -86,7 +86,7 @@ async fn pay_user(
     Ok(())
 }
 
-/// Pay another user some boondollars
+/// Pay another user some Boondollars
 #[poise::command(slash_command, user_cooldown = 300)]
 pub async fn pay(ctx: ApplicationContext<'_>, target_user: User, amount: i32) -> Result<(), Error> {
     pay_user(ctx, target_user, amount).await

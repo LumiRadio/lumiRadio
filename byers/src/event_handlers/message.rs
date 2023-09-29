@@ -90,7 +90,7 @@ impl UserMessageHandlerExt for DbUser {
             )
             .await?;
 
-        info!("User {} sent a message, awarding 3 boonbucks", self.id);
+        info!("User {} sent a message, awarding 3 Boondollars", self.id);
 
         self.boonbucks += 3;
 

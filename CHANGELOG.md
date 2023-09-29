@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning].
 - Reworked slots minigame to use "Easy Vegas" slot machine as base
 - Made roll dice minigame use emojis
 - Changed `/boondollars` back to a message
+- Changed "boonbucks" to "Boondollars"
 
 ## [1.1.8] - 2023-09-23
 
