@@ -9,7 +9,7 @@ use crate::{
 
 /// Check your Boondollars and hours
 #[poise::command(slash_command, user_cooldown = 300)]
-pub async fn boondollars(ctx: Context<'_>) -> Result<(), Error> {
+pub async fn boondollars(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data();
 
     if let Some(guild_id) = ctx.guild_id() {
@@ -29,21 +29,8 @@ pub async fn boondollars(ctx: Context<'_>) -> Result<(), Error> {
         .map(|r| BigDecimal::from(r.hour_requirement) - user.watched_time)
         .unwrap_or(BigDecimal::from(0));
 
-    ctx.send(|m| {
-        m.embed(|e| {
-            e.title("Boondollars")
-                .field("User", ctx.author().to_string(), false)
-                .field("Hours", format!("{hours:.2}"), true)
-                .field("Rank", format!("#{}", hours_pos), true)
-                .field("\u{200b}", "\u{200b}", false)
-                .field("Boondollars", format!("{points:.0}"), true)
-                .field("Rank", format!("#{}", points_pos), true)
-                .field("\u{200b}", "\u{200b}", false)
-                .field("Echeladder", rank_name, true)
-                .field("Next rung in", format!("{next_rank:.0} hours"), true)
-        })
-    })
-    .await?;
+    let message = format!("{username} - Hours: {hours:.2} (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank:.0} hours. - You can check again in 5 minutes.", username = ctx.author().name, hours = hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
+    ctx.say(message).await?;
 
     Ok(())
 }
