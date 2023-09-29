@@ -117,7 +117,7 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
         ctx.send(|m| {
             m.embed(|e| {
                 PvP::prepare_embed(e)
-                    .description("You don't have enough boonbucks to challenge someone!")
+                    .description("You don't have enough Boondollars to challenge someone!")
             })
         })
         .await?;
@@ -128,7 +128,7 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
         ctx.send(|m| {
             m.embed(|e| {
                 PvP::prepare_embed(e).description(format!(
-                    "{} doesn't have enough boonbucks to accept your challenge!",
+                    "{} doesn't have enough Boondollars to accept your challenge!",
                     user.name,
                 ))
             })

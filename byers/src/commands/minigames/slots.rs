@@ -159,7 +159,7 @@ pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         ctx.send(|m| {
             m.embed(|e| {
                 SlotMachine::prepare_embed(e)
-                    .description("You need at least 5 boonbucks to play slots")
+                    .description("You need at least 5 Boondollars to play slots")
                     .color(0xFF0000)
             })
         })
@@ -192,7 +192,7 @@ pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     ctx.send(|m| {
         m.embed(|e| {
             e.title("Slot Machine")
-                .description("You paid 5 Boonbucks to play slots and got...")
+                .description("You paid 5 Boondollars to play slots and got...")
                 .field(
                     "Rolls",
                     format!(
@@ -206,9 +206,9 @@ pub async fn slots(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                 .field(
                     "Payout",
                     match payout {
-                        PayoutOptions::Money(amount) => format!("{} Boonbucks", amount),
+                        PayoutOptions::Money(amount) => format!("{} Boondollars", amount),
                         PayoutOptions::Jackpot => {
-                            format!("{} Boonbucks", jackpot)
+                            format!("{} Boondollars", jackpot)
                         }
                         PayoutOptions::Nothing => "Nothing".to_string(),
                     },

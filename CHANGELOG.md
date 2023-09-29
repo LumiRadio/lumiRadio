@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning].
 - Refactored some chunks of the codebase
 - Reworked slots minigame to use "Easy Vegas" slot machine as base
 - Made roll dice minigame use emojis
+- Changed "boonbucks" to "Boondollars"
 
 ## [1.1.8] - 2023-09-23
 

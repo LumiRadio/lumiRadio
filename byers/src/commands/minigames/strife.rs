@@ -340,7 +340,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         ctx.send(|e| {
             e.embed(|e| {
                 Strife::prepare_embed(e).description(
-                    "You don't have enough boonbucks to start a strife! (50 boonbucks required)",
+                    "You don't have enough Boondollars to start a strife! (50 Boondollars required)",
                 )
             })
         })
@@ -355,7 +355,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let handle = ctx.send(|m| {
         m.embed(|e| {
             Strife::prepare_embed(e)
-                .description(format!("{} gathers up a crew to **STRIFE**!\n\nPress the button below to join the crew! (50 boondollars to enter) There are currently {} waiting to fight!\n\nThe battle should start {}", ctx.author(), 1, now_in_2_minutes.relative_time()))
+                .description(format!("{} gathers up a crew to **STRIFE**!\n\nPress the button below to join the crew! (50 Boondollars to enter) There are currently {} waiting to fight!\n\nThe battle should start {}", ctx.author(), 1, now_in_2_minutes.relative_time()))
         })
         .components(|c| {
             c.create_action_row(|r| {
@@ -383,7 +383,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                 ir.kind(InteractionResponseType::ChannelMessageWithSource)
                     .interaction_response_data(|d| {
                         d.embed(|e| {
-                            Strife::prepare_embed(e).description("You don't have enough boonbucks to join this strife! (50 boonbucks required)")
+                            Strife::prepare_embed(e).description("You don't have enough Boondollars to join this strife! (50 Boondollars required)")
                         })
                         .ephemeral(true)
                     })
@@ -418,7 +418,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                 .interaction_response_data(|d| {
                     d.embed(|e| {
                         Strife::prepare_embed(e)
-                            .description(format!("{} gathers up a crew to **STRIFE**!\n\nPress the button below to join the crew! (50 boondollars to enter) There are currently {} waiting to fight!\n\nThe battle should start {}", ctx.author(), players.len(), now_in_2_minutes.relative_time()))
+                            .description(format!("{} gathers up a crew to **STRIFE**!\n\nPress the button below to join the crew! (50 Boondollars to enter) There are currently {} waiting to fight!\n\nThe battle should start {}", ctx.author(), players.len(), now_in_2_minutes.relative_time()))
                     })
                 })
         }).await?;
@@ -465,7 +465,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             ctx.send(|m| {
                 m.embed(|e| {
                     Strife::prepare_embed(e).description(format!(
-                        "In the battle against the **{}**, {} survived and beat the enemy! They won {} boonbucks and {} {} grist!",
+                        "In the battle against the **{}**, {} survived and beat the enemy! They won {} Boondollars and {} {} grist!",
                         game.enemy_name(),
                         winner.user,
                         result.boonbucks_per_player.unwrap(),
@@ -491,7 +491,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             ctx.send(|m| {
                 m.embed(|e| {
                     Strife::prepare_embed(e).description(format!(
-                        "The fierce battle against **{}** is over and the following people survived and beat the enemy:\n\n{}\n\nThey won {} boonbucks and {} {} grist each!",
+                        "The fierce battle against **{}** is over and the following people survived and beat the enemy:\n\n{}\n\nThey won {} Boondollars and {} {} grist each!",
                         game.enemy_name(),
                         winners,
                         result.boonbucks_per_player.unwrap(),
@@ -510,7 +510,7 @@ pub async fn strife(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             ctx.send(|m| {
                 m.embed(|e| {
                     Strife::prepare_embed(e).description(format!(
-                        "The combatants wiped the floor with the **{}**! They won {} boonbucks and {} {} grist each!",
+                        "The combatants wiped the floor with the **{}**! They won {} Boondollars and {} {} grist each!",
                         game.enemy_name(),
                         result.boonbucks_per_player.unwrap(),
                         result.grist_per_player.unwrap(),
