@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased] - 2023-09-27
 
+### Added
+
+- Added a 15 minute hydration reminder
+
 ### Changed
 
 - Refactored some chunks of the codebase

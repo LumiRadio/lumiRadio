@@ -1,16 +1,13 @@
-use chrono::Utc;
-
 use commands::help::help;
 use fred::{
     clients::SubscriberClient,
     pool::RedisPool,
     prelude::{ClientLike, PubsubInterface},
-    types::{PerformanceConfig, ReconnectPolicy, RedisConfig, RedisValue},
+    types::{PerformanceConfig, ReconnectPolicy, RedisConfig},
 };
-use poise::FrameworkError;
-use poise::{serenity_prelude::Activity, PrefixFrameworkOptions};
+use poise::PrefixFrameworkOptions;
 use sqlx::postgres::PgPoolOptions;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 use tracing_unwrap::ResultExt;
 
 use crate::commands::{
@@ -27,7 +24,6 @@ use crate::{
         youtube::youtube,
     },
     communication::ByersUnixStream,
-    db::DbSong,
     oauth2::oauth2_server,
     prelude::*,
 };
@@ -168,38 +164,7 @@ async fn main() {
                     }
 
                     if let poise::Event::Ready { data_about_bot } = event {
-                        info!("Connected as {}", data_about_bot.user.name);
-
-                        info!("Spawning Redis subscriber message handler...");
-                        let mut message_rx = data.redis_subscriber.on_message();
-                        let context = ctx.clone();
-                        tokio::spawn(async move {
-                            while let Ok(message) = message_rx.recv().await {
-                                debug!(
-                                    "Received message {:?} on channel {:?}",
-                                    message.value, message.channel
-                                );
-
-                                match message.channel.to_string().as_str() {
-                                    "byers:status" => {
-                                        if let RedisValue::String(song) = message.value {
-                                            context.set_activity(Activity::listening(song)).await;
-                                        }
-                                    }
-                                    "moo" => {}
-                                    _ => {}
-                                }
-                            }
-                        });
-
-                        let current_song = DbSong::last_played_song(&data.db).await;
-                        if let Ok(Some(current_song)) = current_song {
-                            ctx.set_activity(Activity::listening(format!(
-                                "{} - {}",
-                                current_song.album, current_song.title
-                            )))
-                            .await;
-                        }
+                        event_handlers::ready::on_ready(ctx, data_about_bot, data).await?;
                     }
 
                     Ok(())
@@ -207,33 +172,9 @@ async fn main() {
             },
             on_error: |error| {
                 Box::pin(async move {
-                    match error {
-                        FrameworkError::CooldownHit {
-                            remaining_cooldown,
-                            ctx,
-                        } => {
-                            ctx.send(|m| {
-                                m.embed(|e| {
-                                    e.title("You are too fast!").description(format!(
-                                        "You can use that command again {}.",
-                                        (Utc::now().naive_utc()
-                                            + chrono::Duration::from_std(remaining_cooldown)
-                                                .unwrap())
-                                        .relative_time()
-                                    ))
-                                })
-                                .ephemeral(true)
-                            })
-                            .await
-                            .expect_or_log("unable to send cooldown message");
-                        }
-                        _ => {
-                            let result = poise::builtins::on_error(error).await;
-                            if let Err(error) = result {
-                                error!("Discord error: {}", error);
-                            }
-                        }
-                    }
+                    event_handlers::error::on_error(error)
+                        .await
+                        .expect_or_log("Failed to handle error");
                 })
             },
             prefix_options: PrefixFrameworkOptions {
