@@ -255,7 +255,7 @@ pub async fn slots(
         ctx.send(|m| {
             m.embed(|e| {
                 NewSlots::prepare_embed(e)
-                    .description("You need at least 5 boonbucks to play slots")
+                    .description("You need at least 5 Boondollars to play slots")
             })
         })
         .await?;

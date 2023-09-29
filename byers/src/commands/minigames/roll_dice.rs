@@ -170,7 +170,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         ctx.send(|m| {
             m.embed(|e| {
                 e.title("Insufficient funds")
-                    .description("You need at least 5 boonbucks to play")
+                    .description("You need at least 5 Boondollars to play")
             })
         })
         .await?;
@@ -194,7 +194,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             ctx.send(|m| {
                 m.embed(|x| {
                     x.title("You won!").description(format!(
-                        r#"You rolled {} and won {total_winnings} boonbucks!
+                        r#"You rolled {} and won {total_winnings} Boondollars!
     
                         Additionally, you rolled the quest roll of {}! The next number is {}"#,
                         roll_to_emoji(game.player_roll()),
@@ -212,7 +212,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             ctx.send(|m| {
                 m.embed(|x| {
                     x.title("You won!").description(format!(
-                        r#"You rolled {} and won {total_winnings} boonbucks!
+                        r#"You rolled {} and won {total_winnings} Boondollars!
 
                     The quest roll is {}"#,
                         roll_to_emoji(game.player_roll()),
@@ -226,7 +226,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             ctx.send(|m| {
                 m.embed(|x| {
                     x.title("You lost!").description(format!(
-                        r#"You rolled {} and lost 5 boonbucks!
+                        r#"You rolled {} and lost 5 Boondollars!
 
                     The quest roll is {}"#,
                         roll_to_emoji(game.player_roll()),
