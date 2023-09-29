@@ -1,0 +1,1 @@
+ALTER TABLE server_channel_config DROP COLUMN hydration_reminder;

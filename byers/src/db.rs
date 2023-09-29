@@ -645,6 +645,7 @@ pub struct DbServerChannelConfig {
     pub server_id: i64,
     pub allow_watch_time_accumulation: bool,
     pub allow_point_accumulation: bool,
+    pub hydration_reminder: bool,
 }
 
 impl DbServerChannelConfig {
@@ -660,7 +661,7 @@ impl DbServerChannelConfig {
             WHERE id = $1 AND server_id = $2
             "#,
             channel_id,
-            server_id
+            server_id,
         )
         .fetch_optional(db)
         .await
@@ -682,7 +683,7 @@ impl DbServerChannelConfig {
             VALUES ($1, $2)
             ON CONFLICT (id)
             DO NOTHING
-            RETURNING id, server_id, allow_watch_time_accumulation, allow_point_accumulation
+            RETURNING id, server_id, allow_watch_time_accumulation, allow_point_accumulation, hydration_reminder
             "#,
             channel_id,
             server_id
@@ -697,17 +698,32 @@ impl DbServerChannelConfig {
         sqlx::query!(
             r#"
             UPDATE server_channel_config
-            SET allow_watch_time_accumulation = $2, allow_point_accumulation = $3
+            SET allow_watch_time_accumulation = $2, allow_point_accumulation = $3, hydration_reminder = $4
             WHERE id = $1
             "#,
             self.id,
             self.allow_watch_time_accumulation,
-            self.allow_point_accumulation
+            self.allow_point_accumulation,
+            self.hydration_reminder
         )
         .execute(db)
         .await?;
 
         Ok(())
+    }
+
+    pub async fn fetch_hydration_channels(
+        db: &PgPool,
+    ) -> Result<Vec<DbServerChannelConfig>, sqlx::Error> {
+        sqlx::query_as!(
+            DbServerChannelConfig,
+            r#"
+            SELECT * FROM server_channel_config
+            WHERE hydration_reminder = true
+            "#,
+        )
+        .fetch_all(db)
+        .await
     }
 }
 
