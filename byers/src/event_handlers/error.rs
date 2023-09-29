@@ -1,6 +1,5 @@
 use chrono::Utc;
 use tracing::error;
-use tracing_unwrap::ResultExt;
 
 use crate::{
     communication::ByersUnixStream,
