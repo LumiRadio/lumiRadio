@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning].
 - Made roll dice minigame use emojis
 - Changed `/boondollars` back to a message
 - Changed "boonbucks" to "Boondollars"
+- Changed "Can Town" to "Can City" and added more names based on the can count
 
 ## [1.1.8] - 2023-09-23
 
