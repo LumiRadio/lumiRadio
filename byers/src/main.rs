@@ -1,4 +1,3 @@
-use commands::help::help;
 use fred::{
     clients::SubscriberClient,
     pool::RedisPool,
@@ -11,39 +10,27 @@ use tracing::{debug, info};
 use tracing_unwrap::ResultExt;
 
 use crate::commands::{
-    add_stuff::{add, addbear, addcan},
+    add_stuff::*,
+    admin::{config::config as config_cmd, control::*, import::*, user::*, *},
+    currency::*,
+    help::*,
+    listen, minigames,
     minigames::pvp::pvp_context,
+    songs::*,
+    version::*,
+    youtube::*,
 };
-use crate::{
-    commands::{
-        admin::{admin, config::config as config_cmd, import::import, user::user},
-        currency::{boondollars, pay, pay_menu},
-        listen, minigames,
-        songs::song,
-        version::version,
-        youtube::youtube,
-    },
-    communication::ByersUnixStream,
-    oauth2::oauth2_server,
-    prelude::*,
-};
+use byers::{communication::ByersUnixStream, oauth2::oauth2_server, prelude::*};
 
-mod app_config;
 mod commands;
-mod communication;
-mod cooldowns;
-mod db;
-mod discord;
 mod event_handlers;
-mod oauth2;
-mod prelude;
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
 
     info!("Loading config from environment...");
-    let config = app_config::AppConfig::from_env();
+    let config = byers::app_config::AppConfig::from_env();
     let commands = vec![
         help(),
         song(),
@@ -158,13 +145,13 @@ async fn main() {
                     debug!("Event received: {}", event.name());
 
                     if let poise::Event::Message { new_message } = event {
-                        event_handlers::message::message_handler(new_message, data)
+                        crate::event_handlers::message::message_handler(new_message, data)
                             .await
                             .expect_or_log("Failed to handle message");
                     }
 
                     if let poise::Event::Ready { data_about_bot } = event {
-                        event_handlers::ready::on_ready(ctx, data_about_bot, data).await?;
+                        crate::event_handlers::ready::on_ready(ctx, data_about_bot, data).await?;
                     }
 
                     Ok(())
@@ -172,7 +159,7 @@ async fn main() {
             },
             on_error: |error| {
                 Box::pin(async move {
-                    event_handlers::error::on_error(error)
+                    crate::event_handlers::error::on_error(error)
                         .await
                         .expect_or_log("Failed to handle error");
                 })

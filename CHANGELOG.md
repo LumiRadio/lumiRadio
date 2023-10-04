@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning].
 ### Added
 
 - Added a 15 minute hydration reminder
+- Added `/minigames slots_info` which tells you information about the slot machine like the payout table.
+- Added `/config manage_role` for automatically assigning roles based on interaction time
+- Added `/config delete_role_config` for removing rules for automatically assigning roles.
+  - This does NOT delete the role!
+- Added changelog comparison links to the changelog
+- Added functionality for frohike to drop indices on moved and deleted directories
+- Added bitrate to song metadata
+- Added tags to song metadata
 
 ### Changed
 
@@ -19,6 +27,12 @@ and this project adheres to [Semantic Versioning].
 - Changed `/boondollars` back to a message
 - Changed "boonbucks" to "Boondollars"
 - Changed "Can Town" to "Can City" and added more names based on the can count
+- Changed `/boondollars` to show hours in increments of 5 minutes
+- Changed `/pvp` to only draw as much money as the challenger has when fighting Byers (so you can't lose more than you have)
+
+### Fixed
+
+- Fixed frohike not being able to drop indices on moved directories
 
 ## [1.1.8] - 2023-09-23
 
@@ -249,5 +263,23 @@ and this project adheres to [Semantic Versioning].
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[unreleased]: https://github.com/LumiRadio/lumiRadio/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.8...HEAD
 [0.1.0]: https://github.com/LumiRadio/lumiRadio/releases/tag/v0.1.0
+[1.0.0]: https://github.com/LumiRadio/lumiRadio/compare/v0.1.0..v1.0.0
+[1.0.1]: https://github.com/LumiRadio/lumiRadio/compare/v1.0.0..v1.0.1
+[1.0.2]: https://github.com/LumiRadio/lumiRadio/compare/v1.0.1..v1.0.2
+[1.0.3]: https://github.com/LumiRadio/lumiRadio/compare/v1.0.2..v1.0.3
+[1.0.4]: https://github.com/LumiRadio/lumiRadio/compare/v1.0.3..v1.0.4
+[1.0.5]: https://github.com/LumiRadio/lumiRadio/compare/v1.0.4..v1.0.5
+[1.0.6]: https://github.com/LumiRadio/lumiRadio/compare/v1.0.5..v1.0.6
+[1.0.7]: https://github.com/LumiRadio/lumiRadio/compare/v1.0.6..v1.0.7
+[1.0.8]: https://github.com/LumiRadio/lumiRadio/compare/v1.0.7..v1.0.8
+[1.1.0]: https://github.com/LumiRadio/lumiRadio/compare/v1.0.8..v1.1.0
+[1.1.1]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.0..v1.1.1
+[1.1.2]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.1..v1.1.2
+[1.1.3]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.2..v1.1.3
+[1.1.4]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.3..v1.1.4
+[1.1.5]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.4..v1.1.5
+[1.1.6]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.5..v1.1.6
+[1.1.7]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.6..v1.1.7
+[1.1.8]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.7..v1.1.8

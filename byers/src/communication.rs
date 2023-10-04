@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use serde::Deserialize;
-use tracing::debug;
+use tracing::{debug, warn};
 use tracing_unwrap::ResultExt;
 
 #[derive(Deserialize, Debug)]
@@ -85,6 +85,11 @@ impl ByersUnixStream {
         Ok(Self { stream })
     }
 
+    pub async fn reconnect(&mut self) -> Result<(), std::io::Error> {
+        self.stream = Self::new().await?.stream;
+        Ok(())
+    }
+
     pub async fn read_until_end(&mut self) -> Result<String, std::io::Error> {
         let mut buf = Vec::new();
         let mut read_buffer = [0; 4096];
@@ -164,11 +169,35 @@ impl LiquidsoapCommunication for ByersUnixStream {
     type Error = std::io::Error;
 
     async fn send_wait(&mut self, command: &str) -> Result<String, Self::Error> {
-        self.write_str_and_wait_for_response(command).await
+        let result = self.write_str_and_wait_for_response(command).await;
+
+        if let Err(e) = result {
+            if e.kind() == std::io::ErrorKind::BrokenPipe {
+                warn!("Socket broken, reconnecting");
+                self.reconnect().await?;
+                return self.send_wait(command).await;
+            } else {
+                return Err(e);
+            }
+        }
+
+        result
     }
 
     async fn send(&mut self, command: &str) -> Result<(), Self::Error> {
-        self.write_line(command).await
+        let result = self.write_line(command).await;
+
+        if let Err(e) = result {
+            if e.kind() == std::io::ErrorKind::BrokenPipe {
+                warn!("Socket broken, reconnecting");
+                self.reconnect().await?;
+                return self.send(command).await;
+            } else {
+                return Err(e);
+            }
+        }
+
+        result
     }
 
     async fn song_requests(&mut self) -> Result<Vec<QueueItem>, Self::Error> {

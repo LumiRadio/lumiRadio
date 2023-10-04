@@ -1,7 +1,7 @@
-use poise::serenity_prelude::ChannelId;
+use poise::serenity_prelude::{Channel, ChannelId, Role, UserId};
 
-use crate::{
-    db::{DbCan, DbServerChannelConfig, DbServerConfig},
+use byers::{
+    db::{DbCan, DbServerChannelConfig, DbServerConfig, DbServerRoleConfig, DbUser},
     prelude::{ApplicationContext, Error},
 };
 
@@ -10,7 +10,13 @@ use crate::{
     slash_command,
     owners_only,
     ephemeral,
-    subcommands("manage_channel", "set_can_count", "set_quest_roll"),
+    subcommands(
+        "manage_channel",
+        "set_can_count",
+        "set_quest_roll",
+        "manage_role",
+        "delete_role_config"
+    ),
     subcommand_required
 )]
 pub async fn config(_: ApplicationContext<'_>) -> Result<(), Error> {
@@ -56,11 +62,83 @@ pub async fn set_quest_roll(ctx: ApplicationContext<'_>, roll: i32) -> Result<()
     Ok(())
 }
 
+/// Configures a role that should be automatically granted based on the specified watch time
+#[poise::command(slash_command, owners_only, ephemeral, guild_only)]
+pub async fn manage_role(
+    ctx: ApplicationContext<'_>,
+    #[description = "Role to manage"] role: Role,
+    #[description = "Minimum watch time"]
+    #[min = 1]
+    hours: i32,
+) -> Result<(), Error> {
+    let data = ctx.data;
+    let guild_id = ctx.guild_id().unwrap();
+
+    DbServerRoleConfig::upsert(&data.db, guild_id.0 as i64, role.id.0 as i64, hours).await?;
+    let handle = ctx
+        .send(|m| {
+            m.embed(|e| {
+                e.title("Role Configured")
+                    .description("Applying the roles for all users...")
+                    .field("Role", &role.name, true)
+                    .field("Minimum watch time", format!("{} hours", hours), true)
+            })
+        })
+        .await?;
+
+    let users = DbUser::fetch_by_minimum_hours(&data.db, hours).await?;
+    for user in users {
+        let user_id = UserId(user.id as u64);
+        let mut member = guild_id.member(&ctx.serenity_context(), user_id).await?;
+        if member.roles.contains(&role.id) {
+            continue;
+        }
+
+        if let Err(e) = member.add_role(&ctx.serenity_context(), role.id).await {
+            tracing::error!("Failed to add role to user: {}", e);
+        }
+    }
+
+    handle
+        .edit(poise::Context::Application(ctx), |m| {
+            m.embed(|e| {
+                e.title("Role Configured")
+                    .description("All users have been updated")
+                    .field("Role", &role.name, true)
+                    .field("Minimum watch time", format!("{} hours", hours), true)
+            })
+        })
+        .await?;
+
+    Ok(())
+}
+
+#[poise::command(slash_command, owners_only, ephemeral, guild_only)]
+pub async fn delete_role_config(
+    ctx: ApplicationContext<'_>,
+    #[description = "The role to delete the config for"] role: Role,
+) -> Result<(), Error> {
+    let data = ctx.data;
+    let guild_id = ctx.guild_id().unwrap();
+
+    DbServerRoleConfig::delete_by_guild_role(&data.db, guild_id.0 as i64, role.id.0 as i64).await?;
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title("Role Config Deleted")
+                .description("The role config has been deleted")
+                .field("Role", &role.name, true)
+        })
+    })
+    .await?;
+
+    Ok(())
+}
+
 /// Configures a channel for watchtime and point accumulation
 #[poise::command(slash_command, owners_only, ephemeral, guild_only)]
 pub async fn manage_channel(
     ctx: ApplicationContext<'_>,
-    #[description = "Channel to manage"] channel: ChannelId,
+    #[description = "Channel to manage"] channel: Channel,
     #[description = "Allow point accumulation"] allow_point_accumulation: bool,
     #[description = "Allow watch time accumulation"] allow_watch_time_accumulation: bool,
 ) -> Result<(), Error> {
@@ -68,7 +146,7 @@ pub async fn manage_channel(
 
     let mut channel_config = DbServerChannelConfig::fetch_or_insert(
         &data.db,
-        channel.0 as i64,
+        channel.id().0 as i64,
         ctx.guild_id().unwrap().0 as i64,
     )
     .await?;

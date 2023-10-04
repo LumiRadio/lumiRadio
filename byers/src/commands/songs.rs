@@ -3,12 +3,12 @@ use std::time::Duration;
 use poise::serenity_prelude::{CreateSelectMenuOption, InteractionResponseType};
 use tracing_unwrap::{OptionExt, ResultExt};
 
-use crate::{
-    commands::autocomplete_songs,
+use crate::commands::autocomplete_songs;
+use crate::event_handlers::message::update_activity;
+use byers::{
     communication::LiquidsoapCommunication,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
     db::DbSong,
-    event_handlers::message::update_activity,
     prelude::*,
 };
 

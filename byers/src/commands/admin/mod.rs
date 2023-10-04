@@ -1,7 +1,6 @@
-use crate::{
-    commands::admin::control::{control_cmd, queue, skip, volume},
-    prelude::{ApplicationContext, Error},
-};
+use crate::commands::admin::control::{control_cmd, queue, reconnect, skip, song_info, volume};
+
+use byers::prelude::*;
 
 pub mod config;
 pub mod control;
@@ -13,7 +12,7 @@ pub mod user;
     slash_command,
     ephemeral,
     owners_only,
-    subcommands("volume", "control_cmd", "skip", "queue"),
+    subcommands("volume", "control_cmd", "skip", "queue", "reconnect", "song_info"),
     subcommand_required
 )]
 pub async fn admin(_: ApplicationContext<'_>) -> Result<(), Error> {

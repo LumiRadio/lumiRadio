@@ -1,5 +1,5 @@
-use crate::db::DbUser;
-use crate::prelude::{ApplicationContext, Error};
+use byers::db::DbUser;
+use byers::prelude::{ApplicationContext, Error};
 use poise::serenity_prelude::User;
 use sqlx::types::BigDecimal;
 

@@ -2,3 +2,4 @@
 xtask = "run --package xtask --"
 addm = "sqlx migrate add --source byers/migrations -r "
 runm = "sqlx migrate run --source byers/migrations -D postgres://byers:byers@localhost/byers"
+revertm = "sqlx migrate revert --source byers/migrations -D postgres://byers:byers@localhost/byers"

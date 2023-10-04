@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use audiotags::Tag;
 use clap::{Parser, Subcommand};
+use serde_json::Value;
 
 mod slcb;
 
@@ -20,6 +21,9 @@ enum SubCommand {
 
     /// Import old bot data
     Import(ImportArgs),
+
+    /// Register Discord linked role metadata
+    Register(RegisterArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -40,6 +44,20 @@ struct ImportArgs {
 
     /// The directory to import
     directory: PathBuf,
+}
+
+#[derive(Parser, Debug)]
+struct RegisterArgs {
+    /// The Discord bot token
+    #[clap(short, long)]
+    token: String,
+
+    /// The Discord client ID
+    #[clap(short, long)]
+    client_id: String,
+
+    /// The file with linked roles (in JSON format)
+    file: PathBuf,
 }
 
 async fn index(database_url: String, directory: PathBuf) {
@@ -181,6 +199,26 @@ async fn main() {
                 directory,
             } = args;
             import(database_url, directory).await;
+        }
+        SubCommand::Register(args) => {
+            let file_json = std::fs::read_to_string(args.file).expect("failed to read file");
+            let linked_roles: Value =
+                serde_json::from_str(&file_json).expect("failed to parse JSON");
+            let client = reqwest::Client::new();
+            let endpoint = format!(
+                "https://discord.com/api/v10/applications/{}/role-connections/metadata",
+                &args.client_id
+            );
+
+            println!("Registering linked roles at {}", endpoint);
+            client
+                .put(&endpoint)
+                .bearer_auth(&args.token)
+                .json(&linked_roles)
+                .send()
+                .await
+                .expect("failed to send request");
+            println!("Done!");
         }
     }
 }

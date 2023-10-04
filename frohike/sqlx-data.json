@@ -1,6 +1,6 @@
 {
   "db": "PostgreSQL",
-  "409d3e48562ff227ff4854d15ffec620e4079e436940634bd62b1fc26ec83aee": {
+  "37f067fdec1c61956a7630c8f6c12662278467e71a25e25d96a11b0f616b3cd8": {
     "describe": {
       "columns": [],
       "nullable": [],
@@ -8,14 +8,23 @@
         "Left": [
           "Varchar",
           "Varchar",
-          "Varchar",
-          "Varchar",
-          "Float8",
           "Varchar"
         ]
       }
     },
-    "query": "INSERT INTO songs (title, artist, album, file_path, duration, file_hash) VALUES ($1, $2, $3, $4, $5, $6)"
+    "query": "INSERT INTO song_tags (song_id, tag, value) VALUES ($1, $2, $3)"
+  },
+  "3a06af983e87be6169f194e63d9971659db877b394230afccad418719ff5e472": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "DELETE FROM songs WHERE file_path LIKE $1"
   },
   "4398458117d085b108aba417a4664e3fb56c730769035fd5772b45e144fe1fde": {
     "describe": {
@@ -38,5 +47,23 @@
       }
     },
     "query": "DELETE FROM songs"
+  },
+  "d42ab17963f33729db66c7ab76af2f4d98656a5d84155f299520c45f7f162a04": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Float8",
+          "Varchar",
+          "Int4"
+        ]
+      }
+    },
+    "query": "INSERT INTO songs (title, artist, album, file_path, duration, file_hash, bitrate) VALUES ($1, $2, $3, $4, $5, $6, $7)"
   }
 }

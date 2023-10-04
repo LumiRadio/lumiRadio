@@ -7,7 +7,7 @@ use poise::{
     Command,
 };
 
-use crate::{
+use byers::{
     communication::ByersUnixStream,
     prelude::{Data, Error},
 };

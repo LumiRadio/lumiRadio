@@ -1,0 +1,8 @@
+[
+    {
+        "key": "hours",
+        "name": "Active Hours",
+        "description": "Hours participated in chat greater than",
+        "type": 2
+    }
+]

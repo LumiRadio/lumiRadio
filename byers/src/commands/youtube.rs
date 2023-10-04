@@ -1,51 +1,16 @@
 use std::{sync::Arc, time::Duration};
 
-use google_youtube3::oauth2::authenticator_delegate::DeviceFlowDelegate;
 use poise::serenity_prelude::{self as serenity, ApplicationCommandInteraction};
 use situwaition::{runtime::AsyncWaiter, SituwaitionError, TokioAsyncSituwaition};
 use sqlx::types::BigDecimal;
 use tracing::error;
 use tracing_unwrap::ResultExt;
 
-use crate::{
+use crate::event_handlers::message::update_activity;
+use byers::{
     db::{DbSlcbUser, DbUser},
-    event_handlers::message::update_activity,
     prelude::*,
 };
-
-#[derive(Clone)]
-struct DeviceFlowDiscordDelegate {
-    interaction: ApplicationCommandInteraction,
-    http: Arc<serenity::Http>,
-}
-
-async fn send_user_url(
-    device_auth_resp: &google_youtube3::oauth2::authenticator_delegate::DeviceAuthResponse,
-    interaction: &ApplicationCommandInteraction,
-    http: &serenity::Http,
-) {
-    let msg = format!(
-        "Please go to {} and enter the code {}. You only need to do this once.",
-        device_auth_resp.verification_uri, device_auth_resp.user_code
-    );
-    interaction
-        .create_followup_message(http, |f| f.content(msg).ephemeral(true))
-        .await
-        .expect_or_log("Failed to send followup message");
-}
-
-impl DeviceFlowDelegate for DeviceFlowDiscordDelegate {
-    fn present_user_code<'yt>(
-        &'yt self,
-        device_auth_resp: &'yt google_youtube3::oauth2::authenticator_delegate::DeviceAuthResponse,
-    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + 'yt>> {
-        Box::pin(send_user_url(
-            device_auth_resp,
-            &self.interaction,
-            &self.http,
-        ))
-    }
-}
 
 /// Commands related to importing data from YouTube
 #[poise::command(slash_command, subcommands("link"))]

@@ -2,7 +2,7 @@ use poise::{serenity_prelude::User, AutocompleteChoice};
 use sqlx::types::BigDecimal;
 use tracing_unwrap::ResultExt;
 
-use crate::{
+use byers::{
     db::{DbSlcbUser, DbUser},
     prelude::{ApplicationContext, Error},
 };

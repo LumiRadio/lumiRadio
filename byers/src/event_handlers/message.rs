@@ -7,7 +7,7 @@ use poise::serenity_prelude::{self as serenity, ChannelId, GuildId, Message, Use
 use sqlx::{types::BigDecimal, PgPool};
 use tracing::info;
 
-use crate::{
+use byers::{
     communication::ByersUnixStream,
     db::{DbServerChannelConfig, DbUser},
     prelude::{Data, Error},

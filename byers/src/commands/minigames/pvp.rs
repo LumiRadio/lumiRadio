@@ -4,12 +4,11 @@ use async_trait::async_trait;
 use poise::serenity_prelude::{ButtonStyle, InteractionResponseType, User};
 use rand::{distributions::Standard, prelude::Distribution};
 
-use crate::{
-    commands::minigames::Minigame,
+use crate::{commands::minigames::Minigame, event_handlers::message::update_activity};
+use byers::{
     communication::ByersUnixStream,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
-    db::DbUser,
-    event_handlers::message::update_activity,
+    db::{DbServerConfig, DbUser},
     prelude::{ApplicationContext, Data, DiscordTimestamp, Error},
 };
 
@@ -53,6 +52,8 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
 
     let mut challenger = DbUser::fetch_or_insert(&data.db, ctx.author().id.0 as i64).await?;
     let mut challenged = DbUser::fetch_or_insert(&data.db, user.id.0 as i64).await?;
+    let mut server_config =
+        DbServerConfig::fetch_or_insert(&data.db, ctx.guild_id().unwrap().0 as i64).await?;
 
     let challenger_key = UserCooldownKey::new(challenger.id, "pvp");
     let challenged_key = UserCooldownKey::new(challenged.id, "pvp");
@@ -76,29 +77,33 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
             ctx.send(|m| {
                 m.embed(|e| {
                     PvP::prepare_embed(e)
-                        .description(format!("Byers wiped the floor with {}! They will need to rest for at least 10 minutes!", ctx.author()))
+                        .description(format!("Byers wiped the floor with {}! They will need to rest for at least 10 minutes! Additionally, Byers took your lunch money of 10 Boondollars!", ctx.author()))
                 })
             })
             .await?;
             set_cooldown(&data.redis_pool, challenger_key, 10 * 60).await?;
 
-            challenger.boonbucks -= 10;
+            challenger.boonbucks -= 10.min(challenger.boonbucks);
+            server_config.slot_jackpot += 10.min(challenger.boonbucks);
         } else {
             ctx.send(|m| {
                 m.embed(|e| {
                     PvP::prepare_embed(e).description(format!(
-                        "Against all odds, {} came out victorious against Byers!",
-                        ctx.author()
+                        "Against all odds, {} came out victorious against Byers! You received Byers' collected lunch money of {} Boondollars!",
+                        ctx.author(),
+                        server_config.slot_jackpot,
                     ))
                 })
             })
             .await?;
             set_cooldown(&data.redis_pool, challenger_key, 5 * 60).await?;
 
-            challenged.boonbucks += 20;
+            challenged.boonbucks += server_config.slot_jackpot;
+            server_config.slot_jackpot = 10;
         }
 
         challenger.update(&data.db).await?;
+        server_config.update(&data.db).await?;
 
         return Ok(());
     }
@@ -262,7 +267,7 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
 }
 
 /// [S] Make them pay!
-#[poise::command(slash_command)]
+#[poise::command(slash_command, guild_only)]
 pub async fn pvp(
     ctx: ApplicationContext<'_>,
     #[description = "The player to challenge"] user: User,
@@ -271,7 +276,7 @@ pub async fn pvp(
 }
 
 /// [S] Make them pay!
-#[poise::command(context_menu_command = "Minigame: PvP")]
+#[poise::command(context_menu_command = "Minigame: PvP", guild_only)]
 pub async fn pvp_context(
     ctx: ApplicationContext<'_>,
     #[description = "The player to challenge"] user: User,

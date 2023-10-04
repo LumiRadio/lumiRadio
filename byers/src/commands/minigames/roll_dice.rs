@@ -1,12 +1,11 @@
 use async_trait::async_trait;
 use rand::Rng;
 
-use crate::{
-    commands::minigames::Minigame,
+use crate::{commands::minigames::Minigame, event_handlers::message::update_activity};
+use byers::{
     communication::ByersUnixStream,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
     db::{DbServerConfig, DbUser},
-    event_handlers::message::update_activity,
     prelude::{ApplicationContext, Data, DiscordTimestamp, Error},
 };
 

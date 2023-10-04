@@ -141,6 +141,9 @@ async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> anyhow::Resul
     };
     let meta = metadata::media_file::MediaFileMetadata::new(&path)?;
     let duration = meta._duration.unwrap_or(0_f64);
+    let bitrate = meta
+        ._bit_rate
+        .unwrap_or((meta.file_size * 8) / duration as u64);
 
     let mut hasher: Sha256 = Digest::new();
     hasher.update(path.canonicalize()?.to_string_lossy().as_bytes());
@@ -154,16 +157,28 @@ async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> anyhow::Resul
         path.display()
     );
     sqlx::query!(
-        "INSERT INTO songs (title, artist, album, file_path, duration, file_hash) VALUES ($1, $2, $3, $4, $5, $6)",
+        "INSERT INTO songs (title, artist, album, file_path, duration, file_hash, bitrate) VALUES ($1, $2, $3, $4, $5, $6, $7)",
         title.replace(char::from(0), ""),
         artist.replace(char::from(0), ""),
         album.replace(char::from(0), ""),
         path.display().to_string(),
         duration,
         hash_str,
+        bitrate as i32,
     )
     .execute(&db)
     .await?;
+
+    for (key, value) in &meta.tags {
+        sqlx::query!(
+            "INSERT INTO song_tags (song_id, tag, value) VALUES ($1, $2, $3)",
+            hash_str,
+            key,
+            value,
+        )
+        .execute(&db)
+        .await?;
+    }
 
     Ok(())
 }
@@ -175,6 +190,24 @@ async fn drop_index(db: PgPool, path: &Path, music_path: &Path) -> anyhow::Resul
     sqlx::query!(
         "DELETE FROM songs WHERE file_path = $1",
         db_path.display().to_string()
+    )
+    .execute(&db)
+    .await?;
+
+    Ok(())
+}
+
+async fn drop_index_folder(
+    db: PgPool,
+    folder_path: &Path,
+    music_path: &Path,
+) -> anyhow::Result<()> {
+    let db_path = rewrite_music_path(folder_path, music_path)?;
+    info!("Dropping index for {}", folder_path.display());
+
+    sqlx::query!(
+        "DELETE FROM songs WHERE file_path LIKE $1",
+        format!("{}%", db_path.display().to_string())
     )
     .execute(&db)
     .await?;
@@ -237,23 +270,49 @@ async fn async_watch<P: AsRef<Path>>(path: P, watcher_pool: PgPool) -> anyhow::R
             )) => {
                 debug!("file modified: {:?}", event.paths);
                 let file_path = event.paths.first().unwrap();
-                drop_index(watcher_pool.clone(), file_path, path.as_ref())
-                    .await
-                    .unwrap();
+
+                if file_path.is_file() {
+                    drop_index(watcher_pool.clone(), file_path, path.as_ref())
+                        .await
+                        .unwrap();
+                } else if file_path.is_dir() {
+                    drop_index_folder(watcher_pool.clone(), file_path, path.as_ref())
+                        .await
+                        .unwrap();
+                }
             }
             notify::event::EventKind::Modify(notify::event::ModifyKind::Name(
                 notify::event::RenameMode::To,
             )) => {
                 debug!("file modified: {:?}", event.paths);
                 let file_path = event.paths.first().unwrap();
-                index_file(watcher_pool.clone(), file_path, path.as_ref())
-                    .await
-                    .unwrap();
+
+                if file_path.is_file() {
+                    index_file(watcher_pool.clone(), file_path, path.as_ref())
+                        .await
+                        .unwrap();
+                } else if file_path.is_dir() {
+                    for entry in walkdir::WalkDir::new(file_path) {
+                        let entry = entry.unwrap();
+                        if entry.file_type().is_file() {
+                            index_file(watcher_pool.clone(), entry.path(), path.as_ref())
+                                .await
+                                .unwrap();
+                        }
+                    }
+                }
             }
             notify::event::EventKind::Remove(notify::event::RemoveKind::File) => {
                 debug!("file removed: {:?}", event.paths);
                 let file_path = event.paths.first().unwrap();
                 drop_index(watcher_pool.clone(), file_path, path.as_ref())
+                    .await
+                    .unwrap();
+            }
+            notify::event::EventKind::Remove(notify::event::RemoveKind::Folder) => {
+                debug!("folder removed: {:?}", event.paths);
+                let file_path = event.paths.first().unwrap();
+                drop_index_folder(watcher_pool.clone(), file_path, path.as_ref())
                     .await
                     .unwrap();
             }

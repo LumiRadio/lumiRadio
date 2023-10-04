@@ -26,6 +26,7 @@ pub struct DbSong {
     pub file_path: String,
     pub duration: f64,
     pub file_hash: String,
+    pub bitrate: i32,
 }
 
 impl Display for DbSong {
@@ -39,7 +40,7 @@ impl DbSong {
         sqlx::query_as!(
             DbSong,
             r#"
-            SELECT songs.title, songs.artist, songs.album, songs.file_path, songs.duration, songs.file_hash
+            SELECT songs.title, songs.artist, songs.album, songs.file_path, songs.duration, songs.file_hash, songs.bitrate
             FROM songs, played_songs
             WHERE songs.file_hash = played_songs.song_id
             ORDER BY played_songs.played_at DESC
@@ -84,7 +85,7 @@ impl DbSong {
         sqlx::query_as!(
             DbSong,
             r#"
-            SELECT songs.title, songs.artist, songs.album, songs.file_path, songs.duration, songs.file_hash
+            SELECT songs.title, songs.artist, songs.album, songs.file_path, songs.duration, songs.file_hash, songs.bitrate
             FROM songs, played_songs
             WHERE songs.file_hash = played_songs.song_id
             ORDER BY played_songs.played_at DESC
@@ -99,7 +100,7 @@ impl DbSong {
         sqlx::query_as!(
             DbSong,
             r#"
-            SELECT title, artist, album, file_path, duration, file_hash
+            SELECT title, artist, album, file_path, duration, file_hash, bitrate
             FROM songs
             WHERE file_path = $1
             "#,
@@ -116,7 +117,7 @@ impl DbSong {
         sqlx::query_as!(
             DbSong,
             r#"
-            SELECT title, artist, album, file_path, duration, file_hash
+            SELECT title, artist, album, file_path, duration, file_hash, bitrate
             FROM songs
             WHERE file_hash = $1
             "#,
@@ -134,7 +135,7 @@ impl DbSong {
                 SELECT to_tsquery(string_agg(lexeme || ':*', ' & ' ORDER BY positions)) AS query
                 FROM unnest(to_tsvector($1))
             )
-            SELECT title, artist, album, file_path, duration, file_hash
+            SELECT title, artist, album, file_path, duration, file_hash, bitrate
             FROM songs, search
             WHERE tsvector @@ query
             "#,
@@ -381,6 +382,23 @@ impl DbUser {
         Ok(position + 1)
     }
 
+    pub async fn fetch_by_minimum_hours(
+        db: &sqlx::PgPool,
+        minimum_hours: i32,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        sqlx::query_as!(
+            DbUser,
+            r#"
+            SELECT * FROM users
+            WHERE watched_time >= $1
+            ORDER BY watched_time DESC
+            "#,
+            BigDecimal::from(minimum_hours)
+        )
+        .fetch_all(db)
+        .await
+    }
+
     pub async fn add_linked_channels(
         &self,
         db: &sqlx::PgPool,
@@ -449,7 +467,7 @@ impl DbSlcbRank {
         // fetch the rank for the user based on the hour requirement
         // additionally, if the rank has a channel_id, check if the user has a channel_id
         // if the user has a channel_id, check both the hour requirement and the channel_id
-        let user_hours_floor: i32 = user.watched_time.round(0).to_i32().unwrap();
+        let user_hours_floor: i32 = user.watched_time.with_scale(0).to_i32().unwrap();
         let linked_channels = user
             .linked_channels(db)
             .await?
@@ -484,7 +502,7 @@ impl DbSlcbRank {
         // fetch the rank for the user based on the hour requirement
         // additionally, if the rank has a channel_id, check if the user has a channel_id
         // if the user has a channel_id, check both the hour requirement and the channel_id
-        let user_hours_floor: i32 = user.watched_time.round(0).to_i32().unwrap();
+        let user_hours_floor: i32 = user.watched_time.with_scale(0).to_i32().unwrap();
         let linked_channels = user
             .linked_channels(db)
             .await?
@@ -636,6 +654,151 @@ impl DbServerConfig {
         .await?;
 
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DbServerRoleConfig {
+    pub id: i32,
+    pub guild_id: i64,
+    pub role_id: i64,
+    pub minimum_hours: i32,
+}
+
+impl DbServerRoleConfig {
+    pub async fn fetch(db: &sqlx::PgPool, guild_id: i64) -> Result<Vec<Self>, sqlx::Error> {
+        sqlx::query_as!(
+            DbServerRoleConfig,
+            r#"
+            SELECT * FROM server_role_config
+            WHERE guild_id = $1
+            "#,
+            guild_id
+        )
+        .fetch_all(db)
+        .await
+    }
+
+    pub async fn fetch_by_guild_role(
+        db: &sqlx::PgPool,
+        guild_id: i64,
+        role_id: i64,
+    ) -> Result<Option<Self>, sqlx::Error> {
+        sqlx::query_as!(
+            DbServerRoleConfig,
+            r#"
+            SELECT * FROM server_role_config
+            WHERE guild_id = $1 AND role_id = $2
+            "#,
+            guild_id,
+            role_id
+        )
+        .fetch_optional(db)
+        .await
+    }
+
+    pub async fn delete_by_guild_role(
+        db: &sqlx::PgPool,
+        guild_id: i64,
+        role_id: i64,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            DELETE FROM server_role_config
+            WHERE guild_id = $1 AND role_id = $2
+            "#,
+            guild_id,
+            role_id
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn fetch_by_hours(
+        db: &sqlx::PgPool,
+        guild_id: i64,
+        hours: i32,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        sqlx::query_as!(
+            DbServerRoleConfig,
+            r#"
+            SELECT * FROM server_role_config
+            WHERE guild_id = $1 AND minimum_hours <= $2
+            "#,
+            guild_id,
+            hours
+        )
+        .fetch_all(db)
+        .await
+    }
+
+    pub async fn insert(
+        db: &sqlx::PgPool,
+        guild_id: i64,
+        role_id: i64,
+        minimum_hours: i32,
+    ) -> Result<Self, sqlx::Error> {
+        sqlx::query_as!(
+            DbServerRoleConfig,
+            r#"
+            INSERT INTO server_role_config (guild_id, role_id, minimum_hours)
+            VALUES ($1, $2, $3)
+            RETURNING id, guild_id, role_id, minimum_hours
+            "#,
+            guild_id,
+            role_id,
+            minimum_hours
+        )
+        .fetch_one(db)
+        .await
+    }
+
+    pub async fn delete(db: &sqlx::PgPool, id: i32) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            DELETE FROM server_role_config
+            WHERE id = $1
+            "#,
+            id
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn update(&self, db: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE server_role_config
+            SET role_id = $2, minimum_hours = $3
+            WHERE id = $1
+            "#,
+            self.id,
+            self.role_id,
+            self.minimum_hours
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn upsert(
+        db: &sqlx::PgPool,
+        guild_id: i64,
+        role_id: i64,
+        minimum_hours: i32,
+    ) -> Result<Self, sqlx::Error> {
+        if let Some(config) = Self::fetch_by_guild_role(db, guild_id, role_id).await? {
+            config.update(db).await?;
+            return Ok(config);
+        }
+
+        let config = Self::insert(db, guild_id, role_id, minimum_hours).await?;
+        Ok(config)
     }
 }
 

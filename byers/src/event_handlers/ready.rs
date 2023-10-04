@@ -3,7 +3,7 @@ use poise::serenity_prelude::{Activity, ChannelId};
 use tracing::{debug, info};
 use tracing_unwrap::ResultExt;
 
-use crate::{
+use byers::{
     communication::ByersUnixStream,
     db::{DbServerChannelConfig, DbSong},
     prelude::{Data, Error},

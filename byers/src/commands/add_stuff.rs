@@ -1,6 +1,6 @@
-use crate::db::DbCan;
 use crate::event_handlers::message::update_activity;
-use crate::prelude::{ApplicationContext, Context, Error};
+use byers::db::DbCan;
+use byers::prelude::{ApplicationContext, Context, Error};
 use fred::prelude::{Expiration, KeysInterface};
 use sqlx::PgPool;
 

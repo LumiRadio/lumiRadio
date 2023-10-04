@@ -4,12 +4,11 @@ use async_trait::async_trait;
 use rand::seq::SliceRandom;
 use strum::{EnumIter, IntoEnumIterator};
 
-use crate::{
-    commands::minigames::Minigame,
+use crate::{commands::minigames::Minigame, event_handlers::message::update_activity};
+use byers::{
     communication::ByersUnixStream,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
     db::DbUser,
-    event_handlers::message::update_activity,
     prelude::{ApplicationContext, Data, DiscordTimestamp, Error},
 };
 
@@ -217,8 +216,51 @@ impl Minigame for NewSlots {
     }
 
     fn command() -> Vec<poise::Command<Data<ByersUnixStream>, anyhow::Error>> {
-        vec![slots()]
+        vec![slots(), slots_info()]
     }
+}
+
+/// Shows information about the slot machine
+#[poise::command(slash_command)]
+pub async fn slots_info(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    let jackpot = SlotSymbols::Jackpot.symbol();
+    let red_seven = SlotSymbols::RedSeven.symbol();
+    let triple_bar = SlotSymbols::TripleBar.symbol();
+    let double_bar = SlotSymbols::DoubleBar.symbol();
+    let bar = SlotSymbols::Bar.symbol();
+    let cherry = SlotSymbols::Cherry.symbol();
+
+    let description = format!(
+        r#"# How the Slot Machine works
+    
+    The slot machine has 3 reels, each with 64 symbols. The symbols are weighted, so some symbols are more likely to appear than others. The weights are as follows:
+
+    - Jackpot ({jackpot}): 6
+    - Red Seven ({red_seven}): 8
+    - Triple Bar ({triple_bar}): 9
+    - Double Bar ({double_bar}): 11
+    - Bar ({bar}): 22
+    - Cherry ({cherry}): 8
+
+    Additionally, there are 64 blanks on each reel. The reels are spun, and the symbols that appear on the middle row are used to determine the payout. The payout is determined as follows:
+
+    {jackpot} {jackpot} {jackpot}: 1200x
+    {red_seven} {red_seven} {red_seven}: 200x
+    {triple_bar} {triple_bar} {triple_bar}: 100x
+    {double_bar} {double_bar} {double_bar}: 90x
+    {bar} {bar} {bar}: 40x
+    {cherry} {cherry} {cherry}: 40x
+    any 3 of {bar}, {double_bar}, {triple_bar}: 10x
+    any 2 {cherry}: 5x
+    any 1 {cherry}: 1x
+
+    If none of these combinations are spun, you lose your bet. If you win, you get your bet back multiplied by the payout. For example, if you bet 5 Boondollars and win 40x, you get 200 Boondollars back."#
+    );
+
+    ctx.send(|m| m.embed(|e| e.title("Slot Machine").description(description)))
+        .await?;
+
+    Ok(())
 }
 
 /// Are you feeling lucky?

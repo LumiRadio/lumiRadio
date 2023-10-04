@@ -1,9 +1,20 @@
-use crate::{
-    commands::autocomplete_songs,
+use crate::commands::autocomplete_songs;
+use byers::{
     communication::LiquidsoapCommunication,
     db::DbSong,
     prelude::{ApplicationContext, Error},
 };
+
+/// Reconnects the Liquidsoap command socket
+#[poise::command(slash_command, ephemeral, owners_only)]
+pub async fn reconnect(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    let mut comms = ctx.data.comms.lock().await;
+
+    comms.reconnect().await?;
+    ctx.send(|m| m.content("Reconnected to Liquidsoap")).await?;
+
+    Ok(())
+}
 
 /// Sends a command to the Liquidsoap server
 #[poise::command(slash_command, ephemeral, owners_only)]
@@ -23,6 +34,22 @@ pub async fn control_cmd(
         })
     })
     .await?;
+
+    Ok(())
+}
+
+/// Gets all info about a song
+#[poise::command(slash_command, ephemeral, owners_only)]
+pub async fn song_info(
+    ctx: ApplicationContext<'_>,
+    #[description = "Song to get info about"] song: String,
+) -> Result<(), Error> {
+    let data = ctx.data;
+
+    let Some(song) = DbSong::fetch_from_hash(&data.db, &song).await? else {
+        ctx.send(|m| m.content("Song not found.")).await?;
+        return Ok(());
+    };
 
     Ok(())
 }

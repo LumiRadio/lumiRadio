@@ -1,11 +1,12 @@
 use poise::{serenity_prelude::User, Modal};
 use sqlx::types::BigDecimal;
 
-use crate::{
+use byers::{
     db::{DbSlcbRank, DbUser},
-    event_handlers::message::update_activity,
     prelude::*,
 };
+
+use crate::event_handlers::message::update_activity;
 
 /// Check your Boondollars and hours
 #[poise::command(slash_command, user_cooldown = 300)]
@@ -20,6 +21,7 @@ pub async fn boondollars(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 
     // $username - Hours: $hours (Rank #$hourspos) - $currencyname: $points (Rank #$pointspos) - Echeladder: $rank • Next rung in $nxtrankreq hours. - You can check again in 5 minutes.
     let hours = user.watched_time.clone();
+    let rounded_hours = (hours * BigDecimal::from(12)).with_scale(0) / BigDecimal::from(12);
     let hours_pos = user.fetch_position_in_hours(&data.db).await?;
     let points = user.boonbucks;
     let points_pos = user.fetch_position_in_boonbucks(&data.db).await?;
@@ -29,7 +31,7 @@ pub async fn boondollars(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         .map(|r| BigDecimal::from(r.hour_requirement) - user.watched_time)
         .unwrap_or(BigDecimal::from(0));
 
-    let message = format!("{username} - Hours: {hours:.2} (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank:.0} hours. - You can check again in 5 minutes.", username = ctx.author().name, hours = hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
+    let message = format!("{username} - Hours: {hours:.2} (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank:.0} hours. - You can check again in 5 minutes.", username = ctx.author().name, hours = rounded_hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
     ctx.say(message).await?;
 
     Ok(())
