@@ -5,16 +5,16 @@ use sha2::{Digest, Sha256};
 use sqlx::PgPool;
 use tracing::{error, info, warn};
 
-use crate::maintenance::rewrite_music_path;
+use crate::{maintenance::rewrite_music_path, prelude::*};
 
 pub trait WavTag {
-    fn read_from_wav_path(path: impl AsRef<Path>) -> Result<Self, id3::Error>
+    fn read_from_wav_path(path: impl AsRef<Path>) -> Result<Self>
     where
         Self: Sized;
 }
 
 impl WavTag for Id3v2Tag {
-    fn read_from_wav_path(path: impl AsRef<Path>) -> Result<Self, id3::Error>
+    fn read_from_wav_path(path: impl AsRef<Path>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -25,7 +25,7 @@ impl WavTag for Id3v2Tag {
 }
 
 #[tracing::instrument(skip(db))]
-async fn index(db: PgPool, directory: PathBuf) -> anyhow::Result<()> {
+async fn index(db: PgPool, directory: PathBuf) -> Result<()> {
     // recursively change all file paths from directory to /music
     let files = walkdir::WalkDir::new(&directory)
         .into_iter()
@@ -68,12 +68,10 @@ async fn index(db: PgPool, directory: PathBuf) -> anyhow::Result<()> {
 }
 
 #[tracing::instrument(skip(db))]
-async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> anyhow::Result<()> {
+async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> Result<()> {
     let (title, artist, album) = {
         if path.extension().unwrap().to_ascii_lowercase() == "wav" {
-            let Ok(tag) = Id3v2Tag::read_from_wav_path(path) else {
-                return Err(anyhow::anyhow!("failed to read wav tag"));
-            };
+            let tag = Id3v2Tag::read_from_wav_path(path)?;
 
             (
                 tag.title().unwrap_or("").to_owned(),
@@ -133,7 +131,7 @@ async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> anyhow::Resul
     Ok(())
 }
 
-async fn drop_index(db: PgPool, path: &Path, music_path: &Path) -> anyhow::Result<()> {
+async fn drop_index(db: PgPool, path: &Path, music_path: &Path) -> Result<()> {
     let db_path = rewrite_music_path(path, music_path)?;
     info!("Dropping index for {}", path.display());
 
@@ -147,11 +145,7 @@ async fn drop_index(db: PgPool, path: &Path, music_path: &Path) -> anyhow::Resul
     Ok(())
 }
 
-async fn drop_index_folder(
-    db: PgPool,
-    folder_path: &Path,
-    music_path: &Path,
-) -> anyhow::Result<()> {
+async fn drop_index_folder(db: PgPool, folder_path: &Path, music_path: &Path) -> Result<()> {
     let db_path = rewrite_music_path(folder_path, music_path)?;
     info!("Dropping index for {}", folder_path.display());
 

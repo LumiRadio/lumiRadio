@@ -1,9 +1,7 @@
 use poise::serenity_prelude::{Channel, ChannelId, Role, UserId};
 
-use byers::{
-    db::{DbCan, DbServerChannelConfig, DbServerConfig, DbServerRoleConfig, DbUser},
-    prelude::{ApplicationContext, Error},
-};
+use crate::prelude::*;
+use judeharley::db::{DbCan, DbServerChannelConfig, DbServerConfig, DbServerRoleConfig, DbUser};
 
 /// Configuration-related commands
 #[poise::command(

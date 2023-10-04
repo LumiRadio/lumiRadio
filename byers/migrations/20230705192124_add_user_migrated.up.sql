@@ -1,2 +1,0 @@
-ALTER TABLE users
-ADD COLUMN migrated BOOLEAN NOT NULL DEFAULT 'false';

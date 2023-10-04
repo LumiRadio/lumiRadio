@@ -2,14 +2,13 @@ use std::{sync::Arc, time::Duration};
 
 use poise::serenity_prelude::{self as serenity, ApplicationCommandInteraction};
 use situwaition::{runtime::AsyncWaiter, SituwaitionError, TokioAsyncSituwaition};
-use sqlx::types::BigDecimal;
 use tracing::error;
 use tracing_unwrap::ResultExt;
 
-use crate::event_handlers::message::update_activity;
-use byers::{
+use crate::{event_handlers::message::update_activity, prelude::*};
+use judeharley::{
     db::{DbSlcbUser, DbUser},
-    prelude::*,
+    BigDecimal,
 };
 
 /// Commands related to importing data from YouTube
@@ -23,7 +22,7 @@ enum YoutubeError {
     #[error("No channel found")]
     NoChannelFound,
     #[error(transparent)]
-    Sqlx(#[from] sqlx::Error),
+    Jude(#[from] judeharley::JudeHarleyError),
 }
 
 /// Link your YouTube channel to your Discord account

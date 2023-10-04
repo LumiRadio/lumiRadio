@@ -1,1 +1,0 @@
-ALTER TABLE cans DROP COLUMN legit;

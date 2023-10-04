@@ -1,4 +1,0 @@
-CREATE TABLE server_config (
-    id BIGINT NOT NULL PRIMARY KEY,
-    slot_jackpot INTEGER NOT NULL DEFAULT 0
-);

@@ -2,7 +2,8 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 use tracing::{debug, warn};
-use tracing_unwrap::ResultExt;
+
+use crate::JudeHarleyError;
 
 #[derive(Deserialize, Debug)]
 pub struct QueueItem {
@@ -25,40 +26,6 @@ pub trait LiquidsoapCommunication {
     }
     async fn priority_request(&mut self, song: &str) -> Result<String, Self::Error> {
         self.send_wait(&format!("prioq.push {}", song)).await
-    }
-}
-
-#[async_trait::async_trait]
-impl LiquidsoapCommunication for telnet::Telnet {
-    type Error = telnet::TelnetError;
-
-    async fn send_wait(&mut self, command: &str) -> Result<String, Self::Error> {
-        self.write(command.as_bytes())
-            .expect_or_log("Failed to write to telnet");
-
-        let result = loop {
-            let event = self.read().expect_or_log("Failed to read from telnet");
-
-            if let telnet::Event::Data(data) = event {
-                break std::str::from_utf8(&data)
-                    .map(ToString::to_string)
-                    .expect_or_log("Failed to parse utf8");
-            }
-        };
-
-        Ok(result)
-    }
-
-    async fn send(&mut self, command: &str) -> Result<(), Self::Error> {
-        self.write(command.as_bytes())
-            .expect_or_log("Failed to write to telnet");
-
-        Ok(())
-    }
-
-    async fn song_requests(&mut self) -> Result<Vec<QueueItem>, Self::Error> {
-        let result = self.send_wait("song_request_queue").await?;
-        Ok(serde_json::from_str(&result).expect_or_log("Failed to parse json"))
     }
 }
 
@@ -166,7 +133,7 @@ impl ByersUnixStream {
 
 #[async_trait::async_trait]
 impl LiquidsoapCommunication for ByersUnixStream {
-    type Error = std::io::Error;
+    type Error = JudeHarleyError;
 
     async fn send_wait(&mut self, command: &str) -> Result<String, Self::Error> {
         let result = self.write_str_and_wait_for_response(command).await;
@@ -177,11 +144,11 @@ impl LiquidsoapCommunication for ByersUnixStream {
                 self.reconnect().await?;
                 return self.send_wait(command).await;
             } else {
-                return Err(e);
+                return Err(e.into());
             }
         }
 
-        result
+        result.map_err(Into::into)
     }
 
     async fn send(&mut self, command: &str) -> Result<(), Self::Error> {
@@ -193,15 +160,15 @@ impl LiquidsoapCommunication for ByersUnixStream {
                 self.reconnect().await?;
                 return self.send(command).await;
             } else {
-                return Err(e);
+                return Err(e.into());
             }
         }
 
-        result
+        result.map_err(Into::into)
     }
 
     async fn song_requests(&mut self) -> Result<Vec<QueueItem>, Self::Error> {
         let result = self.send_wait("song_request_queue").await?;
-        Ok(serde_json::from_str(&result).expect_or_log("Failed to parse json"))
+        serde_json::from_str(&result).map_err(Into::into)
     }
 }

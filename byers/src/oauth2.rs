@@ -12,11 +12,11 @@ use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
     ClientSecret, CsrfToken, Scope, TokenUrl, TokenResponse,
 };
-use sqlx::PgPool;
 use tokio::sync::oneshot::Receiver;
 use tracing_unwrap::ResultExt;
+use judeharley::{db::DbUser, discord::{DiscordConnection, MinimalDiscordUser}, PgPool};
 
-use crate::{app_config::DiscordConfig, prelude::Error, discord::{DiscordConnection, MinimalDiscordUser}, db::DbUser};
+use crate::{app_config::DiscordConfig, prelude::Error};
 
 static OAUTH2_SUCCESS_HTML: &str = include_str!("static/oauth2_success.html");
 static OAUTH2_FAILED_CSRF_HTML: &str = include_str!("static/oauth2_csrf.html");

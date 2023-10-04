@@ -1,9 +1,6 @@
 use crate::commands::autocomplete_songs;
-use byers::{
-    communication::LiquidsoapCommunication,
-    db::DbSong,
-    prelude::{ApplicationContext, Error},
-};
+use crate::prelude::*;
+use judeharley::{communication::LiquidsoapCommunication, db::DbSong};
 
 /// Reconnects the Liquidsoap command socket
 #[poise::command(slash_command, ephemeral, owners_only)]

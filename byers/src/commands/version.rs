@@ -1,5 +1,5 @@
 use crate::event_handlers::message::update_activity;
-use byers::prelude::*;
+use crate::prelude::*;
 
 /// Shows the current version of Byers
 #[poise::command(slash_command, ephemeral, owners_only)]

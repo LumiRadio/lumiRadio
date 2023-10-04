@@ -7,10 +7,8 @@ use poise::{
     Command,
 };
 
-use byers::{
-    communication::ByersUnixStream,
-    prelude::{Data, Error},
-};
+use crate::prelude::*;
+use judeharley::communication::ByersUnixStream;
 
 pub mod new_slots;
 pub mod pvp;

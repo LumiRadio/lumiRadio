@@ -1,2 +1,0 @@
-ALTER TABLE cans
-ADD COLUMN legit boolean NOT NULL DEFAULT false;

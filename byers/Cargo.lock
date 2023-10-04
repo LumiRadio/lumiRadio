@@ -447,7 +447,6 @@ dependencies = [
  "anyhow",
  "async-fred-session",
  "async-trait",
- "audiotags",
  "axum",
  "axum-sessions",
  "chrono",
@@ -455,9 +454,8 @@ dependencies = [
  "ellipse",
  "fred",
  "futures",
- "id3",
+ "judeharley",
  "lazy_static",
- "metadata",
  "num-traits",
  "oauth2",
  "once_cell",
@@ -467,18 +465,14 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
- "sha2 0.10.8",
  "situwaition",
- "sqlx",
  "strum",
- "telnet",
  "thiserror",
  "tokio",
  "tokio-stream",
  "tracing",
  "tracing-subscriber",
  "tracing-unwrap",
- "walkdir",
 ]
 
 [[package]]
@@ -1482,6 +1476,34 @@ dependencies = [
  "pest",
  "pest_derive",
  "serde",
+]
+
+[[package]]
+name = "judeharley"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "audiotags",
+ "chrono",
+ "fred",
+ "futures",
+ "id3",
+ "lazy_static",
+ "metadata",
+ "num-traits",
+ "once_cell",
+ "rand",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "sha2 0.10.8",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+ "walkdir",
 ]
 
 [[package]]
@@ -2797,11 +2819,6 @@ dependencies = [
  "core-foundation-sys",
  "libc",
 ]
-
-[[package]]
-name = "telnet"
-version = "0.2.0"
-source = "git+https://github.com/Leandros/telnet-rs#451417f6bfdc9715d3aecc9483858b114790da33"
 
 [[package]]
 name = "termcolor"

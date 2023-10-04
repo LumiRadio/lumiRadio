@@ -1,11 +1,10 @@
 use std::fmt::Display;
 
-use anyhow::bail;
 use chrono::NaiveDateTime;
 use num_traits::cast::ToPrimitive;
 use sqlx::{types::BigDecimal, PgPool};
 
-use crate::discord::DiscordConnection;
+use crate::{discord::DiscordConnection, JudeHarleyError};
 
 // generate a macro that accepts an sqlx PgPool and a block of code and runs it and at the end, runs self.update(db)
 #[macro_export]
@@ -36,7 +35,7 @@ impl Display for DbSong {
 }
 
 impl DbSong {
-    pub async fn last_played_song(db: &sqlx::PgPool) -> Result<Option<Self>, sqlx::Error> {
+    pub async fn last_played_song(db: &sqlx::PgPool) -> Result<Option<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSong,
             r#"
@@ -49,9 +48,10 @@ impl DbSong {
         )
         .fetch_optional(db)
         .await
+        .map_err(Into::into)
     }
 
-    pub async fn played(&self, db: &PgPool) -> Result<i64, sqlx::Error> {
+    pub async fn played(&self, db: &PgPool) -> Result<i64, JudeHarleyError> {
         let played = sqlx::query!(
             r#"
             SELECT COUNT(*) FROM played_songs
@@ -66,7 +66,7 @@ impl DbSong {
         Ok(played)
     }
 
-    pub async fn requested(&self, db: &PgPool) -> Result<i64, sqlx::Error> {
+    pub async fn requested(&self, db: &PgPool) -> Result<i64, JudeHarleyError> {
         let requested = sqlx::query!(
             r#"
             SELECT COUNT(*) FROM song_requests
@@ -81,7 +81,7 @@ impl DbSong {
         Ok(requested)
     }
 
-    pub async fn last_10_songs(db: &sqlx::PgPool) -> Result<Vec<Self>, sqlx::Error> {
+    pub async fn last_10_songs(db: &sqlx::PgPool) -> Result<Vec<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSong,
             r#"
@@ -94,9 +94,13 @@ impl DbSong {
         )
         .fetch_all(db)
         .await
+        .map_err(Into::into)
     }
 
-    pub async fn fetch(db: &sqlx::PgPool, file_path: &str) -> Result<Option<Self>, sqlx::Error> {
+    pub async fn fetch(
+        db: &sqlx::PgPool,
+        file_path: &str,
+    ) -> Result<Option<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSong,
             r#"
@@ -108,12 +112,13 @@ impl DbSong {
         )
         .fetch_optional(db)
         .await
+        .map_err(Into::into)
     }
 
     pub async fn fetch_from_hash(
         db: &sqlx::PgPool,
         file_hash: &str,
-    ) -> Result<Option<Self>, sqlx::Error> {
+    ) -> Result<Option<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSong,
             r#"
@@ -125,9 +130,10 @@ impl DbSong {
         )
         .fetch_optional(db)
         .await
+        .map_err(Into::into)
     }
 
-    pub async fn search(db: &sqlx::PgPool, query: &str) -> Result<Vec<Self>, sqlx::Error> {
+    pub async fn search(db: &sqlx::PgPool, query: &str) -> Result<Vec<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSong,
             r#"
@@ -143,9 +149,13 @@ impl DbSong {
         )
         .fetch_all(db)
         .await
+        .map_err(Into::into)
     }
 
-    pub async fn last_requested(&self, db: &sqlx::PgPool) -> Result<NaiveDateTime, sqlx::Error> {
+    pub async fn last_requested(
+        &self,
+        db: &sqlx::PgPool,
+    ) -> Result<NaiveDateTime, JudeHarleyError> {
         let last_played = sqlx::query!(
             r#"
             SELECT created_at
@@ -172,7 +182,7 @@ impl DbSong {
         Ok(last_played)
     }
 
-    pub async fn is_on_cooldown(&self, db: &PgPool) -> Result<bool, sqlx::Error> {
+    pub async fn is_on_cooldown(&self, db: &PgPool) -> Result<bool, JudeHarleyError> {
         let last_played = self.last_requested(db).await?;
         let cooldown_time = if self.duration < 300.0 {
             chrono::Duration::seconds(1800)
@@ -191,7 +201,7 @@ impl DbSong {
         Ok(false)
     }
 
-    pub async fn request(&self, db: &sqlx::PgPool, author_id: u64) -> Result<(), sqlx::Error> {
+    pub async fn request(&self, db: &sqlx::PgPool, author_id: u64) -> Result<(), JudeHarleyError> {
         DbUser::fetch_or_insert(db, author_id as i64).await?;
 
         sqlx::query!(
@@ -278,7 +288,7 @@ impl Default for DbUser {
 }
 
 impl DbUser {
-    pub async fn fetch(db: &sqlx::PgPool, id: i64) -> Result<Option<Self>, sqlx::Error> {
+    pub async fn fetch(db: &sqlx::PgPool, id: i64) -> Result<Option<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbUser,
             r#"
@@ -289,9 +299,10 @@ impl DbUser {
         )
         .fetch_optional(db)
         .await
+        .map_err(Into::into)
     }
 
-    pub async fn fetch_or_insert(db: &sqlx::PgPool, id: i64) -> Result<Self, sqlx::Error> {
+    pub async fn fetch_or_insert(db: &sqlx::PgPool, id: i64) -> Result<Self, JudeHarleyError> {
         if let Some(user) = Self::fetch(db, id).await? {
             return Ok(user);
         }
@@ -307,9 +318,10 @@ impl DbUser {
         )
         .fetch_one(db)
         .await
+        .map_err(Into::into)
     }
 
-    pub async fn update(&self, db: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+    pub async fn update(&self, db: &sqlx::PgPool) -> Result<(), JudeHarleyError> {
         sqlx::query!(
             r#"
             UPDATE users
@@ -350,7 +362,7 @@ impl DbUser {
         Ok(())
     }
 
-    pub async fn fetch_position_in_hours(&self, db: &sqlx::PgPool) -> Result<i64, sqlx::Error> {
+    pub async fn fetch_position_in_hours(&self, db: &sqlx::PgPool) -> Result<i64, JudeHarleyError> {
         let position = sqlx::query!(
             r#"
             SELECT COUNT(*) FROM users
@@ -366,7 +378,10 @@ impl DbUser {
         Ok(position + 1)
     }
 
-    pub async fn fetch_position_in_boonbucks(&self, db: &sqlx::PgPool) -> Result<i64, sqlx::Error> {
+    pub async fn fetch_position_in_boonbucks(
+        &self,
+        db: &sqlx::PgPool,
+    ) -> Result<i64, JudeHarleyError> {
         let position = sqlx::query!(
             r#"
             SELECT COUNT(*) FROM users
@@ -385,7 +400,7 @@ impl DbUser {
     pub async fn fetch_by_minimum_hours(
         db: &sqlx::PgPool,
         minimum_hours: i32,
-    ) -> Result<Vec<Self>, sqlx::Error> {
+    ) -> Result<Vec<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbUser,
             r#"
@@ -397,13 +412,14 @@ impl DbUser {
         )
         .fetch_all(db)
         .await
+        .map_err(Into::into)
     }
 
     pub async fn add_linked_channels(
         &self,
         db: &sqlx::PgPool,
         channels: Vec<DiscordConnection>,
-    ) -> Result<(), sqlx::Error> {
+    ) -> Result<(), JudeHarleyError> {
         sqlx::query!(
             r#"
             DELETE FROM connected_youtube_accounts
@@ -429,7 +445,7 @@ impl DbUser {
     pub async fn linked_channels(
         &self,
         db: &sqlx::PgPool,
-    ) -> Result<Vec<DbConnectedAccount>, sqlx::Error> {
+    ) -> Result<Vec<DbConnectedAccount>, JudeHarleyError> {
         sqlx::query_as!(
             DbConnectedAccount,
             r#"
@@ -440,6 +456,7 @@ impl DbUser {
         )
         .fetch_all(db)
         .await
+        .map_err(Into::into)
     }
 }
 
@@ -463,7 +480,7 @@ impl DbSlcbRank {
     pub async fn fetch_rank_for_user(
         user: &DbUser,
         db: &sqlx::PgPool,
-    ) -> Result<String, sqlx::Error> {
+    ) -> Result<String, JudeHarleyError> {
         // fetch the rank for the user based on the hour requirement
         // additionally, if the rank has a channel_id, check if the user has a channel_id
         // if the user has a channel_id, check both the hour requirement and the channel_id
@@ -498,7 +515,7 @@ impl DbSlcbRank {
     pub async fn fetch_next_rank_for_user(
         user: &DbUser,
         db: &sqlx::PgPool,
-    ) -> Result<Option<DbSlcbRank>, sqlx::Error> {
+    ) -> Result<Option<DbSlcbRank>, JudeHarleyError> {
         // fetch the rank for the user based on the hour requirement
         // additionally, if the rank has a channel_id, check if the user has a channel_id
         // if the user has a channel_id, check both the hour requirement and the channel_id
@@ -539,7 +556,7 @@ pub struct DbSlcbUser {
 }
 
 impl DbSlcbUser {
-    pub async fn fetch(db: &sqlx::PgPool, id: i32) -> Result<Option<Self>, sqlx::Error> {
+    pub async fn fetch(db: &sqlx::PgPool, id: i32) -> Result<Option<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSlcbUser,
             r#"
@@ -550,9 +567,13 @@ impl DbSlcbUser {
         )
         .fetch_optional(db)
         .await
+        .map_err(Into::into)
     }
 
-    pub async fn fetch_by_user_id(db: &PgPool, user_id: &str) -> Result<Option<Self>, sqlx::Error> {
+    pub async fn fetch_by_user_id(
+        db: &PgPool,
+        user_id: &str,
+    ) -> Result<Option<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSlcbUser,
             r#"
@@ -563,12 +584,13 @@ impl DbSlcbUser {
         )
         .fetch_optional(db)
         .await
+        .map_err(Into::into)
     }
 
     pub async fn fetch_by_username(
         db: &sqlx::PgPool,
         username: &str,
-    ) -> Result<Vec<Self>, sqlx::Error> {
+    ) -> Result<Vec<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSlcbUser,
             r#"
@@ -579,12 +601,13 @@ impl DbSlcbUser {
         )
         .fetch_all(db)
         .await
+        .map_err(Into::into)
     }
 
     pub async fn search_by_username(
         db: &sqlx::PgPool,
         username: &str,
-    ) -> Result<Vec<Self>, sqlx::Error> {
+    ) -> Result<Vec<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSlcbUser,
             r#"
@@ -595,6 +618,7 @@ impl DbSlcbUser {
         )
         .fetch_all(db)
         .await
+        .map_err(Into::into)
     }
 }
 
@@ -606,7 +630,7 @@ pub struct DbServerConfig {
 }
 
 impl DbServerConfig {
-    pub async fn fetch_or_insert(db: &sqlx::PgPool, id: i64) -> Result<Self, sqlx::Error> {
+    pub async fn fetch_or_insert(db: &sqlx::PgPool, id: i64) -> Result<Self, JudeHarleyError> {
         let config = sqlx::query_as!(
             DbServerConfig,
             r#"
@@ -639,7 +663,7 @@ impl DbServerConfig {
         Ok(config)
     }
 
-    pub async fn update(&self, db: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+    pub async fn update(&self, db: &sqlx::PgPool) -> Result<(), JudeHarleyError> {
         sqlx::query!(
             r#"
             UPDATE server_config
@@ -666,7 +690,7 @@ pub struct DbServerRoleConfig {
 }
 
 impl DbServerRoleConfig {
-    pub async fn fetch(db: &sqlx::PgPool, guild_id: i64) -> Result<Vec<Self>, sqlx::Error> {
+    pub async fn fetch(db: &sqlx::PgPool, guild_id: i64) -> Result<Vec<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbServerRoleConfig,
             r#"
@@ -677,13 +701,14 @@ impl DbServerRoleConfig {
         )
         .fetch_all(db)
         .await
+        .map_err(Into::into)
     }
 
     pub async fn fetch_by_guild_role(
         db: &sqlx::PgPool,
         guild_id: i64,
         role_id: i64,
-    ) -> Result<Option<Self>, sqlx::Error> {
+    ) -> Result<Option<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbServerRoleConfig,
             r#"
@@ -695,13 +720,14 @@ impl DbServerRoleConfig {
         )
         .fetch_optional(db)
         .await
+        .map_err(Into::into)
     }
 
     pub async fn delete_by_guild_role(
         db: &sqlx::PgPool,
         guild_id: i64,
         role_id: i64,
-    ) -> Result<(), sqlx::Error> {
+    ) -> Result<(), JudeHarleyError> {
         sqlx::query!(
             r#"
             DELETE FROM server_role_config
@@ -720,7 +746,7 @@ impl DbServerRoleConfig {
         db: &sqlx::PgPool,
         guild_id: i64,
         hours: i32,
-    ) -> Result<Vec<Self>, sqlx::Error> {
+    ) -> Result<Vec<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbServerRoleConfig,
             r#"
@@ -732,6 +758,7 @@ impl DbServerRoleConfig {
         )
         .fetch_all(db)
         .await
+        .map_err(Into::into)
     }
 
     pub async fn insert(
@@ -739,7 +766,7 @@ impl DbServerRoleConfig {
         guild_id: i64,
         role_id: i64,
         minimum_hours: i32,
-    ) -> Result<Self, sqlx::Error> {
+    ) -> Result<Self, JudeHarleyError> {
         sqlx::query_as!(
             DbServerRoleConfig,
             r#"
@@ -753,9 +780,10 @@ impl DbServerRoleConfig {
         )
         .fetch_one(db)
         .await
+        .map_err(Into::into)
     }
 
-    pub async fn delete(db: &sqlx::PgPool, id: i32) -> Result<(), sqlx::Error> {
+    pub async fn delete(db: &sqlx::PgPool, id: i32) -> Result<(), JudeHarleyError> {
         sqlx::query!(
             r#"
             DELETE FROM server_role_config
@@ -769,7 +797,7 @@ impl DbServerRoleConfig {
         Ok(())
     }
 
-    pub async fn update(&self, db: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+    pub async fn update(&self, db: &sqlx::PgPool) -> Result<(), JudeHarleyError> {
         sqlx::query!(
             r#"
             UPDATE server_role_config
@@ -791,7 +819,7 @@ impl DbServerRoleConfig {
         guild_id: i64,
         role_id: i64,
         minimum_hours: i32,
-    ) -> Result<Self, sqlx::Error> {
+    ) -> Result<Self, JudeHarleyError> {
         if let Some(config) = Self::fetch_by_guild_role(db, guild_id, role_id).await? {
             config.update(db).await?;
             return Ok(config);
@@ -816,7 +844,7 @@ impl DbServerChannelConfig {
         db: &PgPool,
         channel_id: i64,
         server_id: i64,
-    ) -> Result<Option<Self>, sqlx::Error> {
+    ) -> Result<Option<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbServerChannelConfig,
             r#"
@@ -828,13 +856,14 @@ impl DbServerChannelConfig {
         )
         .fetch_optional(db)
         .await
+        .map_err(Into::into)
     }
 
     pub async fn fetch_or_insert(
         db: &PgPool,
         channel_id: i64,
         server_id: i64,
-    ) -> Result<Self, sqlx::Error> {
+    ) -> Result<Self, JudeHarleyError> {
         if let Some(config) = Self::fetch(db, channel_id, server_id).await? {
             return Ok(config);
         }
@@ -857,7 +886,7 @@ impl DbServerChannelConfig {
         Ok(config)
     }
 
-    pub async fn update(&self, db: &PgPool) -> Result<(), sqlx::Error> {
+    pub async fn update(&self, db: &PgPool) -> Result<(), JudeHarleyError> {
         sqlx::query!(
             r#"
             UPDATE server_channel_config
@@ -877,7 +906,7 @@ impl DbServerChannelConfig {
 
     pub async fn fetch_hydration_channels(
         db: &PgPool,
-    ) -> Result<Vec<DbServerChannelConfig>, sqlx::Error> {
+    ) -> Result<Vec<DbServerChannelConfig>, JudeHarleyError> {
         sqlx::query_as!(
             DbServerChannelConfig,
             r#"
@@ -887,6 +916,7 @@ impl DbServerChannelConfig {
         )
         .fetch_all(db)
         .await
+        .map_err(Into::into)
     }
 }
 
@@ -899,7 +929,7 @@ pub struct DbCan {
 }
 
 impl DbCan {
-    pub async fn add_one(db: &PgPool, added_by: i64, legit: bool) -> Result<(), sqlx::Error> {
+    pub async fn add_one(db: &PgPool, added_by: i64, legit: bool) -> Result<(), JudeHarleyError> {
         DbUser::fetch_or_insert(db, added_by).await?;
 
         sqlx::query!(
@@ -916,7 +946,7 @@ impl DbCan {
         Ok(())
     }
 
-    pub async fn count(db: &PgPool) -> Result<i64, sqlx::Error> {
+    pub async fn count(db: &PgPool) -> Result<i64, JudeHarleyError> {
         let count = sqlx::query!(
             r#"
             SELECT COUNT(*) FROM cans
@@ -928,7 +958,7 @@ impl DbCan {
         Ok(count.count.unwrap())
     }
 
-    pub async fn count_for_user(db: &PgPool, user_id: i64) -> Result<i64, sqlx::Error> {
+    pub async fn count_for_user(db: &PgPool, user_id: i64) -> Result<i64, JudeHarleyError> {
         let count = sqlx::query!(
             r#"
             SELECT COUNT(*) FROM cans
@@ -942,7 +972,11 @@ impl DbCan {
         Ok(count.count.unwrap())
     }
 
-    pub async fn add_multiple(db: &PgPool, added_by: i64, amount: i32) -> Result<(), sqlx::Error> {
+    pub async fn add_multiple(
+        db: &PgPool,
+        added_by: i64,
+        amount: i32,
+    ) -> Result<(), JudeHarleyError> {
         if amount <= 0 {
             return Ok(());
         }
@@ -965,7 +999,7 @@ impl DbCan {
         Ok(())
     }
 
-    pub async fn set(db: &PgPool, added_by: i64, amount: i32) -> Result<(), anyhow::Error> {
+    pub async fn set(db: &PgPool, added_by: i64, amount: i32) -> Result<(), JudeHarleyError> {
         if amount <= 0 {
             return Ok(());
         }
@@ -982,14 +1016,14 @@ impl DbCan {
         Ok(())
     }
 
-    pub async fn remove_last_n(db: &PgPool, amount: i32) -> Result<(), anyhow::Error> {
+    pub async fn remove_last_n(db: &PgPool, amount: i32) -> Result<(), JudeHarleyError> {
         if amount <= 0 {
             return Ok(());
         }
 
         let current_count = DbCan::count(db).await?;
         if amount > current_count as i32 {
-            bail!("You can't remove more cans than there are in the database");
+            return Ok(());
         }
 
         sqlx::query!(

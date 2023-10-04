@@ -1,16 +1,9 @@
-use fred::{
-    clients::SubscriberClient,
-    pool::RedisPool,
-    prelude::{ClientLike, PubsubInterface},
-    types::{PerformanceConfig, ReconnectPolicy, RedisConfig},
-};
+use fred::prelude::{ClientLike, PubsubInterface};
 use poise::PrefixFrameworkOptions;
-use sqlx::postgres::PgPoolOptions;
 use tracing::{debug, info};
 use tracing_unwrap::ResultExt;
 
 use crate::{
-    bin_prelude::*,
     commands::{
         add_stuff::*,
         admin::{config::config as config_cmd, control::*, import::*, user::*, *},
@@ -22,19 +15,23 @@ use crate::{
         version::*,
         youtube::*,
     },
+    oauth2::oauth2_server,
+    prelude::*,
 };
-use byers::{communication::ByersUnixStream, oauth2::oauth2_server, prelude::*};
+use judeharley::{communication::ByersUnixStream, prelude::*};
 
-mod bin_prelude;
+mod app_config;
 mod commands;
 mod event_handlers;
+mod oauth2;
+mod prelude;
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
 
     info!("Loading config from environment...");
-    let config = byers::app_config::AppConfig::from_env();
+    let config = crate::app_config::AppConfig::from_env();
     let commands = vec![
         help(),
         song(),
@@ -59,32 +56,18 @@ async fn main() {
 
     info!("Connecting to database...");
     tracing::debug!("Database URL: {}", config.database_url);
-    let db = PgPoolOptions::new()
-        .connect(&config.database_url)
+    let db = judeharley::connect_database(&config.database_url)
         .await
         .expect_or_log("failed to connect to database");
 
-    sqlx::migrate!()
-        .run(&db)
+    judeharley::migrate(&db)
         .await
-        .expect_or_log("failed to run migrations");
+        .expect_or_log("failed to migrate database");
 
     info!("Connecting to Redis...");
-    let redis_config = RedisConfig::from_url(&config.redis_url).expect_or_log("invalid Redis URL");
-    let policy = ReconnectPolicy::new_exponential(0, 100, 30_000, 2);
-    let perf = PerformanceConfig::default();
-    let redis_pool = RedisPool::new(
-        redis_config.clone(),
-        Some(perf.clone()),
-        Some(policy.clone()),
-        5,
-    )
-    .expect_or_log("failed to create Redis pool");
-    let subscriber_client = SubscriberClient::new(
-        redis_config.clone(),
-        Some(perf.clone()),
-        Some(policy.clone()),
-    );
+    let redis_pool =
+        judeharley::redis_pool(&config.redis_url).expect_or_log("failed to create Redis pool");
+    let subscriber_client = judeharley::subscriber_client(&config.redis_url);
 
     let mut subscriber_error_rx = subscriber_client.on_error();
     let mut subscriber_reconnect_rx = subscriber_client.on_reconnect();

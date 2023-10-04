@@ -1,12 +1,11 @@
 use poise::{serenity_prelude::User, Modal};
-use sqlx::types::BigDecimal;
 
-use byers::{
+use judeharley::{
     db::{DbSlcbRank, DbUser},
-    prelude::*,
+    BigDecimal,
 };
 
-use crate::event_handlers::message::update_activity;
+use crate::{event_handlers::message::update_activity, prelude::*};
 
 /// Check your Boondollars and hours
 #[poise::command(slash_command, user_cooldown = 300)]

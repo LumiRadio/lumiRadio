@@ -4,12 +4,13 @@ use async_trait::async_trait;
 use rand::seq::SliceRandom;
 use strum::{EnumIter, IntoEnumIterator};
 
+use crate::prelude::*;
 use crate::{commands::minigames::Minigame, event_handlers::message::update_activity};
-use byers::{
+use judeharley::{
     communication::ByersUnixStream,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
     db::DbUser,
-    prelude::{ApplicationContext, Data, DiscordTimestamp, Error},
+    prelude::DiscordTimestamp,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, Hash)]

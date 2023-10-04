@@ -1,10 +1,10 @@
 use poise::{serenity_prelude::User, AutocompleteChoice};
-use sqlx::types::BigDecimal;
 use tracing_unwrap::ResultExt;
 
-use byers::{
+use crate::prelude::*;
+use judeharley::{
     db::{DbSlcbUser, DbUser},
-    prelude::{ApplicationContext, Error},
+    BigDecimal,
 };
 
 pub async fn autocomplete_channels(

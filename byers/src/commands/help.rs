@@ -1,5 +1,5 @@
 use crate::event_handlers::message::update_activity;
-use byers::prelude::*;
+use crate::prelude::*;
 
 /// there is no help
 #[poise::command(slash_command)]

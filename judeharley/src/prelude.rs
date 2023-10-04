@@ -1,29 +1,34 @@
-use std::sync::Arc;
-
 use chrono::{DateTime, NaiveDateTime, TimeZone};
 use fred::{
     prelude::{RedisError, RedisErrorKind},
     types::{FromRedis, RedisValue},
 };
-use lazy_static::lazy_static;
-use tokio::sync::Mutex;
 
-use crate::{
-    app_config::GoogleConfig,
-    communication::{ByersUnixStream, LiquidsoapCommunication},
-};
+pub(crate) type Error = JudeHarleyError;
+pub(crate) type Result<T> = std::result::Result<T, Error>;
 
-pub type Error = anyhow::Error;
-
-pub struct Data<C>
-where
-    C: LiquidsoapCommunication,
-{
-    pub db: sqlx::PgPool,
-    pub comms: Arc<Mutex<C>>,
-    pub google_config: GoogleConfig,
-    pub redis_pool: fred::pool::RedisPool,
-    pub redis_subscriber: fred::clients::SubscriberClient,
+#[derive(Debug, thiserror::Error)]
+pub enum JudeHarleyError {
+    #[error(transparent)]
+    Sqlx(#[from] sqlx::Error),
+    #[error(transparent)]
+    SqlxMigration(#[from] sqlx::migrate::MigrateError),
+    #[error(transparent)]
+    Redis(#[from] fred::prelude::RedisError),
+    #[error(transparent)]
+    Reqwest(#[from] reqwest::Error),
+    #[error(transparent)]
+    ParseInt(#[from] std::num::ParseIntError),
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    SerdeJson(#[from] serde_json::Error),
+    #[error(transparent)]
+    PathStripPrefix(#[from] std::path::StripPrefixError),
+    #[error(transparent)]
+    Id3(#[from] id3::Error),
+    #[error(transparent)]
+    AudioTags(#[from] audiotags::Error),
 }
 
 pub trait DiscordTimestamp {
@@ -157,15 +162,15 @@ impl<T> AsRef<T> for W<T> {
 }
 
 impl TryFrom<W<chrono::NaiveDateTime>> for RedisValue {
-    type Error = RedisError;
+    type Error = JudeHarleyError;
 
-    fn try_from(value: W<chrono::NaiveDateTime>) -> Result<Self, Self::Error> {
+    fn try_from(value: W<chrono::NaiveDateTime>) -> Result<Self> {
         Ok(RedisValue::Integer(value.0.timestamp()))
     }
 }
 
 impl FromRedis for W<chrono::NaiveDateTime> {
-    fn from_value(value: fred::types::RedisValue) -> Result<Self, fred::prelude::RedisError> {
+    fn from_value(value: fred::types::RedisValue) -> std::result::Result<Self, RedisError> {
         if let fred::types::RedisValue::Integer(i) = value {
             Ok(W(chrono::NaiveDateTime::from_timestamp_opt(i, 0).unwrap()))
         } else {

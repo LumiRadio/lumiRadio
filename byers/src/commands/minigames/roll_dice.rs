@@ -1,12 +1,13 @@
 use async_trait::async_trait;
 use rand::Rng;
 
+use crate::prelude::*;
 use crate::{commands::minigames::Minigame, event_handlers::message::update_activity};
-use byers::{
+use judeharley::{
     communication::ByersUnixStream,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
     db::{DbServerConfig, DbUser},
-    prelude::{ApplicationContext, Data, DiscordTimestamp, Error},
+    prelude::DiscordTimestamp,
 };
 
 pub struct DiceRoll {

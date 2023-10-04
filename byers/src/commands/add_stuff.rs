@@ -1,8 +1,7 @@
 use crate::event_handlers::message::update_activity;
-use byers::db::DbCan;
-use byers::prelude::{ApplicationContext, Context, Error};
+use crate::prelude::*;
 use fred::prelude::{Expiration, KeysInterface};
-use sqlx::PgPool;
+use judeharley::{db::DbCan, PgPool};
 
 /// Adds... things
 #[poise::command(slash_command, subcommands("can", "bear", "john"), subcommand_required)]

@@ -3,33 +3,15 @@ name = "byers"
 version = "1.1.8"
 edition = "2021"
 
-[lib]
-name = "byers"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[[bin]]
-name = "byers"
-required-features = ["binary"]
-
 [dependencies]
 chrono = { version = "0.4.24", features = ["serde"] }
 config = "0.13.3"
-sqlx = { version = "0.6", features = [
-    "runtime-tokio-rustls",
-    "postgres",
-    "macros",
-    "offline",
-    "chrono",
-    "migrate",
-    "bigdecimal",
-] }
-poise = { version = "0.5.6", optional = true }
+poise = { version = "0.5.6" }
 serde = { version = "1.0.160", features = ["derive"] }
 tokio = { version = "1.27.0", features = ["full"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 tracing-unwrap = { version = "0.10.0", features = ["log-location"] }
-telnet = { git = "https://github.com/Leandros/telnet-rs" }
 lazy_static = "1.4.0"
 fred = { version = "6.3.0", features = ["subscriber-client"] }
 async-trait = "0.1.71"
@@ -53,14 +35,8 @@ futures = "0.3.28"
 ellipse = "0.2.0"
 situwaition = { version = "0.3.2", features = ["tokio"] }
 serde_json = "1.0.107"
-walkdir = "2.4.0"
-audiotags = { git = "https://github.com/lumiRadio/audiotags", version = "0.5.0" }
-id3 = "1.8.0"
-metadata = "0.1.8"
-sha2 = "0.10.8"
+# judeharley = { git = "https://github.com/lumiRadio/lumiRadio", version = "0.1.0" }
+judeharley = { path = "../judeharley" }
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3
-
-[features]
-binary = ["dep:poise"]

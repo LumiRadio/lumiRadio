@@ -3,7 +3,7 @@ use std::fmt::Display;
 use chrono::NaiveDateTime;
 use fred::{pool::RedisPool, prelude::KeysInterface};
 
-use crate::prelude::Error;
+use crate::prelude::*;
 
 #[derive(Debug, Clone, Copy)]
 pub struct UserCooldownKey<'a> {
@@ -57,7 +57,7 @@ where
 impl<'a> CooldownKey for UserCooldownKey<'a> {}
 impl<'a> CooldownKey for GlobalCooldownKey<'a> {}
 
-pub async fn is_on_cooldown<C>(pool: &RedisPool, key: C) -> Result<Option<NaiveDateTime>, Error>
+pub async fn is_on_cooldown<C>(pool: &RedisPool, key: C) -> Result<Option<NaiveDateTime>>
 where
     C: CooldownKey + Display,
 {
@@ -79,7 +79,7 @@ where
     Ok(Some(over))
 }
 
-pub async fn set_cooldown<C>(pool: &RedisPool, key: C, expires_in: i64) -> Result<(), Error>
+pub async fn set_cooldown<C>(pool: &RedisPool, key: C, expires_in: i64) -> Result<()>
 where
     C: CooldownKey + Display,
 {
