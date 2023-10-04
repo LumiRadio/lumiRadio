@@ -1,0 +1,1 @@
+DROP TABLE connected_youtube_accounts;

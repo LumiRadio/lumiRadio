@@ -1,0 +1,5 @@
+BEGIN;
+ALTER TABLE users
+ALTER COLUMN watched_time DROP NOT NULL,
+    ALTER COLUMN watched_time DROP DEFAULT;
+COMMIT;

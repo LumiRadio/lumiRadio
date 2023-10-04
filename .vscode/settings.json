@@ -1,21 +1,21 @@
 {
-    "sqltools.connections": [
-        {
-            "previewLimit": 50,
-            "server": "localhost",
-            "port": 5432,
-            "driver": "PostgreSQL",
-            "name": "Byers dev",
-            "database": "byers",
-            "username": "byers",
-            "password": "byers"
-        },
-        {
-            "previewLimit": 50,
-            "driver": "SQLite",
-            "name": "ByersPlus",
-            "database": "slcb_data/byers_plus.db"
-        }
-    ],
-    "sqltools.useNodeRuntime": true
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5432,
+      "driver": "PostgreSQL",
+      "name": "Byers dev",
+      "database": "byers",
+      "username": "byers",
+      "password": "byers"
+    },
+    {
+      "previewLimit": 50,
+      "driver": "SQLite",
+      "name": "ByersPlus",
+      "database": "slcb_data/byers_plus.db"
+    }
+  ],
+  "sqltools.useNodeRuntime": true
 }

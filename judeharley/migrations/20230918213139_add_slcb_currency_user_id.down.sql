@@ -1,0 +1,1 @@
+ALTER TABLE slcb_currency DROP COLUMN user_id;

@@ -1,15 +1,9 @@
 [package]
-name = "byers"
-version = "1.1.8"
+name = "judeharley"
+version = "0.1.0"
 edition = "2021"
 
-[lib]
-name = "byers"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[[bin]]
-name = "byers"
-required-features = ["binary"]
 
 [dependencies]
 chrono = { version = "0.4.24", features = ["serde"] }
@@ -23,7 +17,6 @@ sqlx = { version = "0.6", features = [
     "migrate",
     "bigdecimal",
 ] }
-poise = { version = "0.5.6", optional = true }
 serde = { version = "1.0.160", features = ["derive"] }
 tokio = { version = "1.27.0", features = ["full"] }
 tracing = "0.1.37"
@@ -58,9 +51,3 @@ audiotags = { git = "https://github.com/lumiRadio/audiotags", version = "0.5.0" 
 id3 = "1.8.0"
 metadata = "0.1.8"
 sha2 = "0.10.8"
-
-[profile.dev.package.sqlx-macros]
-opt-level = 3
-
-[features]
-binary = ["dep:poise"]

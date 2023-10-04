@@ -1,0 +1,1825 @@
+{
+  "db": "PostgreSQL",
+  "06ac3c78c7ef7b4fa95335fcb4bd2913695135482574f74631089ac516f88c6d": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "server_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "allow_watch_time_accumulation",
+          "ordinal": 2,
+          "type_info": "Bool"
+        },
+        {
+          "name": "allow_point_accumulation",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "hydration_reminder",
+          "ordinal": 4,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO server_channel_config (id, server_id)\n            VALUES ($1, $2)\n            ON CONFLICT (id)\n            DO NOTHING\n            RETURNING id, server_id, allow_watch_time_accumulation, allow_point_accumulation, hydration_reminder\n            "
+  },
+  "152446e8fd6936ee884512bb72e7e654799f7d16ac43621257fd754309516538": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            DELETE FROM connected_youtube_accounts\n            WHERE user_id = $1\n            "
+  },
+  "155a6927743ed441741938a8fc86c3abfdd36ab1c5bf5287359b3c5e5049f38a": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            DELETE FROM cans\n            WHERE id IN (\n                SELECT id FROM cans\n                ORDER BY id DESC\n                LIMIT $1\n            )\n            "
+  },
+  "18d3467b553c673d1121aff330fb9857f178e1f5453c9b1277f1d25df4ce7135": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "rank_name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "hour_requirement",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "channel_id",
+          "ordinal": 3,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "TextArray"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM slcb_rank\n            WHERE hour_requirement > $1\n            AND (channel_id IS NULL OR channel_id = ANY($2))\n            ORDER BY hour_requirement ASC\n            LIMIT 1\n            "
+  },
+  "19c1c772cacd5f4106b68d72baeb0e1501edd8711d851d64f20683d01bd42208": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "slot_jackpot",
+          "ordinal": 1,
+          "type_info": "Int4"
+        },
+        {
+          "name": "dice_roll",
+          "ordinal": 2,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM server_config\n            WHERE id = $1\n            "
+  },
+  "26cb4c39fb7e9b96f7ae0e01c5e7d7afe3b3250741674c6a6363eb8bcc7a712c": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "points",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "hours",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 4,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM slcb_currency\n            WHERE user_id = $1\n            "
+  },
+  "288ad976eb9c4561a03fc693c3dd690bda029c8e94d5613dfc9d02ce08554a3c": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "points",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "hours",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 4,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM slcb_currency\n            WHERE username ILIKE $1\n            "
+  },
+  "2ac2a3967f4f17d9e5285749d8b67d7f19b5ad9073ac44e4892cce5b9bd687b8": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            SELECT COUNT(*) FROM users\n            WHERE boonbucks > $1\n            "
+  },
+  "2c335e4d2554f6eb4d01c946a938066926ecb41955ea45557dcc0a432e8633e5": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT COUNT(*) FROM song_requests\n            WHERE song_id = $1\n            "
+  },
+  "32c41fbc1ff0cf0b72e194e20f375d18695b1e67400f887fd012c34456d3ef1b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT COUNT(*) FROM played_songs\n            WHERE song_id = $1\n            "
+  },
+  "34df5c801f8e5a3b56867f3c2ea1bee27c9849fe954c725ae7939e9d0d80105a": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Bool",
+          "Bool",
+          "Bool"
+        ]
+      }
+    },
+    "query": "\n            UPDATE server_channel_config\n            SET allow_watch_time_accumulation = $2, allow_point_accumulation = $3, hydration_reminder = $4\n            WHERE id = $1\n            "
+  },
+  "35d8954b7a08cc9a2966a11ac122e5da8b48018f9797a973c3dbf60b9fdb795c": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Bool"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO cans (added_by, legit)\n            VALUES ($1, $2)\n            "
+  },
+  "37f067fdec1c61956a7630c8f6c12662278467e71a25e25d96a11b0f616b3cd8": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "INSERT INTO song_tags (song_id, tag, value) VALUES ($1, $2, $3)"
+  },
+  "3a06af983e87be6169f194e63d9971659db877b394230afccad418719ff5e472": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "DELETE FROM songs WHERE file_path LIKE $1"
+  },
+  "3d60926f4b3c2b43ca86718cd305e614f14950a9eac8decdfea52fb0c45074b1": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "watched_time",
+          "ordinal": 1,
+          "type_info": "Numeric"
+        },
+        {
+          "name": "boonbucks",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 4,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "last_message_sent",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "migrated",
+          "ordinal": 6,
+          "type_info": "Bool"
+        },
+        {
+          "name": "amber",
+          "ordinal": 7,
+          "type_info": "Int4"
+        },
+        {
+          "name": "amethyst",
+          "ordinal": 8,
+          "type_info": "Int4"
+        },
+        {
+          "name": "artifact",
+          "ordinal": 9,
+          "type_info": "Int4"
+        },
+        {
+          "name": "caulk",
+          "ordinal": 10,
+          "type_info": "Int4"
+        },
+        {
+          "name": "chalk",
+          "ordinal": 11,
+          "type_info": "Int4"
+        },
+        {
+          "name": "cobalt",
+          "ordinal": 12,
+          "type_info": "Int4"
+        },
+        {
+          "name": "diamond",
+          "ordinal": 13,
+          "type_info": "Int4"
+        },
+        {
+          "name": "garnet",
+          "ordinal": 14,
+          "type_info": "Int4"
+        },
+        {
+          "name": "gold",
+          "ordinal": 15,
+          "type_info": "Int4"
+        },
+        {
+          "name": "iodine",
+          "ordinal": 16,
+          "type_info": "Int4"
+        },
+        {
+          "name": "marble",
+          "ordinal": 17,
+          "type_info": "Int4"
+        },
+        {
+          "name": "mercury",
+          "ordinal": 18,
+          "type_info": "Int4"
+        },
+        {
+          "name": "quartz",
+          "ordinal": 19,
+          "type_info": "Int4"
+        },
+        {
+          "name": "ruby",
+          "ordinal": 20,
+          "type_info": "Int4"
+        },
+        {
+          "name": "rust",
+          "ordinal": 21,
+          "type_info": "Int4"
+        },
+        {
+          "name": "shale",
+          "ordinal": 22,
+          "type_info": "Int4"
+        },
+        {
+          "name": "sulfur",
+          "ordinal": 23,
+          "type_info": "Int4"
+        },
+        {
+          "name": "tar",
+          "ordinal": 24,
+          "type_info": "Int4"
+        },
+        {
+          "name": "uranium",
+          "ordinal": 25,
+          "type_info": "Int4"
+        },
+        {
+          "name": "zillium",
+          "ordinal": 26,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Numeric"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM users\n            WHERE watched_time >= $1\n            ORDER BY watched_time DESC\n            "
+  },
+  "40997b222505f09a5231014970a1d78707b2d15c612177174241d2154fe24e1a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "guild_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "role_id",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "minimum_hours",
+          "ordinal": 3,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM server_role_config\n            WHERE guild_id = $1\n            "
+  },
+  "4398458117d085b108aba417a4664e3fb56c730769035fd5772b45e144fe1fde": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "DELETE FROM songs WHERE file_path = $1"
+  },
+  "4acfb06affe5a65976956ca6f66b2397bb28dc277accb74a37b609691f42ec9d": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "DELETE FROM songs"
+  },
+  "697289e57551d12e0d9a882c7ab0ec68131ebfa273cd66f6477973117c1e5252": {
+    "describe": {
+      "columns": [
+        {
+          "name": "title",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "artist",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "album",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "file_path",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "duration",
+          "ordinal": 4,
+          "type_info": "Float8"
+        },
+        {
+          "name": "file_hash",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "bitrate",
+          "ordinal": 6,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT title, artist, album, file_path, duration, file_hash, bitrate\n            FROM songs\n            WHERE file_path = $1\n            "
+  },
+  "78274af52af74e9632c7c87e26e3cfd4cc808a14aa9dcacfa340c96e2d2ad32e": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Numeric",
+          "Int4",
+          "Timestamp",
+          "Timestamp",
+          "Timestamp",
+          "Bool",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            UPDATE users\n            SET watched_time = $2, boonbucks = $3, created_at = $4, updated_at = $5, last_message_sent = $6, migrated = $7, amber = $8, amethyst = $9, artifact = $10, caulk = $11, chalk = $12, cobalt = $13, diamond = $14, garnet = $15, gold = $16, iodine = $17, marble = $18, mercury = $19, quartz = $20, ruby = $21, rust = $22, shale = $23, sulfur = $24, tar = $25, uranium = $26, zillium = $27\n            WHERE id = $1\n            "
+  },
+  "7ae59c7abfa2dbcae94d317712b31ce76c68a5a541f2b919d771ebfe4f8a9478": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int4",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            UPDATE server_config\n            SET slot_jackpot = $2, dice_roll = $3\n            WHERE id = $1\n            "
+  },
+  "7e8da4070c16cbcb640d3b72eb26ef9182c6dbebd6011333b08f8bb9c89a3df9": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            DELETE FROM server_role_config\n            WHERE id = $1\n            "
+  },
+  "8f4e8b154c1f5d51076245ca4bbb1479313cf243a2cd6bf50e4498d69ecc14cd": {
+    "describe": {
+      "columns": [
+        {
+          "name": "title",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "artist",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "album",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "file_path",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "duration",
+          "ordinal": 4,
+          "type_info": "Float8"
+        },
+        {
+          "name": "file_hash",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "bitrate",
+          "ordinal": 6,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            SELECT songs.title, songs.artist, songs.album, songs.file_path, songs.duration, songs.file_hash, songs.bitrate\n            FROM songs, played_songs\n            WHERE songs.file_hash = played_songs.song_id\n            ORDER BY played_songs.played_at DESC\n            LIMIT 10\n            "
+  },
+  "967fd17f1c47f391af7b372151776b0d66301a8f8373201ce9588b4449371766": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "server_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "allow_watch_time_accumulation",
+          "ordinal": 2,
+          "type_info": "Bool"
+        },
+        {
+          "name": "allow_point_accumulation",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "hydration_reminder",
+          "ordinal": 4,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            SELECT * FROM server_channel_config\n            WHERE hydration_reminder = true\n            "
+  },
+  "99de9dfc50a5b6844c05c7c75cb9370cce06d9b4de2b24bc653da1ae042fb283": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "youtube_channel_id",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "youtube_channel_name",
+          "ordinal": 3,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM connected_youtube_accounts\n            WHERE user_id = $1\n            "
+  },
+  "9d0595ba5acdf6fded5d5a808d4be7f350eb69ad798222ee7d7a293807adc249": {
+    "describe": {
+      "columns": [
+        {
+          "name": "title",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "artist",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "album",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "file_path",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "duration",
+          "ordinal": 4,
+          "type_info": "Float8"
+        },
+        {
+          "name": "file_hash",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "bitrate",
+          "ordinal": 6,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            SELECT songs.title, songs.artist, songs.album, songs.file_path, songs.duration, songs.file_hash, songs.bitrate\n            FROM songs, played_songs\n            WHERE songs.file_hash = played_songs.song_id\n            ORDER BY played_songs.played_at DESC\n            LIMIT 1\n            "
+  },
+  "a020f9828cb34aab2f8cb3e90bfea5b0a91eaffb98ceaeb44201ceaa0606c8be": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "server_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "allow_watch_time_accumulation",
+          "ordinal": 2,
+          "type_info": "Bool"
+        },
+        {
+          "name": "allow_point_accumulation",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "hydration_reminder",
+          "ordinal": 4,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM server_channel_config\n            WHERE id = $1 AND server_id = $2\n            "
+  },
+  "a7da26ab1348cd70027e19dc9e49edc9a1d82133343b144a642d93029a0ae1d4": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "watched_time",
+          "ordinal": 1,
+          "type_info": "Numeric"
+        },
+        {
+          "name": "boonbucks",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 4,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "last_message_sent",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "migrated",
+          "ordinal": 6,
+          "type_info": "Bool"
+        },
+        {
+          "name": "amber",
+          "ordinal": 7,
+          "type_info": "Int4"
+        },
+        {
+          "name": "amethyst",
+          "ordinal": 8,
+          "type_info": "Int4"
+        },
+        {
+          "name": "artifact",
+          "ordinal": 9,
+          "type_info": "Int4"
+        },
+        {
+          "name": "caulk",
+          "ordinal": 10,
+          "type_info": "Int4"
+        },
+        {
+          "name": "chalk",
+          "ordinal": 11,
+          "type_info": "Int4"
+        },
+        {
+          "name": "cobalt",
+          "ordinal": 12,
+          "type_info": "Int4"
+        },
+        {
+          "name": "diamond",
+          "ordinal": 13,
+          "type_info": "Int4"
+        },
+        {
+          "name": "garnet",
+          "ordinal": 14,
+          "type_info": "Int4"
+        },
+        {
+          "name": "gold",
+          "ordinal": 15,
+          "type_info": "Int4"
+        },
+        {
+          "name": "iodine",
+          "ordinal": 16,
+          "type_info": "Int4"
+        },
+        {
+          "name": "marble",
+          "ordinal": 17,
+          "type_info": "Int4"
+        },
+        {
+          "name": "mercury",
+          "ordinal": 18,
+          "type_info": "Int4"
+        },
+        {
+          "name": "quartz",
+          "ordinal": 19,
+          "type_info": "Int4"
+        },
+        {
+          "name": "ruby",
+          "ordinal": 20,
+          "type_info": "Int4"
+        },
+        {
+          "name": "rust",
+          "ordinal": 21,
+          "type_info": "Int4"
+        },
+        {
+          "name": "shale",
+          "ordinal": 22,
+          "type_info": "Int4"
+        },
+        {
+          "name": "sulfur",
+          "ordinal": 23,
+          "type_info": "Int4"
+        },
+        {
+          "name": "tar",
+          "ordinal": 24,
+          "type_info": "Int4"
+        },
+        {
+          "name": "uranium",
+          "ordinal": 25,
+          "type_info": "Int4"
+        },
+        {
+          "name": "zillium",
+          "ordinal": 26,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM users\n            WHERE id = $1\n            "
+  },
+  "a815a453becf46c3ce45ab26805803fa22f29b08aadeef2b4095f438c3728493": {
+    "describe": {
+      "columns": [
+        {
+          "name": "title",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "artist",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "album",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "file_path",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "duration",
+          "ordinal": 4,
+          "type_info": "Float8"
+        },
+        {
+          "name": "file_hash",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "bitrate",
+          "ordinal": 6,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT title, artist, album, file_path, duration, file_hash, bitrate\n            FROM songs\n            WHERE file_hash = $1\n            "
+  },
+  "a81a98e1a30461c9a401e90836f8d3ab735dae043369470c369057ce02baa4ca": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO song_requests (song_id, user_id)\n            VALUES ($1, $2)\n            "
+  },
+  "a9577fd6d652496a6bea799b406453af7e0adfddf022af4db766bd0a00c0e42d": {
+    "describe": {
+      "columns": [
+        {
+          "name": "title",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "artist",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "album",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "file_path",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "duration",
+          "ordinal": 4,
+          "type_info": "Float8"
+        },
+        {
+          "name": "file_hash",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "bitrate",
+          "ordinal": 6,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            WITH search AS (\n                SELECT to_tsquery(string_agg(lexeme || ':*', ' & ' ORDER BY positions)) AS query\n                FROM unnest(to_tsvector($1))\n            )\n            SELECT title, artist, album, file_path, duration, file_hash, bitrate\n            FROM songs, search\n            WHERE tsvector @@ query\n            "
+  },
+  "aa137d8b16f61a91bf8e929c6c6f2c5c5d866be3d78f824bc126b7c4b1cdc646": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "slot_jackpot",
+          "ordinal": 1,
+          "type_info": "Int4"
+        },
+        {
+          "name": "dice_roll",
+          "ordinal": 2,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO server_config (id)\n            VALUES ($1)\n            ON CONFLICT (id)\n            DO NOTHING\n            RETURNING id, slot_jackpot, dice_roll\n            "
+  },
+  "b6b7b161e3721c9f53fc2bbb3d9ef076b1d8fbd7fb3fcd6d9c85e6375eda0277": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO connected_youtube_accounts (user_id, youtube_channel_id, youtube_channel_name)\n            VALUES ($1, $2, $3)\n            "
+  },
+  "c27145c06281effc3db9ec89344e9611ff7d217071d40f2ccbad861db468f80c": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "guild_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "role_id",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "minimum_hours",
+          "ordinal": 3,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM server_role_config\n            WHERE guild_id = $1 AND minimum_hours <= $2\n            "
+  },
+  "c4dc1e7ef9c93f71a2090099fda8ba762367862130aaaa91b99e4e9a3e86fb89": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int8",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            UPDATE server_role_config\n            SET role_id = $2, minimum_hours = $3\n            WHERE id = $1\n            "
+  },
+  "c9ff566af87c02d39aea481800ad32c0dfc9dd8c1667c50db8949a5bd761f528": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "watched_time",
+          "ordinal": 1,
+          "type_info": "Numeric"
+        },
+        {
+          "name": "boonbucks",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 4,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "last_message_sent",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "migrated",
+          "ordinal": 6,
+          "type_info": "Bool"
+        },
+        {
+          "name": "amber",
+          "ordinal": 7,
+          "type_info": "Int4"
+        },
+        {
+          "name": "amethyst",
+          "ordinal": 8,
+          "type_info": "Int4"
+        },
+        {
+          "name": "artifact",
+          "ordinal": 9,
+          "type_info": "Int4"
+        },
+        {
+          "name": "caulk",
+          "ordinal": 10,
+          "type_info": "Int4"
+        },
+        {
+          "name": "chalk",
+          "ordinal": 11,
+          "type_info": "Int4"
+        },
+        {
+          "name": "cobalt",
+          "ordinal": 12,
+          "type_info": "Int4"
+        },
+        {
+          "name": "diamond",
+          "ordinal": 13,
+          "type_info": "Int4"
+        },
+        {
+          "name": "garnet",
+          "ordinal": 14,
+          "type_info": "Int4"
+        },
+        {
+          "name": "gold",
+          "ordinal": 15,
+          "type_info": "Int4"
+        },
+        {
+          "name": "iodine",
+          "ordinal": 16,
+          "type_info": "Int4"
+        },
+        {
+          "name": "marble",
+          "ordinal": 17,
+          "type_info": "Int4"
+        },
+        {
+          "name": "mercury",
+          "ordinal": 18,
+          "type_info": "Int4"
+        },
+        {
+          "name": "quartz",
+          "ordinal": 19,
+          "type_info": "Int4"
+        },
+        {
+          "name": "ruby",
+          "ordinal": 20,
+          "type_info": "Int4"
+        },
+        {
+          "name": "rust",
+          "ordinal": 21,
+          "type_info": "Int4"
+        },
+        {
+          "name": "shale",
+          "ordinal": 22,
+          "type_info": "Int4"
+        },
+        {
+          "name": "sulfur",
+          "ordinal": 23,
+          "type_info": "Int4"
+        },
+        {
+          "name": "tar",
+          "ordinal": 24,
+          "type_info": "Int4"
+        },
+        {
+          "name": "uranium",
+          "ordinal": 25,
+          "type_info": "Int4"
+        },
+        {
+          "name": "zillium",
+          "ordinal": 26,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO users (id) VALUES ($1)\n            ON CONFLICT (id) DO NOTHING\n            RETURNING id, watched_time, boonbucks, created_at, updated_at, last_message_sent, migrated, amber, amethyst, artifact, caulk, chalk, cobalt, diamond, garnet, gold, iodine, marble, mercury, quartz, ruby, rust, shale, sulfur, tar, uranium, zillium\n            "
+  },
+  "cc22d45552ea5d8d041b0dfce766ab45f8dfa5b36b6397f274148a323605b0b6": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Numeric"
+        ]
+      }
+    },
+    "query": "\n            SELECT COUNT(*) FROM users\n            WHERE watched_time > $1\n            "
+  },
+  "d42ab17963f33729db66c7ab76af2f4d98656a5d84155f299520c45f7f162a04": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Float8",
+          "Varchar",
+          "Int4"
+        ]
+      }
+    },
+    "query": "INSERT INTO songs (title, artist, album, file_path, duration, file_hash, bitrate) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+  },
+  "d588916133d209cfa0b12f2755fa1933b2281776a9ddcfc70b2b57ed12230e3b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "points",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "hours",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 4,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM slcb_currency\n            WHERE id = $1\n            "
+  },
+  "dba675fc8e629e760c426c351d651d8966169e641a978bc8cfc14cb48e2ffcab": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "guild_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "role_id",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "minimum_hours",
+          "ordinal": 3,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO server_role_config (guild_id, role_id, minimum_hours)\n            VALUES ($1, $2, $3)\n            RETURNING id, guild_id, role_id, minimum_hours\n            "
+  },
+  "eb46b74d13baa47d6d6ea6f9df0b438b1a4c0a6723df9a985c18ef68d83f57c2": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            SELECT COUNT(*) FROM cans\n            "
+  },
+  "ed26cc4ff93c229cc2a265a56a0ae2a89ee44e6a932d2ab241ba47b7386d47b5": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            DELETE FROM server_role_config\n            WHERE guild_id = $1 AND role_id = $2\n            "
+  },
+  "eea1c8fd86a997faa9e786642791a23b8c357fe53962dd9afc2ba21d7e39f0af": {
+    "describe": {
+      "columns": [
+        {
+          "name": "created_at",
+          "ordinal": 0,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT created_at\n            FROM song_requests\n            WHERE song_id = $1\n            ORDER BY created_at DESC\n            LIMIT 1\n            "
+  },
+  "ef7ece6b6cff0ec2dd31a1f26be1af01573f742339942045f79916161596d2ce": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "rank_name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "hour_requirement",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "channel_id",
+          "ordinal": 3,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "TextArray"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM slcb_rank\n            WHERE hour_requirement <= $1\n            AND (channel_id IS NULL OR channel_id = ANY($2))\n            ORDER BY hour_requirement DESC\n            LIMIT 1\n            "
+  },
+  "f32e0fd3943180989ee37b9bb286e12699f9d4c6a0f022c50171b1a8e43f21ce": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "guild_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "role_id",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "minimum_hours",
+          "ordinal": 3,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM server_role_config\n            WHERE guild_id = $1 AND role_id = $2\n            "
+  },
+  "f53e4535f915507d0c0ca5c4f97c7d34465d0a3ce62fe38fcab3db637bb8ffba": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "points",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "hours",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 4,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM slcb_currency\n            WHERE username = $1\n            "
+  },
+  "f922a26751d8074317b77ee7930748f9dfa6f1c4b8ff723226cae4d93d84e9d0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT COUNT(*) FROM cans\n            WHERE added_by = $1 AND legit = true\n            "
+  }
+}

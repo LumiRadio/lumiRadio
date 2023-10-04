@@ -9,19 +9,23 @@ use sqlx::postgres::PgPoolOptions;
 use tracing::{debug, info};
 use tracing_unwrap::ResultExt;
 
-use crate::commands::{
-    add_stuff::*,
-    admin::{config::config as config_cmd, control::*, import::*, user::*, *},
-    currency::*,
-    help::*,
-    listen, minigames,
-    minigames::pvp::pvp_context,
-    songs::*,
-    version::*,
-    youtube::*,
+use crate::{
+    bin_prelude::*,
+    commands::{
+        add_stuff::*,
+        admin::{config::config as config_cmd, control::*, import::*, user::*, *},
+        currency::*,
+        help::*,
+        listen, minigames,
+        minigames::pvp::pvp_context,
+        songs::*,
+        version::*,
+        youtube::*,
+    },
 };
 use byers::{communication::ByersUnixStream, oauth2::oauth2_server, prelude::*};
 
+mod bin_prelude;
 mod commands;
 mod event_handlers;
 
