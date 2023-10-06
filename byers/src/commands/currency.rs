@@ -51,16 +51,37 @@ async fn pay_user(
     let mut target_db_user = DbUser::fetch_or_insert(&data.db, target_user.id.0 as i64).await?;
 
     if source_db_user.boonbucks < amount {
-        ctx.say(format!(
-            "You don't have enough Boondollars to pay that much! You have {}.",
-            source_db_user.boonbucks
-        ))
+        ctx.send(|m| {
+            m.embed(|e| {
+                e.title("Payment failed").description(format!(
+                    "You don't have enough boondollars to pay that much! You have {}.",
+                    source_db_user.boonbucks
+                ))
+            })
+        })
         .await?;
         return Ok(());
     }
 
     if amount < 0 {
-        ctx.say("You can't pay negative Boondollars!").await?;
+        ctx.send(|m| {
+            m.embed(|e| {
+                e.title("Payment failed")
+                    .description("You can't pay negative boondollars!")
+            })
+        })
+        .await?;
+        return Ok(());
+    }
+
+    if source_db_user.id == target_db_user.id {
+        ctx.send(|m| {
+            m.embed(|e| {
+                e.title("Payment successful")
+                    .description(format!("You paid yourself {} boonbucks. Good job.", amount))
+            })
+        })
+        .await?;
         return Ok(());
     }
 

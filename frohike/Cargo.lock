@@ -491,12 +491,11 @@ checksum = "7f30e7476521f6f8af1a1c4c0b8cc94f0bee37d91763d0ca2665f299b6cd8aec"
 [[package]]
 name = "byers"
 version = "1.1.8"
-source = "git+https://github.com/lumiRadio/lumiRadio#9371d751d6bb62cf790d7ff269d03159421e890d"
+source = "git+https://github.com/lumiRadio/lumiRadio#2368b80bbc8bdcf0e133fe862c662216fab7e6e9"
 dependencies = [
  "anyhow",
  "async-fred-session",
  "async-trait",
- "audiotags",
  "axum",
  "axum-sessions",
  "chrono",
@@ -504,10 +503,8 @@ dependencies = [
  "ellipse",
  "fred",
  "futures",
- "id3",
+ "judeharley",
  "lazy_static",
- "metadata",
- "mini-telnet",
  "num-traits",
  "oauth2",
  "once_cell",
@@ -517,18 +514,14 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
- "sha2 0.10.8",
  "situwaition",
- "sqlx",
  "strum",
- "telnet",
  "thiserror",
  "tokio",
  "tokio-stream",
  "tracing",
  "tracing-subscriber",
  "tracing-unwrap",
- "walkdir",
 ]
 
 [[package]]
@@ -1000,70 +993,6 @@ checksum = "1835a82a08e5c9393639e7cf99786a65af71f7fa9df7c91a519f2d52e6fa052d"
 dependencies = [
  "unicode-segmentation",
 ]
-
-[[package]]
-name = "encoding"
-version = "0.2.33"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b0d943856b990d12d3b55b359144ff341533e516d94098b1d3fc1ac666d36ec"
-dependencies = [
- "encoding-index-japanese",
- "encoding-index-korean",
- "encoding-index-simpchinese",
- "encoding-index-singlebyte",
- "encoding-index-tradchinese",
-]
-
-[[package]]
-name = "encoding-index-japanese"
-version = "1.20141219.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04e8b2ff42e9a05335dbf8b5c6f7567e5591d0d916ccef4e0b1710d32a0d0c91"
-dependencies = [
- "encoding_index_tests",
-]
-
-[[package]]
-name = "encoding-index-korean"
-version = "1.20141219.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4dc33fb8e6bcba213fe2f14275f0963fd16f0a02c878e3095ecfdf5bee529d81"
-dependencies = [
- "encoding_index_tests",
-]
-
-[[package]]
-name = "encoding-index-simpchinese"
-version = "1.20141219.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d87a7194909b9118fc707194baa434a4e3b0fb6a5a757c73c3adb07aa25031f7"
-dependencies = [
- "encoding_index_tests",
-]
-
-[[package]]
-name = "encoding-index-singlebyte"
-version = "1.20141219.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3351d5acffb224af9ca265f435b859c7c01537c0849754d3db3fdf2bfe2ae84a"
-dependencies = [
- "encoding_index_tests",
-]
-
-[[package]]
-name = "encoding-index-tradchinese"
-version = "1.20141219.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd0e20d5688ce3cab59eb3ef3a2083a5c77bf496cb798dc6fcdb75f323890c18"
-dependencies = [
- "encoding_index_tests",
-]
-
-[[package]]
-name = "encoding_index_tests"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a246d82be1c9d791c5dfde9a2bd045fc3cbba3fa2b11ad558f27d01712f00569"
 
 [[package]]
 name = "encoding_rs"
@@ -1731,6 +1660,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "judeharley"
+version = "0.1.0"
+source = "git+https://github.com/lumiRadio/lumiRadio#2368b80bbc8bdcf0e133fe862c662216fab7e6e9"
+dependencies = [
+ "async-trait",
+ "audiotags",
+ "chrono",
+ "fred",
+ "futures",
+ "id3",
+ "lazy_static",
+ "metadata",
+ "num-traits",
+ "once_cell",
+ "rand",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "sha2 0.10.8",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+ "walkdir",
+]
+
+[[package]]
 name = "kqueue"
 version = "1.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1893,21 +1851,6 @@ checksum = "4192263c238a5f0d0c6bfd21f336a313a4ce1c450542449ca191bb657b4642ef"
 dependencies = [
  "mime",
  "unicase",
-]
-
-[[package]]
-name = "mini-telnet"
-version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b54adfb9d72f24238fcce6e90d3f373f0ab241b9351a66e5d55a476bf712d70"
-dependencies = [
- "bytes",
- "encoding",
- "futures",
- "regex",
- "thiserror",
- "tokio",
- "tokio-util",
 ]
 
 [[package]]
@@ -3098,11 +3041,6 @@ dependencies = [
  "core-foundation-sys",
  "libc",
 ]
-
-[[package]]
-name = "telnet"
-version = "0.2.0"
-source = "git+https://github.com/Leandros/telnet-rs#451417f6bfdc9715d3aecc9483858b114790da33"
 
 [[package]]
 name = "termcolor"

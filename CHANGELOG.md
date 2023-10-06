@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning].
 ### Fixed
 
 - Fixed frohike not being able to drop indices on moved directories
+## [1.1.9] - 2023-10-06
+
+### Fixed
+
+- Fixed bug where you could generate money by paying yourself.
 
 ## [1.1.8] - 2023-09-23
 
