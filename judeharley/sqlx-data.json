@@ -45,6 +45,62 @@
     },
     "query": "\n            INSERT INTO server_channel_config (id, server_id)\n            VALUES ($1, $2)\n            ON CONFLICT (id)\n            DO NOTHING\n            RETURNING id, server_id, allow_watch_time_accumulation, allow_point_accumulation, hydration_reminder\n            "
   },
+  "0ff348db5749549572fe6d0333e0d8789e8a2178782f2b34cc7a709807e271a0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "title",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "artist",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "album",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "file_path",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "duration",
+          "ordinal": 4,
+          "type_info": "Float8"
+        },
+        {
+          "name": "file_hash",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "bitrate",
+          "ordinal": 6,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT title, artist, album, file_path, duration, file_hash, bitrate\n            FROM songs\n            WHERE file_path LIKE $1\n            "
+  },
   "152446e8fd6936ee884512bb72e7e654799f7d16ac43621257fd754309516538": {
     "describe": {
       "columns": [],
@@ -139,6 +195,32 @@
       }
     },
     "query": "\n            SELECT * FROM server_config\n            WHERE id = $1\n            "
+  },
+  "2433259f993ff88a63770d2c44721d66a8dd9c15135535b51fb62456b4e571ad": {
+    "describe": {
+      "columns": [
+        {
+          "name": "tag",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "value",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT tag, value FROM song_tags\n            WHERE song_id = $1\n            "
   },
   "26cb4c39fb7e9b96f7ae0e01c5e7d7afe3b3250741674c6a6363eb8bcc7a712c": {
     "describe": {
@@ -248,6 +330,16 @@
     },
     "query": "\n            SELECT COUNT(*) FROM users\n            WHERE boonbucks > $1\n            "
   },
+  "2c1b66239c0767118ccf1a35b93bbf01f45f8a6557cd04e71071488879565338": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            DELETE FROM song_tags\n            "
+  },
   "2c335e4d2554f6eb4d01c946a938066926ecb41955ea45557dcc0a432e8633e5": {
     "describe": {
       "columns": [
@@ -267,6 +359,20 @@
       }
     },
     "query": "\n            SELECT COUNT(*) FROM song_requests\n            WHERE song_id = $1\n            "
+  },
+  "2e1d404540fdd5499d6a7dcd9759ce3805fc7178cca51285afb6cf9718a8353d": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "\n                INSERT INTO song_tags (song_id, tag, value)\n                VALUES ($1, $2, $3)\n                ON CONFLICT (song_id, tag)\n                DO UPDATE SET value = $3\n                "
   },
   "32c41fbc1ff0cf0b72e194e20f375d18695b1e67400f887fd012c34456d3ef1b": {
     "describe": {
@@ -315,32 +421,6 @@
       }
     },
     "query": "\n            INSERT INTO cans (added_by, legit)\n            VALUES ($1, $2)\n            "
-  },
-  "37f067fdec1c61956a7630c8f6c12662278467e71a25e25d96a11b0f616b3cd8": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Varchar",
-          "Varchar"
-        ]
-      }
-    },
-    "query": "INSERT INTO song_tags (song_id, tag, value) VALUES ($1, $2, $3)"
-  },
-  "3a06af983e87be6169f194e63d9971659db877b394230afccad418719ff5e472": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "DELETE FROM songs WHERE file_path LIKE $1"
   },
   "3d60926f4b3c2b43ca86718cd305e614f14950a9eac8decdfea52fb0c45074b1": {
     "describe": {
@@ -556,18 +636,6 @@
     },
     "query": "\n            SELECT * FROM server_role_config\n            WHERE guild_id = $1\n            "
   },
-  "4398458117d085b108aba417a4664e3fb56c730769035fd5772b45e144fe1fde": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "DELETE FROM songs WHERE file_path = $1"
-  },
   "4acfb06affe5a65976956ca6f66b2397bb28dc277accb74a37b609691f42ec9d": {
     "describe": {
       "columns": [],
@@ -685,6 +753,18 @@
       }
     },
     "query": "\n            UPDATE server_config\n            SET slot_jackpot = $2, dice_roll = $3\n            WHERE id = $1\n            "
+  },
+  "7b642430975a78300d298a61931ad5ab83e51fdab1dcb0707611311387a10e90": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            DELETE FROM songs\n            WHERE file_hash = $1\n            "
   },
   "7e8da4070c16cbcb640d3b72eb26ef9182c6dbebd6011333b08f8bb9c89a3df9": {
     "describe": {
@@ -1278,6 +1358,16 @@
     },
     "query": "\n            INSERT INTO connected_youtube_accounts (user_id, youtube_channel_id, youtube_channel_name)\n            VALUES ($1, $2, $3)\n            "
   },
+  "c0d872c7da9920261b7dea5c43b983941208ac0312792ec1090599cd19d8cbb9": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            DELETE FROM songs\n            "
+  },
   "c27145c06281effc3db9ec89344e9611ff7d217071d40f2ccbad861db468f80c": {
     "describe": {
       "columns": [
@@ -1527,24 +1617,6 @@
     },
     "query": "\n            SELECT COUNT(*) FROM users\n            WHERE watched_time > $1\n            "
   },
-  "d42ab17963f33729db66c7ab76af2f4d98656a5d84155f299520c45f7f162a04": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Varchar",
-          "Varchar",
-          "Varchar",
-          "Float8",
-          "Varchar",
-          "Int4"
-        ]
-      }
-    },
-    "query": "INSERT INTO songs (title, artist, album, file_path, duration, file_hash, bitrate) VALUES ($1, $2, $3, $4, $5, $6, $7)"
-  },
   "d588916133d209cfa0b12f2755fa1933b2281776a9ddcfc70b2b57ed12230e3b": {
     "describe": {
       "columns": [
@@ -1589,6 +1661,18 @@
     },
     "query": "\n            SELECT * FROM slcb_currency\n            WHERE id = $1\n            "
   },
+  "d81e4593bf1069acc884fcd8f38856f7735d0fc88e1a70cb60d584bc62777f8e": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            DELETE FROM song_tags\n            WHERE song_id = $1\n            "
+  },
   "dba675fc8e629e760c426c351d651d8966169e641a978bc8cfc14cb48e2ffcab": {
     "describe": {
       "columns": [
@@ -1628,6 +1712,36 @@
       }
     },
     "query": "\n            INSERT INTO server_role_config (guild_id, role_id, minimum_hours)\n            VALUES ($1, $2, $3)\n            RETURNING id, guild_id, role_id, minimum_hours\n            "
+  },
+  "e5a04d6888f4e908443ffb4652c6c92a803f9563cd2e86a7e36e0c0e7bb7e388": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            DELETE FROM songs\n            WHERE file_path = $1\n            "
+  },
+  "e94207b5c6af7195df371cab25f380194932e8b84d8c4d391c1fae10eddf1186": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Float8",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO songs (file_path, file_hash, title, artist, album, duration, bitrate)\n            VALUES ($1, $2, $3, $4, $5, $6, $7)\n            ON CONFLICT (file_path)\n            DO UPDATE SET file_hash = $2, title = $3, artist = $4, album = $5, duration = $6, bitrate = $7\n            "
   },
   "eb46b74d13baa47d6d6ea6f9df0b438b1a4c0a6723df9a985c18ef68d83f57c2": {
     "describe": {

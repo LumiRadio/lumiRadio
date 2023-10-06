@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning].
 
 ### Changed
 
-- Refactored some chunks of the codebase
+- Refactored the codebase for Byers
 - Reworked slots minigame to use "Easy Vegas" slot machine as base
 - Made roll dice minigame use emojis
 - Changed `/boondollars` back to a message

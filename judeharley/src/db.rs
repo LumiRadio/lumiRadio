@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, path::Path};
 
 use chrono::NaiveDateTime;
 use num_traits::cast::ToPrimitive;
@@ -15,9 +15,6 @@ macro_rules! update {
     }};
 }
 
-// SELECT title, artist, album, file_path, duration
-// FROM songs
-// WHERE file_path = $1
 pub struct DbSong {
     pub title: String,
     pub artist: String,
@@ -35,6 +32,121 @@ impl Display for DbSong {
 }
 
 impl DbSong {
+    pub async fn upsert(&self, db: &PgPool) -> Result<(), JudeHarleyError> {
+        sqlx::query!(
+            r#"
+            INSERT INTO songs (file_path, file_hash, title, artist, album, duration, bitrate)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ON CONFLICT (file_path)
+            DO UPDATE SET file_hash = $2, title = $3, artist = $4, album = $5, duration = $6, bitrate = $7
+            "#,
+            self.file_path,
+            self.file_hash,
+            self.title,
+            self.artist,
+            self.album,
+            self.duration,
+            self.bitrate
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn add_tags(
+        &self,
+        db: &PgPool,
+        tags: &[(String, String)],
+    ) -> Result<(), JudeHarleyError> {
+        for (key, value) in tags {
+            sqlx::query!(
+                r#"
+                INSERT INTO song_tags (song_id, tag, value)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (song_id, tag)
+                DO UPDATE SET value = $3
+                "#,
+                self.file_hash,
+                key,
+                value
+            )
+            .execute(db)
+            .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn delete(&self, db: &PgPool) -> Result<(), JudeHarleyError> {
+        sqlx::query!(
+            r#"
+            DELETE FROM song_tags
+            WHERE song_id = $1
+            "#,
+            self.file_hash
+        )
+        .execute(db)
+        .await?;
+
+        sqlx::query!(
+            r#"
+            DELETE FROM songs
+            WHERE file_hash = $1
+            "#,
+            self.file_hash
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn delete_by_path(db: &PgPool, file_path: &Path) -> Result<(), JudeHarleyError> {
+        let file_path = file_path.display().to_string();
+        sqlx::query!(
+            r#"
+            DELETE FROM song_tags
+            WHERE song_id = $1
+            "#,
+            file_path
+        )
+        .execute(db)
+        .await?;
+
+        sqlx::query!(
+            r#"
+            DELETE FROM songs
+            WHERE file_path = $1
+            "#,
+            file_path
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn prune(db: &PgPool) -> Result<(), JudeHarleyError> {
+        sqlx::query!(
+            r#"
+            DELETE FROM song_tags
+            "#,
+        )
+        .execute(db)
+        .await?;
+
+        sqlx::query!(
+            r#"
+            DELETE FROM songs
+            "#,
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn last_played_song(db: &sqlx::PgPool) -> Result<Option<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSong,
@@ -133,6 +245,25 @@ impl DbSong {
         .map_err(Into::into)
     }
 
+    pub async fn fetch_by_directory(
+        db: &PgPool,
+        directory: &Path,
+    ) -> Result<Vec<Self>, JudeHarleyError> {
+        let directory = directory.display().to_string();
+        sqlx::query_as!(
+            DbSong,
+            r#"
+            SELECT title, artist, album, file_path, duration, file_hash, bitrate
+            FROM songs
+            WHERE file_path LIKE $1
+            "#,
+            format!("{}%", directory)
+        )
+        .fetch_all(db)
+        .await
+        .map_err(Into::into)
+    }
+
     pub async fn search(db: &sqlx::PgPool, query: &str) -> Result<Vec<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSong,
@@ -220,6 +351,29 @@ impl DbSong {
         })?;
 
         Ok(())
+    }
+
+    pub async fn tags(
+        &self,
+        db: &PgPool,
+        file_hash: &str,
+    ) -> Result<Vec<(String, String)>, JudeHarleyError> {
+        let tags = sqlx::query!(
+            r#"
+            SELECT tag, value FROM song_tags
+            WHERE song_id = $1
+            "#,
+            file_hash
+        )
+        .fetch_all(db)
+        .await?;
+
+        let tags = tags
+            .into_iter()
+            .map(|t| (t.tag, t.value))
+            .collect::<Vec<_>>();
+
+        Ok(tags)
     }
 }
 

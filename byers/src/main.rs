@@ -6,7 +6,7 @@ use tracing_unwrap::ResultExt;
 use crate::{
     commands::{
         add_stuff::*,
-        admin::{config::config as config_cmd, control::*, import::*, user::*, *},
+        admin::{config::config as config_cmd, import::*, user::*, *},
         currency::*,
         help::*,
         listen, minigames,
@@ -18,7 +18,7 @@ use crate::{
     oauth2::oauth2_server,
     prelude::*,
 };
-use judeharley::{communication::ByersUnixStream, prelude::*};
+use judeharley::communication::ByersUnixStream;
 
 mod app_config;
 mod commands;

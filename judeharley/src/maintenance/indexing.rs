@@ -5,7 +5,7 @@ use sha2::{Digest, Sha256};
 use sqlx::PgPool;
 use tracing::{error, info, warn};
 
-use crate::{maintenance::rewrite_music_path, prelude::*};
+use crate::{db::DbSong, maintenance::rewrite_music_path, prelude::*};
 
 pub trait WavTag {
     fn read_from_wav_path(path: impl AsRef<Path>) -> Result<Self>
@@ -104,29 +104,19 @@ async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> Result<()> {
         "Indexing {title} by {artist} on {album} at path {}",
         path.display()
     );
-    sqlx::query!(
-        "INSERT INTO songs (title, artist, album, file_path, duration, file_hash, bitrate) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-        title.replace(char::from(0), ""),
-        artist.replace(char::from(0), ""),
-        album.replace(char::from(0), ""),
-        path.display().to_string(),
-        duration,
-        hash_str,
-        bitrate as i32,
-    )
-    .execute(&db)
-    .await?;
 
-    for (key, value) in &meta.tags {
-        sqlx::query!(
-            "INSERT INTO song_tags (song_id, tag, value) VALUES ($1, $2, $3)",
-            hash_str,
-            key,
-            value,
-        )
-        .execute(&db)
-        .await?;
-    }
+    let new_song = DbSong {
+        title: title.replace(char::from(0), ""),
+        artist: artist.replace(char::from(0), ""),
+        album: album.replace(char::from(0), ""),
+        file_path: path.display().to_string(),
+        duration,
+        file_hash: hash_str.clone(),
+        bitrate: bitrate as i32,
+    };
+    new_song.upsert(&db).await?;
+
+    new_song.add_tags(&db, &meta.tags).await?;
 
     Ok(())
 }
@@ -135,12 +125,7 @@ async fn drop_index(db: PgPool, path: &Path, music_path: &Path) -> Result<()> {
     let db_path = rewrite_music_path(path, music_path)?;
     info!("Dropping index for {}", path.display());
 
-    sqlx::query!(
-        "DELETE FROM songs WHERE file_path = $1",
-        db_path.display().to_string()
-    )
-    .execute(&db)
-    .await?;
+    DbSong::delete_by_path(&db, &db_path).await?;
 
     Ok(())
 }
@@ -149,12 +134,10 @@ async fn drop_index_folder(db: PgPool, folder_path: &Path, music_path: &Path) ->
     let db_path = rewrite_music_path(folder_path, music_path)?;
     info!("Dropping index for {}", folder_path.display());
 
-    sqlx::query!(
-        "DELETE FROM songs WHERE file_path LIKE $1",
-        format!("{}%", db_path.display().to_string())
-    )
-    .execute(&db)
-    .await?;
+    let songs = DbSong::fetch_by_directory(&db, &db_path).await?;
+    for song in songs {
+        song.delete(&db).await?;
+    }
 
     Ok(())
 }
