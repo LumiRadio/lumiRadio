@@ -264,6 +264,20 @@ impl DbSong {
         .map_err(Into::into)
     }
 
+    pub async fn fetch_all_paths(db: &PgPool) -> Result<Vec<String>, JudeHarleyError> {
+        let paths = sqlx::query!(
+            r#"
+            SELECT file_path FROM songs
+            "#,
+        )
+        .fetch_all(db)
+        .await?;
+
+        let paths = paths.into_iter().map(|p| p.file_path).collect::<Vec<_>>();
+
+        Ok(paths)
+    }
+
     pub async fn search(db: &sqlx::PgPool, query: &str) -> Result<Vec<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSong,

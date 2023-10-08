@@ -25,7 +25,7 @@ impl WavTag for Id3v2Tag {
 }
 
 #[tracing::instrument(skip(db))]
-async fn index(db: PgPool, directory: PathBuf) -> Result<()> {
+pub async fn index(db: PgPool, directory: PathBuf) -> Result<()> {
     // recursively change all file paths from directory to /music
     let files = walkdir::WalkDir::new(&directory)
         .into_iter()
@@ -68,7 +68,7 @@ async fn index(db: PgPool, directory: PathBuf) -> Result<()> {
 }
 
 #[tracing::instrument(skip(db))]
-async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> Result<()> {
+pub async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> Result<()> {
     let (title, artist, album) = {
         if path.extension().unwrap().to_ascii_lowercase() == "wav" {
             let tag = Id3v2Tag::read_from_wav_path(path)?;
@@ -121,7 +121,7 @@ async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> Result<()> {
     Ok(())
 }
 
-async fn drop_index(db: PgPool, path: &Path, music_path: &Path) -> Result<()> {
+pub async fn drop_index(db: PgPool, path: &Path, music_path: &Path) -> Result<()> {
     let db_path = rewrite_music_path(path, music_path)?;
     info!("Dropping index for {}", path.display());
 
@@ -130,13 +130,29 @@ async fn drop_index(db: PgPool, path: &Path, music_path: &Path) -> Result<()> {
     Ok(())
 }
 
-async fn drop_index_folder(db: PgPool, folder_path: &Path, music_path: &Path) -> Result<()> {
+pub async fn drop_index_folder(db: PgPool, folder_path: &Path, music_path: &Path) -> Result<()> {
     let db_path = rewrite_music_path(folder_path, music_path)?;
     info!("Dropping index for {}", folder_path.display());
 
     let songs = DbSong::fetch_by_directory(&db, &db_path).await?;
     for song in songs {
         song.delete(&db).await?;
+    }
+
+    Ok(())
+}
+
+pub async fn create_playlist(db: PgPool, playlist_path: &Path) -> Result<()> {
+    let songs = DbSong::fetch_all_paths(&db)
+        .await?
+        .into_iter()
+        .map(m3u::path_entry)
+        .collect::<Vec<_>>();
+
+    let mut file = std::fs::File::create(playlist_path)?;
+    let mut writer = m3u::Writer::new(&mut file);
+    for entry in songs {
+        writer.write_entry(&entry)?;
     }
 
     Ok(())

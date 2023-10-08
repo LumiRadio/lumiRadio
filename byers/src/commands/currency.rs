@@ -54,7 +54,7 @@ async fn pay_user(
         ctx.send(|m| {
             m.embed(|e| {
                 e.title("Payment failed").description(format!(
-                    "You don't have enough boondollars to pay that much! You have {}.",
+                    "You don't have enough Boondollars to pay that much! You have {}.",
                     source_db_user.boonbucks
                 ))
             })
@@ -77,8 +77,10 @@ async fn pay_user(
     if source_db_user.id == target_db_user.id {
         ctx.send(|m| {
             m.embed(|e| {
-                e.title("Payment successful")
-                    .description(format!("You paid yourself {} boonbucks. Good job.", amount))
+                e.title("Payment successful").description(format!(
+                    "You paid yourself {} Boondollars. Good job.",
+                    amount
+                ))
             })
         })
         .await?;

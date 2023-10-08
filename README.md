@@ -1,10 +1,21 @@
 # lumiRadio
 
-The Homestuck Radio, now powered by Icecast and Liquidsoap!
+The Homestuck Radio, now powered by Liquidsoap and a bunch of Rust code.
 
-## Setting up
+## Components
 
-1. Clone this repository: `git clone https://github.com/LumiRadio/lumiRadio.git`
-2. Copy the configuration file from `docker/icecast/icecast.example.xml` to `docker/icecast/icecast.xml` and change the passwords in the config
-3. Copy the configuration file from `docker/liquidsoap/script.example.liq` to `docker/liquidsoap/script.liq` and change the passwords in the script
-4. Copy `.env.example` to `.env` and change the environment variables to your needs
+### Byers
+
+A Discord bot, which handles song requests, minigames and other fun stuff.
+
+### Frohike
+
+A CLI tool which handles housekeeping tasks, such as updating the song database when new songs are added.
+
+### Langley
+
+A small, internal webserver which reports the currently playing song to other components.
+
+### JudeHarley
+
+The common library for all components.

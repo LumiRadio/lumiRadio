@@ -702,6 +702,24 @@
     },
     "query": "\n            SELECT title, artist, album, file_path, duration, file_hash, bitrate\n            FROM songs\n            WHERE file_path = $1\n            "
   },
+  "6c158c10d3cb1fade2a181fd784c7d438999c50d8ea861fbaa1d483768f7272f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "file_path",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            SELECT file_path FROM songs\n            "
+  },
   "78274af52af74e9632c7c87e26e3cfd4cc808a14aa9dcacfa340c96e2d2ad32e": {
     "describe": {
       "columns": [],

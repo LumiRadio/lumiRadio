@@ -39,6 +39,7 @@ audiotags = { git = "https://github.com/lumiRadio/audiotags", version = "0.5.0" 
 id3 = "1.8.0"
 metadata = "0.1.8"
 sha2 = "0.10.8"
+m3u = "1.0.0"
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3

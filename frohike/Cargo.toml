@@ -7,25 +7,11 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
-audiotags = { git = "https://github.com/lumiRadio/audiotags" }
-byers = { git = "https://github.com/lumiRadio/lumiRadio", version = "1.1.8" }
+judeharley = { path = "../judeharley" }
+# judeharley = { git = "https://github.com/lumiRadio/lumiRadio", version = "0.1.0" }
 clap = { version = "4.4.0", features = ["derive"] }
 futures-util = "0.3.28"
-id3 = "1.7.0"
-inotify = "0.10.2"
-metadata = "0.1.8"
 notify = "6.1.1"
-oggvorbismeta = "0.1.0"
-sha2 = "0.10.7"
-sqlx = { version = "0.6", features = [
-    "runtime-tokio-rustls",
-    "postgres",
-    "macros",
-    "offline",
-    "chrono",
-    "migrate",
-    "bigdecimal",
-] }
 tokio = { version = "1.32.0", features = ["full"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
