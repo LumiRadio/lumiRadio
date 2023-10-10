@@ -7,6 +7,7 @@ use judeharley::db::DbSong;
 
 pub mod add_stuff;
 pub mod admin;
+pub mod context;
 pub mod currency;
 pub mod help;
 pub mod minigames;

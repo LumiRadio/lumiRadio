@@ -7,6 +7,7 @@ use crate::{
     commands::{
         add_stuff::*,
         admin::{config::config as config_cmd, import::*, user::*, *},
+        context::what_song,
         currency::*,
         help::*,
         listen, minigames,
@@ -50,6 +51,7 @@ async fn main() {
         pvp_context(),
         addcan(),
         addbear(),
+        what_song(),
     ];
 
     info!("Loading {} commands...", commands.len());

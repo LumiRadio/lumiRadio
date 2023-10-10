@@ -147,6 +147,30 @@ impl DbSong {
         Ok(())
     }
 
+    pub async fn song_played_at(
+        db: &PgPool,
+        timestamp: NaiveDateTime,
+    ) -> Result<Option<Self>, JudeHarleyError> {
+        sqlx::query_as!(
+            DbSong,
+            r#"
+            SELECT songs.title, songs.artist, songs.album, songs.file_path, songs.duration, songs.file_hash, songs.bitrate
+            FROM songs
+            INNER JOIN (
+                SELECT song_id
+                FROM played_songs
+                WHERE played_at <= $1
+                ORDER BY played_at DESC
+                LIMIT 1
+            ) AS latest_played_song ON songs.file_hash = latest_played_song.song_id;
+            "#,
+            timestamp
+        )
+        .fetch_optional(db)
+        .await
+        .map_err(Into::into)
+    }
+
     pub async fn last_played_song(db: &sqlx::PgPool) -> Result<Option<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSong,
