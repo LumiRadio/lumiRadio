@@ -391,17 +391,13 @@ impl DbSong {
         Ok(())
     }
 
-    pub async fn tags(
-        &self,
-        db: &PgPool,
-        file_hash: &str,
-    ) -> Result<Vec<(String, String)>, JudeHarleyError> {
+    pub async fn tags(&self, db: &PgPool) -> Result<Vec<(String, String)>, JudeHarleyError> {
         let tags = sqlx::query!(
             r#"
             SELECT tag, value FROM song_tags
             WHERE song_id = $1
             "#,
-            file_hash
+            self.file_hash
         )
         .fetch_all(db)
         .await?;

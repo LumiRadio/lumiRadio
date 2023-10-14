@@ -39,7 +39,10 @@ pub async fn control_cmd(
 #[poise::command(slash_command, ephemeral, owners_only)]
 pub async fn song_info(
     ctx: ApplicationContext<'_>,
-    #[description = "Song to get info about"] song: String,
+    #[description = "Song to get info about"]
+    #[rest]
+    #[autocomplete = "autocomplete_songs"]
+    song: String,
 ) -> Result<(), Error> {
     let data = ctx.data;
 
@@ -47,6 +50,31 @@ pub async fn song_info(
         ctx.send(|m| m.content("Song not found.")).await?;
         return Ok(());
     };
+
+    let tags = song.tags(&data.db).await?;
+    let tags_str = tags
+        .into_iter()
+        .map(|t| format!("{} = {}", t.0, t.1))
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title("Song Info")
+                .description(format!(
+                    "The song {} - {} has the following information:",
+                    &song.artist, &song.title
+                ))
+                .field("Title", &song.title, true)
+                .field("Artist", &song.artist, true)
+                .field("Album", &song.album, true)
+                .field("Bitrate", song.bitrate, true)
+                .field("File Path", &song.file_path, true)
+                .field("ID", &song.file_hash, true)
+                .field("Tags", &tags_str, true)
+        })
+    })
+    .await?;
 
     Ok(())
 }
