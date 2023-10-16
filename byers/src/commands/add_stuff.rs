@@ -27,39 +27,8 @@ async fn addcan_action(ctx: Context<'_>) -> Result<(), Error> {
         update_activity(ctx.data(), ctx.author().id, ctx.channel_id(), guild_id).await?;
     }
 
-    if ctx
-        .data()
-        .redis_pool
-        .get::<Option<String>, _>("can")
-        .await?
-        .is_some()
-    {
-        return Ok(());
-    }
-    ctx.data()
-        .redis_pool
-        .set("can", "true", Some(Expiration::EX(35)), None, false)
-        .await?;
-
-    add_can(&ctx.data().db, ctx.author().id.0).await?;
-
     let can_count = DbCan::count(&ctx.data().db).await?;
-    let can_name = can_name("Can", can_count);
-    ctx.send(|m| {
-        m.embed(|e| {
-            e.title(&can_name)
-                .description(format!("You place a can in {can_name}. There's now {can_count} cans. Someone can add another in 35 seconds."))
-        })
-    }).await?;
-
-    Ok(())
-}
-
-async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(ctx.data(), ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
-
+    let can_town_name = can_name("Can", can_count);
     if ctx
         .data()
         .redis_pool
@@ -69,7 +38,7 @@ async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
     {
         ctx.send(|m| {
             m.embed(|e| {
-                e.title("Bear Town")
+                e.title(&can_town_name)
                     .description("Woah, slow down there! Rome wasn't built in a day!")
             })
             .ephemeral(true)
@@ -86,11 +55,55 @@ async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
     add_can(&ctx.data().db, ctx.author().id.0).await?;
 
     let can_count = DbCan::count(&ctx.data().db).await?;
-    let can_name = can_name("Bear", can_count);
+    let can_town_name = can_name("Can", can_count);
     ctx.send(|m| {
         m.embed(|e| {
-            e.title(&can_name)
-                .description(format!("You place a bear in {can_name}. There's now {can_count} bears. Someone can add another in 35 seconds."))
+            e.title(&can_town_name)
+                .description(format!("You place a can in {can_town_name}. There's now {can_count} cans. Someone can add another in 35 seconds."))
+        })
+    }).await?;
+
+    Ok(())
+}
+
+async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
+    if let Some(guild_id) = ctx.guild_id() {
+        update_activity(ctx.data(), ctx.author().id, ctx.channel_id(), guild_id).await?;
+    }
+
+    let can_count = DbCan::count(&ctx.data().db).await?;
+    let can_town_name = can_name("Bear", can_count);
+    if ctx
+        .data()
+        .redis_pool
+        .get::<Option<String>, _>("can")
+        .await?
+        .is_some()
+    {
+        ctx.send(|m| {
+            m.embed(|e| {
+                e.title(&can_town_name)
+                    .description("Woah, slow down there! Rome wasn't built in a day!")
+            })
+            .ephemeral(true)
+        })
+        .await?;
+
+        return Ok(());
+    }
+    ctx.data()
+        .redis_pool
+        .set("can", "true", Some(Expiration::EX(35)), None, false)
+        .await?;
+
+    add_can(&ctx.data().db, ctx.author().id.0).await?;
+
+    let can_count = DbCan::count(&ctx.data().db).await?;
+    let can_town_name = can_name("Bear", can_count);
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title(&can_town_name)
+                .description(format!("You place a bear in {can_town_name}. There's now {can_count} bears. Someone can add another in 35 seconds."))
         })
     }).await?;
 

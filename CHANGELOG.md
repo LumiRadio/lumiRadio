@@ -14,10 +14,12 @@ and this project adheres to [Semantic Versioning].
 - Added `/config manage_role` for automatically assigning roles based on interaction time
 - Added `/config delete_role_config` for removing rules for automatically assigning roles.
   - This does NOT delete the role!
+- Added `/admin song_info` for getting information about a song.
 - Added changelog comparison links to the changelog
 - Added functionality for frohike to drop indices on moved and deleted directories
 - Added bitrate to song metadata
 - Added tags to song metadata
+- Added pre and post messages to `/pvp`
 
 ### Changed
 
@@ -29,10 +31,13 @@ and this project adheres to [Semantic Versioning].
 - Changed "Can Town" to "Can City" and added more names based on the can count
 - Changed `/boondollars` to show hours in increments of 5 minutes
 - Changed `/pvp` to only draw as much money as the challenger has when fighting Byers (so you can't lose more than you have)
+- Updated sqlx to 0.7.1
 
 ### Fixed
 
 - Fixed frohike not being able to drop indices on moved directories
+- Fixed `/addcan` not returning any message when it's on cooldown
+
 ## [1.1.9] - 2023-10-06
 
 ### Fixed
