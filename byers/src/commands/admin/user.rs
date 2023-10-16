@@ -22,46 +22,95 @@ pub enum UserParameter {
     Boonbucks,
     #[name = "Migrated"]
     Migrated,
+}
+
+#[derive(Debug, Clone, poise::ChoiceParameter)]
+pub enum UserGristParameter {
     #[name = "Amber Grist"]
-    AmberGrist,
+    Amber,
     #[name = "Amethyst Grist"]
-    AmethystGrist,
+    Amethyst,
     #[name = "Artifact Grist"]
-    ArtifactGrist,
+    Artifact,
     #[name = "Caulk Grist"]
-    CaulkGrist,
+    Caulk,
     #[name = "Chalk Grist"]
-    ChalkGrist,
+    Chalk,
     #[name = "Cobalt Grist"]
-    CobaltGrist,
+    Cobalt,
     #[name = "Diamond Grist"]
-    DiamondGrist,
+    Diamond,
     #[name = "Garnet Grist"]
-    GarnetGrist,
+    Garnet,
     #[name = "Gold Grist"]
-    GoldGrist,
+    Gold,
     #[name = "Iodine Grist"]
-    IodineGrist,
+    Iodine,
     #[name = "Marble Grist"]
-    MarbleGrist,
+    Marble,
     #[name = "Mercury Grist"]
-    MercuryGrist,
+    Mercury,
     #[name = "Quartz Grist"]
-    QuartzGrist,
+    Quartz,
     #[name = "Ruby Grist"]
-    RubyGrist,
+    Ruby,
     #[name = "Rust Grist"]
-    RustGrist,
+    Rust,
     #[name = "Shale Grist"]
-    ShaleGrist,
+    Shale,
     #[name = "Sulfur Grist"]
-    SulfurGrist,
+    Sulfur,
     #[name = "Tar Grist"]
-    TarGrist,
+    Tar,
     #[name = "Uranium Grist"]
-    UraniumGrist,
+    Uranium,
     #[name = "Zillium Grist"]
-    ZilliumGrist,
+    Zillium,
+}
+
+/// Gets the grist of a user
+#[poise::command(slash_command, ephemeral, owners_only)]
+pub async fn get_grist(
+    ctx: ApplicationContext<'_>,
+    #[description = "The user to inspect"] user: User,
+    #[description = "The grist type to inspect"] grist_type: UserGristParameter,
+) -> Result<(), Error> {
+    let data = ctx.data();
+
+    let db_user = DbUser::fetch_or_insert(&data.db, user.id.0 as i64).await?;
+    let value = match grist_type {
+        UserGristParameter::Amber => db_user.amber.to_string(),
+        UserGristParameter::Amethyst => db_user.amethyst.to_string(),
+        UserGristParameter::Artifact => db_user.artifact.to_string(),
+        UserGristParameter::Caulk => db_user.caulk.to_string(),
+        UserGristParameter::Chalk => db_user.chalk.to_string(),
+        UserGristParameter::Cobalt => db_user.cobalt.to_string(),
+        UserGristParameter::Diamond => db_user.diamond.to_string(),
+        UserGristParameter::Garnet => db_user.garnet.to_string(),
+        UserGristParameter::Gold => db_user.gold.to_string(),
+        UserGristParameter::Iodine => db_user.iodine.to_string(),
+        UserGristParameter::Marble => db_user.marble.to_string(),
+        UserGristParameter::Mercury => db_user.mercury.to_string(),
+        UserGristParameter::Quartz => db_user.quartz.to_string(),
+        UserGristParameter::Ruby => db_user.ruby.to_string(),
+        UserGristParameter::Rust => db_user.rust.to_string(),
+        UserGristParameter::Shale => db_user.shale.to_string(),
+        UserGristParameter::Sulfur => db_user.sulfur.to_string(),
+        UserGristParameter::Tar => db_user.tar.to_string(),
+        UserGristParameter::Uranium => db_user.uranium.to_string(),
+        UserGristParameter::Zillium => db_user.zillium.to_string(),
+    };
+
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title(format!("User {}", user.name))
+                .field("Property", grist_type.to_string(), true)
+                .field("Value", value, true)
+        })
+    })
+    .await?;
+
+    Ok(())
 }
 
 /// Gets a user's property
@@ -78,26 +127,6 @@ pub async fn get(
         UserParameter::WatchedTime => db_user.watched_time.to_string(),
         UserParameter::Boonbucks => db_user.boonbucks.to_string(),
         UserParameter::Migrated => db_user.migrated.to_string(),
-        UserParameter::AmberGrist => db_user.amber.to_string(),
-        UserParameter::AmethystGrist => db_user.amethyst.to_string(),
-        UserParameter::ArtifactGrist => db_user.artifact.to_string(),
-        UserParameter::CaulkGrist => db_user.caulk.to_string(),
-        UserParameter::ChalkGrist => db_user.chalk.to_string(),
-        UserParameter::CobaltGrist => db_user.cobalt.to_string(),
-        UserParameter::DiamondGrist => db_user.diamond.to_string(),
-        UserParameter::GarnetGrist => db_user.garnet.to_string(),
-        UserParameter::GoldGrist => db_user.gold.to_string(),
-        UserParameter::IodineGrist => db_user.iodine.to_string(),
-        UserParameter::MarbleGrist => db_user.marble.to_string(),
-        UserParameter::MercuryGrist => db_user.mercury.to_string(),
-        UserParameter::QuartzGrist => db_user.quartz.to_string(),
-        UserParameter::RubyGrist => db_user.ruby.to_string(),
-        UserParameter::RustGrist => db_user.rust.to_string(),
-        UserParameter::ShaleGrist => db_user.shale.to_string(),
-        UserParameter::SulfurGrist => db_user.sulfur.to_string(),
-        UserParameter::TarGrist => db_user.tar.to_string(),
-        UserParameter::UraniumGrist => db_user.uranium.to_string(),
-        UserParameter::ZilliumGrist => db_user.zillium.to_string(),
     };
 
     ctx.send(|m| {
@@ -105,6 +134,92 @@ pub async fn get(
             e.title(format!("User {}", user.name))
                 .field("Property", property.to_string(), true)
                 .field("Value", value, true)
+        })
+    })
+    .await?;
+
+    Ok(())
+}
+
+/// Sets a user's grist
+#[poise::command(slash_command, ephemeral, owners_only)]
+pub async fn set_grist(
+    ctx: ApplicationContext<'_>,
+    #[description = "The user to edit"] user: User,
+    #[description = "The grist type to edit"] grist_type: UserGristParameter,
+    #[description = "The value to set the grist to"] value: i32,
+) -> Result<(), Error> {
+    let data = ctx.data();
+
+    let mut db_user = DbUser::fetch_or_insert(&data.db, user.id.0 as i64).await?;
+    match grist_type {
+        UserGristParameter::Amber => {
+            db_user.amber = value;
+        }
+        UserGristParameter::Amethyst => {
+            db_user.amethyst = value;
+        }
+        UserGristParameter::Artifact => {
+            db_user.artifact = value;
+        }
+        UserGristParameter::Caulk => {
+            db_user.caulk = value;
+        }
+        UserGristParameter::Chalk => {
+            db_user.chalk = value;
+        }
+        UserGristParameter::Cobalt => {
+            db_user.cobalt = value;
+        }
+        UserGristParameter::Diamond => {
+            db_user.diamond = value;
+        }
+        UserGristParameter::Garnet => {
+            db_user.garnet = value;
+        }
+        UserGristParameter::Gold => {
+            db_user.gold = value;
+        }
+        UserGristParameter::Iodine => {
+            db_user.iodine = value;
+        }
+        UserGristParameter::Marble => {
+            db_user.marble = value;
+        }
+        UserGristParameter::Mercury => {
+            db_user.mercury = value;
+        }
+        UserGristParameter::Quartz => {
+            db_user.quartz = value;
+        }
+        UserGristParameter::Ruby => {
+            db_user.ruby = value;
+        }
+        UserGristParameter::Rust => {
+            db_user.rust = value;
+        }
+        UserGristParameter::Shale => {
+            db_user.shale = value;
+        }
+        UserGristParameter::Sulfur => {
+            db_user.sulfur = value;
+        }
+        UserGristParameter::Tar => {
+            db_user.tar = value;
+        }
+        UserGristParameter::Uranium => {
+            db_user.uranium = value;
+        }
+        UserGristParameter::Zillium => {
+            db_user.zillium = value;
+        }
+    }
+    db_user.update(&data.db).await?;
+
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title("Successfully set user grist")
+                .description(format!("Successfully set {} to {}", grist_type, value))
         })
     })
     .await?;
@@ -132,66 +247,6 @@ pub async fn set(
         }
         UserParameter::Migrated => {
             db_user.migrated = value.parse::<bool>()?;
-        }
-        UserParameter::AmberGrist => {
-            db_user.amber = value.parse::<i32>()?;
-        }
-        UserParameter::AmethystGrist => {
-            db_user.amethyst = value.parse::<i32>()?;
-        }
-        UserParameter::ArtifactGrist => {
-            db_user.artifact = value.parse::<i32>()?;
-        }
-        UserParameter::CaulkGrist => {
-            db_user.caulk = value.parse::<i32>()?;
-        }
-        UserParameter::ChalkGrist => {
-            db_user.chalk = value.parse::<i32>()?;
-        }
-        UserParameter::CobaltGrist => {
-            db_user.cobalt = value.parse::<i32>()?;
-        }
-        UserParameter::DiamondGrist => {
-            db_user.diamond = value.parse::<i32>()?;
-        }
-        UserParameter::GarnetGrist => {
-            db_user.garnet = value.parse::<i32>()?;
-        }
-        UserParameter::GoldGrist => {
-            db_user.gold = value.parse::<i32>()?;
-        }
-        UserParameter::IodineGrist => {
-            db_user.iodine = value.parse::<i32>()?;
-        }
-        UserParameter::MarbleGrist => {
-            db_user.marble = value.parse::<i32>()?;
-        }
-        UserParameter::MercuryGrist => {
-            db_user.mercury = value.parse::<i32>()?;
-        }
-        UserParameter::QuartzGrist => {
-            db_user.quartz = value.parse::<i32>()?;
-        }
-        UserParameter::RubyGrist => {
-            db_user.ruby = value.parse::<i32>()?;
-        }
-        UserParameter::RustGrist => {
-            db_user.rust = value.parse::<i32>()?;
-        }
-        UserParameter::ShaleGrist => {
-            db_user.shale = value.parse::<i32>()?;
-        }
-        UserParameter::SulfurGrist => {
-            db_user.sulfur = value.parse::<i32>()?;
-        }
-        UserParameter::TarGrist => {
-            db_user.tar = value.parse::<i32>()?;
-        }
-        UserParameter::UraniumGrist => {
-            db_user.uranium = value.parse::<i32>()?;
-        }
-        UserParameter::ZilliumGrist => {
-            db_user.zillium = value.parse::<i32>()?;
         }
     }
     db_user.update(&data.db).await?;

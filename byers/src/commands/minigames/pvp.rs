@@ -213,8 +213,38 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
         return Ok(());
     }
 
+    // {player2} accepted {player1}'s challenge!
+    // The two warriors face each other, from opposite ends of the colosseum. The crowd roars... The wind is howling... Somewhere, a clock ticks, and the fate of our heroes hangs in the balance. FIGHT!
+    // The wind picks up, consuming the colosseum in a wild sandstorm.
+    // The dust settles and {player1/player2} emerges victorious!
+    mci.create_interaction_response(ctx.serenity_context(), |r| {
+        r.kind(InteractionResponseType::UpdateMessage)
+            .interaction_response_data(|m| {
+                m.embed(|e| {
+                    PvP::prepare_embed(e).description(format!(
+                        "{} accepted {}'s challenge!",
+                        user.name,
+                        ctx.author()
+                    ))
+                })
+                .components(|c| c)
+            })
+    })
+    .await?;
+    tokio::time::sleep(Duration::from_secs(5)).await;
+    handle
+        .edit(poise::Context::Application(ctx), |m| {
+            m.embed(|e| {
+                PvP::prepare_embed(e)
+                    .description("The two warriors face each other, from opposite ends of the colosseum. The crowd roars... The wind is howling... Somewhere, a clock ticks, and the fate of our heroes hangs in the balance. FIGHT! Suddenly, the wind picks up, consuming the colosseum in a wild sandstorm.")
+            })
+        })
+        .await?;
+
     let game = PvP;
     let result = game.play().await?;
+
+    tokio::time::sleep(Duration::from_secs(5)).await;
 
     match result {
         PvPResult::Player1 => {
@@ -223,20 +253,16 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
             challenger.update(&data.db).await?;
             challenged.update(&data.db).await?;
 
-            mci.create_interaction_response(ctx.serenity_context(), |r| {
-                r.kind(InteractionResponseType::UpdateMessage)
-                    .interaction_response_data(|d| {
-                        d.embed(|e| {
-                            PvP::prepare_embed(e).description(format!(
-                                "{} challenged {} to a duel and won!",
-                                ctx.author().name,
-                                user.name,
-                            ))
-                        })
-                        .components(|c| c)
+            handle
+                .edit(poise::Context::Application(ctx), |m| {
+                    m.embed(|e| {
+                        PvP::prepare_embed(e).description(format!(
+                            "The dust settles and {} emerges victorious!",
+                            ctx.author().name,
+                        ))
                     })
-            })
-            .await?;
+                })
+                .await?;
         }
         PvPResult::Player2 => {
             challenged.boonbucks += 10;
@@ -244,20 +270,16 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
             challenged.update(&data.db).await?;
             challenger.update(&data.db).await?;
 
-            mci.create_interaction_response(ctx.serenity_context(), |r| {
-                r.kind(InteractionResponseType::UpdateMessage)
-                    .interaction_response_data(|d| {
-                        d.embed(|e| {
-                            PvP::prepare_embed(e).description(format!(
-                                "{} challenged {} to a duel and lost!",
-                                ctx.author().name,
-                                user.name,
-                            ))
-                        })
-                        .components(|c| c)
+            handle
+                .edit(poise::Context::Application(ctx), |m| {
+                    m.embed(|e| {
+                        PvP::prepare_embed(e).description(format!(
+                            "The dust settles and {} emerges victorious!",
+                            user.name,
+                        ))
                     })
-            })
-            .await?;
+                })
+                .await?;
         }
     }
 

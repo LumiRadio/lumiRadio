@@ -273,6 +273,10 @@ impl DbSong {
         db: &PgPool,
         directory: &Path,
     ) -> Result<Vec<Self>, JudeHarleyError> {
+        if directory.is_file() {
+            return Ok(vec![]);
+        }
+
         let directory = directory.display().to_string();
         sqlx::query_as!(
             DbSong,

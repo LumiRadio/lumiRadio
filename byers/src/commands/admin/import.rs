@@ -27,6 +27,45 @@ pub async fn autocomplete_channels(
         })
 }
 
+/// Manually insert user data for a user
+#[poise::command(slash_command, ephemeral, owners_only)]
+pub async fn import_manually(
+    ctx: ApplicationContext<'_>,
+    #[description = "The user you want to import data for"] user: User,
+    #[description = "The amount of hours to import"] hours: i32,
+    #[description = "The amount of points to import"] points: i32,
+) -> Result<(), Error> {
+    let data = ctx.data();
+
+    let mut user = DbUser::fetch_or_insert(&data.db, user.id.0 as i64).await?;
+    if user.migrated {
+        ctx.send(|m| {
+            m.embed(|e| {
+                e.title("User already migrated")
+                    .description("This user had their data already imported!")
+            })
+        })
+        .await?;
+
+        return Ok(());
+    }
+
+    user.watched_time += BigDecimal::from(hours);
+    user.boonbucks += points;
+    user.migrated = true;
+    user.update(&data.db).await?;
+
+    ctx.send(|m| {
+        m.embed(|e| {
+            e.title("Imported user data")
+                .description(format!("Imported {} hours and {} points", hours, points))
+        })
+    })
+    .await?;
+
+    Ok(())
+}
+
 /// Import user data from SLCB
 #[poise::command(slash_command, ephemeral, owners_only)]
 pub async fn import(

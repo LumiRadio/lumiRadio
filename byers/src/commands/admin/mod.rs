@@ -1,5 +1,6 @@
 use crate::commands::admin::control::{control_cmd, queue, reconnect, skip, song_info, volume};
 
+use crate::commands::admin::import::import_manually;
 use crate::prelude::*;
 
 pub mod config;
@@ -12,7 +13,15 @@ pub mod user;
     slash_command,
     ephemeral,
     owners_only,
-    subcommands("volume", "control_cmd", "skip", "queue", "reconnect", "song_info"),
+    subcommands(
+        "volume",
+        "control_cmd",
+        "skip",
+        "queue",
+        "reconnect",
+        "song_info",
+        "import_manually"
+    ),
     subcommand_required
 )]
 pub async fn admin(_: ApplicationContext<'_>) -> Result<(), Error> {
