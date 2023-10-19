@@ -7,14 +7,6 @@ edition = "2021"
 
 [dependencies]
 chrono = { version = "0.4.24", features = ["serde"] }
-sqlx = { version = "0.7", features = [
-    "runtime-tokio-rustls",
-    "postgres",
-    "macros",
-    "chrono",
-    "migrate",
-    "bigdecimal",
-] }
 serde = { version = "1.0.160", features = ["derive"] }
 tokio = { version = "1.27.0", features = ["full"] }
 tracing = "0.1.37"
@@ -40,5 +32,5 @@ metadata = "0.1.8"
 sha2 = "0.10.8"
 m3u = "1.0.0"
 
-[profile.dev.package.sqlx-macros]
-opt-level = 3
+[dependencies.sqlx]
+workspace = true

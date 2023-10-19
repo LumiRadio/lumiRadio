@@ -1,7 +1,8 @@
 [package]
 name = "byers"
-version = "1.1.9"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
 
 [dependencies]
 chrono = { version = "0.4.24", features = ["serde"] }
@@ -35,8 +36,5 @@ futures = "0.3.28"
 ellipse = "0.2.0"
 situwaition = { version = "0.3.2", features = ["tokio"] }
 serde_json = "1.0.107"
-# judeharley = { git = "https://github.com/lumiRadio/lumiRadio", version = "0.1.0" }
-judeharley = { path = "../judeharley" }
-
-[profile.dev.package.sqlx-macros]
-opt-level = 3
+judeharley = { git = "https://github.com/lumiRadio/lumiRadio" }
+# judeharley = { path = "../judeharley" }

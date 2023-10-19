@@ -1230,6 +1230,7 @@ dependencies = [
 [[package]]
 name = "judeharley"
 version = "0.1.0"
+source = "git+https://github.com/lumiRadio/lumiRadio#78d7cfc9cc4d4b60e2a9ef17fec36c7881ff1ddc"
 dependencies = [
  "async-trait",
  "audiotags",

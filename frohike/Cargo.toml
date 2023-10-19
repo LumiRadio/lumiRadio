@@ -1,14 +1,15 @@
 [package]
 name = "frohike"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anyhow = "1.0.75"
-judeharley = { path = "../judeharley" }
-# judeharley = { git = "https://github.com/lumiRadio/lumiRadio", version = "0.1.0" }
+# judeharley = { path = "../judeharley" }
+judeharley = { git = "https://github.com/lumiRadio/lumiRadio" }
 clap = { version = "4.4.0", features = ["derive"] }
 futures-util = "0.3.28"
 notify = "6.1.1"
@@ -16,6 +17,3 @@ tokio = { version = "1.32.0", features = ["full"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 walkdir = "2.3.3"
-
-[profile.dev.package.sqlx-macros]
-opt-level = 3

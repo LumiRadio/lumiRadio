@@ -1,0 +1,20 @@
+[workspace]
+members = ["judeharley", "byers", "langley", "frohike"]
+
+[workspace.package]
+version = "1.2.0"
+authors = ["cozyGalvinism <jean@der-capta.in>"]
+edition = "2021"
+
+[workspace.dependencies]
+sqlx = { version = "0.7", features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "macros",
+    "chrono",
+    "migrate",
+    "bigdecimal",
+] }
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3

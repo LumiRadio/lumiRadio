@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 use judeharley::{db::DbSong, PgPool};
 use notify::Watcher;
 use tokio::sync::{mpsc::Receiver, Mutex};
-use tracing::{debug, error};
+use tracing::{debug, error, info};
 
 #[derive(Parser)]
 #[command(author, about, version)]
@@ -39,6 +39,8 @@ struct Indexing {
     dry_run: bool,
     #[clap(short = 'D', long)]
     database_url: String,
+    #[clap(short = 'p', long)]
+    playlist: Option<PathBuf>,
 
     path: PathBuf,
 }
@@ -209,7 +211,13 @@ async fn main() -> anyhow::Result<()> {
             debug!("indexing");
             let pool = judeharley::connect_database(&indexing.database_url).await?;
 
-            judeharley::maintenance::indexing::index(pool, indexing.path).await?;
+            judeharley::maintenance::indexing::index(pool.clone(), indexing.path).await?;
+
+            if let Some(playlist) = indexing.playlist {
+                info!("generating playlist");
+
+                judeharley::maintenance::indexing::create_playlist(pool, &playlist).await?;
+            }
         }
         SubCommand::HouseKeeping(house_keeping) => {
             debug!("house keeping");
