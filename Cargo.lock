@@ -512,7 +512,7 @@ dependencies = [
  "ellipse",
  "fred",
  "futures",
- "judeharley 0.1.0 (git+https://github.com/lumiRadio/lumiRadio)",
+ "judeharley 0.1.0",
  "lazy_static",
  "num-traits",
  "oauth2",
@@ -1185,7 +1185,7 @@ dependencies = [
  "anyhow",
  "clap 4.4.6",
  "futures-util",
- "judeharley 0.1.0 (git+https://github.com/lumiRadio/lumiRadio)",
+ "judeharley 0.1.0",
  "notify",
  "tokio",
  "tracing",
@@ -1715,6 +1715,7 @@ dependencies = [
 [[package]]
 name = "judeharley"
 version = "0.1.0"
+source = "git+https://github.com/lumiRadio/lumiRadio#78d7cfc9cc4d4b60e2a9ef17fec36c7881ff1ddc"
 dependencies = [
  "async-trait",
  "audiotags",
@@ -1743,8 +1744,7 @@ dependencies = [
 
 [[package]]
 name = "judeharley"
-version = "0.1.0"
-source = "git+https://github.com/lumiRadio/lumiRadio#78d7cfc9cc4d4b60e2a9ef17fec36c7881ff1ddc"
+version = "1.2.0"
 dependencies = [
  "async-trait",
  "audiotags",
@@ -1793,7 +1793,7 @@ dependencies = [
 
 [[package]]
 name = "langley"
-version = "0.1.0"
+version = "1.2.0"
 dependencies = [
  "axum",
  "fred",
