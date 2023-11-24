@@ -54,18 +54,50 @@ impl DbSong {
         Ok(())
     }
 
+    pub async fn insert(&self, db: &PgPool) -> Result<(), JudeHarleyError> {
+        if let Some(_) = Self::fetch(db, &self.file_path).await? {
+            return Ok(());
+        }
+
+        sqlx::query!(
+            r#"
+            INSERT INTO songs (file_path, file_hash, title, artist, album, duration, bitrate)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            "#,
+            self.file_path,
+            self.file_hash,
+            self.title,
+            self.artist,
+            self.album,
+            self.duration,
+            self.bitrate
+        )
+        .execute(db)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn add_tags(
         &self,
         db: &PgPool,
         tags: &[(String, String)],
     ) -> Result<(), JudeHarleyError> {
+        sqlx::query!(
+            r#"
+            DELETE FROM song_tags
+            WHERE song_id = $1
+            "#,
+            self.file_hash
+        )
+        .execute(db)
+        .await?;
+
         for (key, value) in tags {
             sqlx::query!(
                 r#"
                 INSERT INTO song_tags (song_id, tag, value)
                 VALUES ($1, $2, $3)
-                ON CONFLICT (song_id, tag)
-                DO UPDATE SET value = $3
                 "#,
                 self.file_hash,
                 key,

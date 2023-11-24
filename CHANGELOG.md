@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning].
 - Added bitrate to song metadata
 - Added tags to song metadata
 - Added pre and post messages to `/pvp`
+- Added back the hydration reminder
 
 ### Changed
 

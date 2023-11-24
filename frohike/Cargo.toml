@@ -8,8 +8,8 @@ authors.workspace = true
 
 [dependencies]
 anyhow = "1.0.75"
-# judeharley = { path = "../judeharley" }
-judeharley = { git = "https://github.com/lumiRadio/lumiRadio" }
+judeharley = { path = "../judeharley" }
+# judeharley = { git = "https://github.com/lumiRadio/lumiRadio" }
 clap = { version = "4.4.0", features = ["derive"] }
 futures-util = "0.3.28"
 notify = "6.1.1"

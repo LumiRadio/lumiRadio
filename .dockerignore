@@ -1,0 +1,12 @@
+target
+*.env
+Dockerfile
+docker-compose.yml
+docker-compose.dev.yml
+README.md
+SONG_CHANGELOG.md
+CHANGELOG.md
+metadata/
+slcb_data/
+docker/icecast
+docker/liquidsoap
