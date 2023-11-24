@@ -47,7 +47,7 @@ pub async fn index(db: PgPool, directory: PathBuf) -> Result<()> {
 
     // prune database
     info!("Pruning indexing database");
-    sqlx::query!("DELETE FROM songs").execute(&db).await?;
+    DbSong::prune(&db).await?;
 
     let len = files.len();
     let mut failed_files = vec![];
@@ -114,7 +114,7 @@ pub async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> Result<()
         file_hash: hash_str.clone(),
         bitrate: bitrate as i32,
     };
-    new_song.upsert(&db).await?;
+    new_song.insert(&db).await?;
 
     new_song.add_tags(&db, &meta.tags).await?;
 

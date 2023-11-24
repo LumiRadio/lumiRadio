@@ -1,4 +1,6 @@
-use crate::commands::admin::control::{control_cmd, queue, reconnect, skip, song_info, volume};
+use crate::commands::admin::control::{
+    control_cmd, queue, reconnect, reindex, skip, song_info, volume,
+};
 
 use crate::commands::admin::import::import_manually;
 use crate::prelude::*;
@@ -20,7 +22,8 @@ pub mod user;
         "queue",
         "reconnect",
         "song_info",
-        "import_manually"
+        "import_manually",
+        "reindex"
     ),
     subcommand_required
 )]

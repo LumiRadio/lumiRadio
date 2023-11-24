@@ -1,4 +1,5 @@
 use poise::serenity_prelude::{Channel, ChannelId, Role, UserId};
+use serde::de;
 
 use crate::prelude::*;
 use judeharley::db::{DbCan, DbServerChannelConfig, DbServerConfig, DbServerRoleConfig, DbUser};
@@ -139,6 +140,7 @@ pub async fn manage_channel(
     #[description = "Channel to manage"] channel: Channel,
     #[description = "Allow point accumulation"] allow_point_accumulation: bool,
     #[description = "Allow watch time accumulation"] allow_watch_time_accumulation: bool,
+    #[description = "Remind people to hydrate in here"] hydration_reminder: bool,
 ) -> Result<(), Error> {
     let data = ctx.data;
 
@@ -150,6 +152,7 @@ pub async fn manage_channel(
     .await?;
     channel_config.allow_point_accumulation = allow_point_accumulation;
     channel_config.allow_watch_time_accumulation = allow_watch_time_accumulation;
+    channel_config.hydration_reminder = hydration_reminder;
     channel_config.update(&data.db).await?;
 
     ctx.send(|m| {
@@ -163,6 +166,11 @@ pub async fn manage_channel(
                 .field(
                     "Allow watch time accumulation",
                     allow_watch_time_accumulation.to_string(),
+                    true,
+                )
+                .field(
+                    "Remind people to hydrate",
+                    hydration_reminder.to_string(),
                     true,
                 )
         })

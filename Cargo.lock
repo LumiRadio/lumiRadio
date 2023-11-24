@@ -512,7 +512,7 @@ dependencies = [
  "ellipse",
  "fred",
  "futures",
- "judeharley 0.1.0",
+ "judeharley",
  "lazy_static",
  "num-traits",
  "oauth2",
@@ -1185,7 +1185,7 @@ dependencies = [
  "anyhow",
  "clap 4.4.6",
  "futures-util",
- "judeharley 0.1.0",
+ "judeharley",
  "notify",
  "tokio",
  "tracing",
@@ -1710,36 +1710,6 @@ dependencies = [
  "pest",
  "pest_derive",
  "serde",
-]
-
-[[package]]
-name = "judeharley"
-version = "0.1.0"
-source = "git+https://github.com/lumiRadio/lumiRadio#78d7cfc9cc4d4b60e2a9ef17fec36c7881ff1ddc"
-dependencies = [
- "async-trait",
- "audiotags",
- "chrono",
- "fred",
- "futures",
- "id3",
- "lazy_static",
- "m3u",
- "metadata",
- "num-traits",
- "once_cell",
- "rand",
- "reqwest",
- "serde",
- "serde_json",
- "serde_repr",
- "sha2 0.10.8",
- "sqlx",
- "thiserror",
- "tokio",
- "tokio-stream",
- "tracing",
- "walkdir",
 ]
 
 [[package]]

@@ -13,6 +13,21 @@ pub async fn reconnect(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+/// Reindexes the song database
+#[poise::command(slash_command, ephemeral, owners_only)]
+pub async fn reindex(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    let data = ctx.data;
+    let mut comms = ctx.data.comms.lock().await;
+
+    ctx.defer_ephemeral().await?;
+    judeharley::maintenance::indexing::index(data.db.clone(), "/music".into()).await?;
+    comms.send("music.reload").await?;
+    ctx.send(|m| m.content("Reindexed the song database."))
+        .await?;
+
+    Ok(())
+}
+
 /// Sends a command to the Liquidsoap server
 #[poise::command(slash_command, ephemeral, owners_only)]
 pub async fn control_cmd(
@@ -57,6 +72,12 @@ pub async fn song_info(
         .map(|t| format!("{} = {}", t.0, t.1))
         .collect::<Vec<_>>()
         .join(", ");
+    // take 1024 characters or, if longer, 1021 characters and add ...
+    let tags_str = if tags_str.len() > 1024 {
+        format!("{}...", &tags_str[..1021])
+    } else {
+        tags_str
+    };
 
     ctx.send(|m| {
         m.embed(|e| {
@@ -98,7 +119,8 @@ pub async fn volume(
                 e.title("Volume")
                     .description(format!("Volume is set to {}%", (set_volume * 100.0) as i32))
             })
-        }).await?;
+        })
+        .await?;
         return Ok(());
     };
 
@@ -141,8 +163,7 @@ pub async fn queue(
 ) -> Result<(), Error> {
     let data = ctx.data;
     let Some(song) = DbSong::fetch_from_hash(&ctx.data.db, &song).await? else {
-        ctx.send(|m| m.content("Song not found."))
-            .await?;
+        ctx.send(|m| m.content("Song not found.")).await?;
         return Ok(());
     };
 

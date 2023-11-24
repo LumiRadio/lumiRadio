@@ -4,17 +4,15 @@ services:
   redis:
     image: redis:7.0.11-alpine
   liquidsoap:
-    image: ghcr.io/lumiradio/liquidsoap
+    image: ghcr.io/lumiradio/liquidsoap:${LIQUIDSOAP_TAG}
+    command: ["/usr/share/liquidsoap/script.liq"]
     build:
       context: ./docker/liquidsoap
       dockerfile: Dockerfile
-      args:
-        - OPAM_PACKAGES=liquidsoap.2.0.0 taglib mad lame vorbis cry samplerate ocurl
     volumes:
-      - ./docker/liquidsoap/script.liq:/etc/liquidsoap/script.liq
-      - ./docker/liquidsoap/vars.json:/etc/liquidsoap/vars.json
-      - ${RADIO_MUSIC:?RADIO_MUSIC is unset}:/music
-      - ls_socket:/etc/liquidsoap
+      - ./docker/liquidsoap/script.liq:/usr/share/liquidsoap/script.liq
+      - ${RADIO_MUSIC:?RADIO_MUSIC is unset}:/music:ro
+      - ls_socket:/usr/share/liquidsoap
     environment:
       ICECAST_HOST: ${ICECAST_HOST}
       ICECAST_PORT: ${ICECAST_PORT}
@@ -26,17 +24,18 @@ services:
     image: postgres:12
     volumes:
       - pg_data:/var/lib/postgresql/data/
-    ports:
-      - 5432:5432
     environment:
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASSWORD}
       POSTGRES_DB: ${PG_DATABASE}
   byers:
-    image: ghcr.io/lumiradio/byers
+    image: ghcr.io/lumiradio/lumiradio:${BYERS_TAG}
+    command: "./byers/byers"
     build:
-      context: ./byers
+      context: "."
       dockerfile: Dockerfile
+    ports:
+      - 8181:8000
     depends_on:
       - liquidsoap
     environment:
@@ -46,28 +45,28 @@ services:
       LIQUIDSOAP__PORT: 1234
       GOOGLE__CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE__CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      DISCORD__CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD__CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      SECRET: ${SECRET}
       REDIS_URL: redis://redis/
       RUST_LOG: info
     volumes:
       - ls_socket:/usr/src/app/ls
+      - ${RADIO_MUSIC:?RADIO_MUSIC is unset}:/music
   langley:
-    image: ghcr.io/lumiradio/langley
-    build:
-      context: ./langley
-      dockerfile: Dockerfile
+    image: ghcr.io/lumiradio/lumiradio:${LANGLEY_TAG}
+    command: "./langley/langley"
     environment:
-      ROCKET_ADDRESS: 0.0.0.0
-      ROCKET_DATABASES: '{byersdb={url="postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}"}}'
+      DATABASE_URL: postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}
       REDIS_URL: redis://redis/
+      RUST_LOG: info
   frohike:
-    image: ghcr.io/lumiradio/frohike
-    build:
-      context: ./frohike
-      dockerfile: Dockerfile
+    image: ghcr.io/lumiradio/lumiradio:${FROHIKE_TAG}
     environment:
       RUST_LOG: debug
       REDIS_URL: redis://redis/
     command:
+      - "./frohike/frohike"
       - "house-keeping"
       - "--database-url"
       - "postgres://${PG_USER}:${PG_PASSWORD}@db/${PG_DATABASE}"
