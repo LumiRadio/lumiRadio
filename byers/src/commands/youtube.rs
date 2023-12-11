@@ -1,7 +1,10 @@
 use std::{sync::Arc, time::Duration};
 
 use poise::serenity_prelude::{self as serenity, ApplicationCommandInteraction};
-use situwaition::{runtime::AsyncWaiter, SituwaitionError, TokioAsyncSituwaition};
+use situwaition::{
+    runtime::AsyncWaiter, SituwaitionError, SituwaitionOpts, SituwaitionOptsBuilder,
+    TokioAsyncSituwaition,
+};
 use tracing::error;
 use tracing_unwrap::ResultExt;
 
@@ -72,7 +75,7 @@ pub async fn link(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         })
     }).await?;
 
-    let linked_channels = AsyncWaiter::with_timeout(
+    let linked_channels = AsyncWaiter::with_opts(
         || async {
             let connected_channels = user
                 .linked_channels(&ctx.data().db)
@@ -85,8 +88,12 @@ pub async fn link(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 
             Ok(connected_channels)
         },
-        Duration::from_secs(120),
-    )?
+        SituwaitionOptsBuilder::default()
+            .timeout(Duration::from_secs(120))
+            .check_interval(Duration::from_secs(1))
+            .build()
+            .unwrap(),
+    )
     .exec()
     .await;
 

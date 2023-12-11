@@ -7,7 +7,7 @@ authors.workspace = true
 [dependencies]
 chrono = { version = "0.4.24", features = ["serde"] }
 config = "0.13.3"
-poise = { version = "0.5.6" }
+poise = { version = "0.5.7" }
 serde = { version = "1.0.160", features = ["derive"] }
 tokio = { version = "1.27.0", features = ["full"] }
 tracing = "0.1.37"

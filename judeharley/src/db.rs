@@ -338,6 +338,19 @@ impl DbSong {
         Ok(paths)
     }
 
+    pub async fn fetch_all(db: &PgPool) -> Result<Vec<Self>, JudeHarleyError> {
+        sqlx::query_as!(
+            DbSong,
+            r#"
+            SELECT title, artist, album, file_path, duration, file_hash, bitrate
+            FROM songs
+            "#,
+        )
+        .fetch_all(db)
+        .await
+        .map_err(Into::into)
+    }
+
     pub async fn search(db: &sqlx::PgPool, query: &str) -> Result<Vec<Self>, JudeHarleyError> {
         sqlx::query_as!(
             DbSong,

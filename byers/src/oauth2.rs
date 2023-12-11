@@ -2,21 +2,27 @@ use async_fred_session::RedisSessionStore;
 use axum::{
     extract::{FromRef, Query, State},
     http::StatusCode,
-    response::{Html, Redirect},
+    response::{Html, IntoResponse, Redirect},
     routing::get,
-    Router,
+    Json, Router,
 };
 use axum_sessions::{extractors::WritableSession, SessionLayer};
 use fred::pool::RedisPool;
+use judeharley::{
+    db::{DbSong, DbUser},
+    discord::{DiscordConnection, MinimalDiscordUser},
+    PgPool,
+};
 use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
-    ClientSecret, CsrfToken, Scope, TokenUrl, TokenResponse,
+    ClientSecret, CsrfToken, Scope, TokenResponse, TokenUrl,
 };
+use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot::Receiver;
+use tracing::error;
 use tracing_unwrap::ResultExt;
-use judeharley::{db::DbUser, discord::{DiscordConnection, MinimalDiscordUser}, PgPool};
 
-use crate::{app_config::DiscordConfig, prelude::Error};
+use crate::{app_config::DiscordConfig, commands::songs, prelude::Error};
 
 static OAUTH2_SUCCESS_HTML: &str = include_str!("static/oauth2_success.html");
 static OAUTH2_FAILED_CSRF_HTML: &str = include_str!("static/oauth2_csrf.html");
@@ -47,9 +53,15 @@ fn oauth2_client(client_id: &str, client_secret: &str) -> BasicClient {
     )
 }
 
+#[derive(Deserialize, Debug)]
+struct OAuth2LoginParams {
+    next: Option<String>,
+}
+
 async fn oauth2_login(
     State(discord): State<DiscordConfig>,
     mut session: WritableSession,
+    Query(login_params): Query<OAuth2LoginParams>,
 ) -> Redirect {
     let client = oauth2_client(&discord.client_id, &discord.client_secret);
 
@@ -64,6 +76,12 @@ async fn oauth2_login(
         .insert("state", csrf.secret())
         .expect_or_log("Failed to insert csrf token");
 
+    if let Some(next) = login_params.next {
+        session
+            .insert("next", next)
+            .expect_or_log("Failed to insert next");
+    }
+
     Redirect::to(auth_url.as_ref())
 }
 
@@ -72,29 +90,38 @@ async fn oauth2_callback(
     State(discord): State<DiscordConfig>,
     Query(params): Query<OAuth2CallbackParams>,
     mut session: WritableSession,
-) -> (StatusCode, Html<String>) {
+) -> impl IntoResponse {
     let Some(csrf) = session.get::<String>("state") else {
-        return (StatusCode::BAD_REQUEST, Html(OAUTH2_FAILED_CSRF_HTML.to_string()));
+        return (
+            StatusCode::BAD_REQUEST,
+            Html(OAUTH2_FAILED_CSRF_HTML.to_string()),
+        )
+            .into_response();
     };
 
     if csrf != params.state {
         return (
             StatusCode::BAD_REQUEST,
             Html(OAUTH2_FAILED_CSRF_HTML.to_string()),
-        );
+        )
+            .into_response();
     }
     let client = oauth2_client(&discord.client_id, &discord.client_secret);
     let Ok(token) = client
         .exchange_code(AuthorizationCode::new(params.code))
         .request_async(async_http_client)
-        .await 
+        .await
     else {
         return (
             StatusCode::BAD_REQUEST,
             Html(OAUTH2_FAILED_DISCORD_HTML.to_string()),
-        );
+        )
+            .into_response();
     };
-    session.destroy();
+    session.remove("state");
+    session
+        .insert("token", token.clone())
+        .expect_or_log("Failed to insert token");
 
     let connections = DiscordConnection::fetch(token.access_token().secret())
         .await
@@ -107,12 +134,73 @@ async fn oauth2_callback(
     let logged_in_user = MinimalDiscordUser::fetch(token.access_token().secret())
         .await
         .expect_or_log("Failed to fetch Discord user");
-    let user = DbUser::fetch_or_insert(&db, logged_in_user.id.parse().unwrap_or_log()).await
+    let user = DbUser::fetch_or_insert(&db, logged_in_user.id.parse().unwrap_or_log())
+        .await
         .expect_or_log("Failed to fetch or insert user");
-    user.add_linked_channels(&db, youtube_connections).await
+    user.add_linked_channels(&db, youtube_connections)
+        .await
         .expect_or_log("Failed to add linked channels");
 
-    (StatusCode::OK, Html(OAUTH2_SUCCESS_HTML.to_string()))
+    let next = session.get::<String>("next");
+    if let Some(next) = next {
+        session.remove("next");
+        return Redirect::to(&next).into_response();
+    }
+
+    (StatusCode::OK, Html(OAUTH2_SUCCESS_HTML.to_string())).into_response()
+}
+
+#[derive(Serialize, Debug)]
+#[serde(tag = "type")]
+enum ApiResponse<T> {
+    Success { data: T },
+    Error { error: String },
+}
+
+impl<T> IntoResponse for ApiResponse<T>
+where
+    T: Serialize,
+{
+    fn into_response(self) -> axum::response::Response {
+        (axum::http::StatusCode::OK, Json(self)).into_response()
+    }
+}
+
+#[derive(Serialize, Debug)]
+struct Song {
+    id: String,
+    title: String,
+    artist: String,
+    album: String,
+    duration: f64,
+}
+
+impl From<DbSong> for Song {
+    fn from(value: DbSong) -> Self {
+        Self {
+            id: value.file_hash,
+            title: value.title,
+            artist: value.artist,
+            album: value.album,
+            duration: value.duration,
+        }
+    }
+}
+
+async fn song_list(State(app_state): State<AppState>) -> ApiResponse<Vec<Song>> {
+    let songs = match DbSong::fetch_all(&app_state.db).await {
+        Ok(songs) => songs,
+        Err(e) => {
+            error!("Failed to fetch songs: {}", e);
+            return ApiResponse::Error {
+                error: "Failed to fetch songs".to_string(),
+            };
+        }
+    };
+
+    ApiResponse::Success {
+        data: songs.into_iter().map(Into::into).collect(),
+    }
 }
 
 pub async fn oauth2_server(
@@ -129,6 +217,7 @@ pub async fn oauth2_server(
     let app = Router::new()
         .route("/oauth2/callback", get(oauth2_callback))
         .route("/oauth2/login", get(oauth2_login))
+        .route("/api/songs", get(song_list))
         .with_state(AppState { db, discord_config })
         .layer(session_layer);
 

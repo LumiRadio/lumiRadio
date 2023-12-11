@@ -26,7 +26,9 @@ impl WavTag for Id3v2Tag {
 
 #[tracing::instrument(skip(db))]
 pub async fn index(db: PgPool, directory: PathBuf) -> Result<()> {
-    // recursively change all file paths from directory to /music
+    info!("Pruning indexing database");
+    DbSong::prune(&db).await?;
+
     let files = walkdir::WalkDir::new(&directory)
         .into_iter()
         .filter_map(|e| e.ok())
@@ -44,10 +46,6 @@ pub async fn index(db: PgPool, directory: PathBuf) -> Result<()> {
         })
         .map(|e| e.path().to_owned())
         .collect::<Vec<_>>();
-
-    // prune database
-    info!("Pruning indexing database");
-    DbSong::prune(&db).await?;
 
     let len = files.len();
     let mut failed_files = vec![];
