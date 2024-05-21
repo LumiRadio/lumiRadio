@@ -5,10 +5,7 @@ use poise::{
 use tracing_unwrap::ResultExt;
 
 use crate::prelude::*;
-use judeharley::{
-    db::{DbSlcbUser, DbUser},
-    BigDecimal,
-};
+use judeharley::{controllers::users::UpdateParams, Decimal, SlcbCurrency, Users};
 
 pub async fn autocomplete_channels(
     ctx: ApplicationContext<'_>,
@@ -23,7 +20,7 @@ pub async fn autocomplete_channels(
     //     ),
     //     value: user.id,
     // }
-    DbSlcbUser::search_by_username(&data.db, partial)
+    SlcbCurrency::search(partial, &data.db)
         .await
         .expect_or_log("Failed to fetch possible channels")
         .into_iter()
@@ -49,7 +46,7 @@ pub async fn import_manually(
 ) -> Result<(), Error> {
     let data = ctx.data();
 
-    let mut user = DbUser::fetch_or_insert(&data.db, user.id.get() as i64).await?;
+    let user = Users::get_or_insert(user.id.get(), &data.db).await?;
     if user.migrated {
         ctx.send(
             CreateReply::default().embed(
@@ -63,10 +60,18 @@ pub async fn import_manually(
         return Ok(());
     }
 
-    user.watched_time += BigDecimal::from(hours);
-    user.boonbucks += points;
-    user.migrated = true;
-    user.update(&data.db).await?;
+    let new_watch_time = user.watched_time + Decimal::from(hours);
+    let new_boonbucks = user.boonbucks + points;
+    user.update(
+        UpdateParams {
+            watched_time: Some(new_watch_time),
+            boonbucks: Some(new_boonbucks as u32),
+            migrated: Some(true),
+            ..Default::default()
+        },
+        &data.db,
+    )
+    .await?;
 
     ctx.send(
         CreateReply::default().embed(
@@ -91,7 +96,7 @@ pub async fn import(
 ) -> Result<(), Error> {
     let data = ctx.data();
 
-    let mut user = DbUser::fetch_or_insert(&data.db, user.id.get() as i64).await?;
+    let user = Users::get_or_insert(user.id.get(), &data.db).await?;
 
     if user.migrated {
         ctx.send(
@@ -106,13 +111,22 @@ pub async fn import(
         return Ok(());
     }
 
-    let Some(slcb_user) = DbSlcbUser::fetch(&data.db, channel).await? else {
+    let Some(slcb_user) = SlcbCurrency::get(channel, &data.db).await? else {
         unreachable!("Autocomplete should prevent this from happening");
     };
-    user.watched_time += BigDecimal::from(slcb_user.hours);
-    user.boonbucks += slcb_user.points;
-    user.migrated = true;
-    user.update(&data.db).await?;
+
+    let new_watch_time = user.watched_time + Decimal::from(slcb_user.hours);
+    let new_boonbucks = user.boonbucks + slcb_user.points;
+    user.update(
+        UpdateParams {
+            watched_time: Some(new_watch_time),
+            boonbucks: Some(new_boonbucks as u32),
+            migrated: Some(true),
+            ..Default::default()
+        },
+        &data.db,
+    )
+    .await?;
 
     ctx.send(
         CreateReply::default().embed(CreateEmbed::new().title("Imported user data").description(

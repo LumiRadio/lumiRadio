@@ -5,7 +5,7 @@ use std::{
 };
 
 use clap::{Parser, Subcommand};
-use judeharley::{PgPool, SUPPORTED_AUDIO_FORMATS};
+use judeharley::{sea_orm::DatabaseConnection, SUPPORTED_AUDIO_FORMATS};
 use notify::Watcher;
 use tokio::sync::{mpsc::Receiver, Mutex};
 use tracing::{debug, error, info, warn};
@@ -92,7 +92,7 @@ fn async_watcher(
     Ok((watcher, rx))
 }
 
-async fn async_watch<P: AsRef<Path>>(path: P, watcher_pool: PgPool) -> anyhow::Result<()> {
+async fn async_watch<P: AsRef<Path>>(path: P, db: DatabaseConnection) -> anyhow::Result<()> {
     let tokio_rt = tokio::runtime::Handle::current();
     let (mut watcher, mut rx) = async_watcher(tokio_rt)?;
     watcher.watch(path.as_ref(), notify::RecursiveMode::Recursive)?;
@@ -112,13 +112,8 @@ async fn async_watch<P: AsRef<Path>>(path: P, watcher_pool: PgPool) -> anyhow::R
             )) => {
                 debug!("file written: {:?}", event.paths);
                 let file_path = event.paths.first().unwrap();
-                let watcher_pool = watcher_pool.clone();
-                judeharley::maintenance::indexing::index_file(
-                    watcher_pool,
-                    file_path,
-                    path.as_ref(),
-                )
-                .await?;
+                judeharley::maintenance::indexing::index_file(&db, file_path, path.as_ref())
+                    .await?;
             }
             notify::event::EventKind::Modify(notify::event::ModifyKind::Name(
                 notify::event::RenameMode::From,
@@ -127,16 +122,12 @@ async fn async_watch<P: AsRef<Path>>(path: P, watcher_pool: PgPool) -> anyhow::R
                 let file_path = event.paths.first().unwrap();
 
                 if file_path.is_file() {
-                    judeharley::maintenance::indexing::drop_index(
-                        watcher_pool.clone(),
-                        file_path,
-                        path.as_ref(),
-                    )
-                    .await
-                    .unwrap();
+                    judeharley::maintenance::indexing::drop_index(&db, file_path, path.as_ref())
+                        .await
+                        .unwrap();
                 } else if file_path.is_dir() {
                     judeharley::maintenance::indexing::drop_index_folder(
-                        watcher_pool.clone(),
+                        &db,
                         file_path,
                         path.as_ref(),
                     )
@@ -151,19 +142,15 @@ async fn async_watch<P: AsRef<Path>>(path: P, watcher_pool: PgPool) -> anyhow::R
                 let file_path = event.paths.first().unwrap();
 
                 if file_path.is_file() {
-                    judeharley::maintenance::indexing::index_file(
-                        watcher_pool.clone(),
-                        file_path,
-                        path.as_ref(),
-                    )
-                    .await
-                    .unwrap();
+                    judeharley::maintenance::indexing::index_file(&db, file_path, path.as_ref())
+                        .await
+                        .unwrap();
                 } else if file_path.is_dir() {
                     for entry in walkdir::WalkDir::new(file_path) {
                         let entry = entry.unwrap();
                         if entry.file_type().is_file() {
                             judeharley::maintenance::indexing::index_file(
-                                watcher_pool.clone(),
+                                &db,
                                 entry.path(),
                                 path.as_ref(),
                             )
@@ -177,18 +164,14 @@ async fn async_watch<P: AsRef<Path>>(path: P, watcher_pool: PgPool) -> anyhow::R
                 debug!("file or folder created: {:?}", event.paths);
                 let file_path = event.paths.first().unwrap();
                 if file_path.is_file() {
-                    judeharley::maintenance::indexing::index_file(
-                        watcher_pool.clone(),
-                        file_path,
-                        path.as_ref(),
-                    )
-                    .await?;
+                    judeharley::maintenance::indexing::index_file(&db, file_path, path.as_ref())
+                        .await?;
                 } else if file_path.is_dir() {
                     for entry in walkdir::WalkDir::new(file_path) {
                         let entry = entry.unwrap();
                         if entry.file_type().is_file() {
                             judeharley::maintenance::indexing::index_file(
-                                watcher_pool.clone(),
+                                &db,
                                 entry.path(),
                                 path.as_ref(),
                             )
@@ -208,16 +191,12 @@ async fn async_watch<P: AsRef<Path>>(path: P, watcher_pool: PgPool) -> anyhow::R
                 let file_path = event.paths.first().unwrap();
 
                 if file_path.is_file() {
-                    judeharley::maintenance::indexing::drop_index(
-                        watcher_pool.clone(),
-                        file_path,
-                        path.as_ref(),
-                    )
-                    .await
-                    .unwrap();
+                    judeharley::maintenance::indexing::drop_index(&db, file_path, path.as_ref())
+                        .await
+                        .unwrap();
                 } else if file_path.is_dir() {
                     judeharley::maintenance::indexing::drop_index_folder(
-                        watcher_pool.clone(),
+                        &db,
                         file_path,
                         path.as_ref(),
                     )
@@ -231,7 +210,7 @@ async fn async_watch<P: AsRef<Path>>(path: P, watcher_pool: PgPool) -> anyhow::R
                         let ext_str = extension.to_string_lossy().to_lowercase();
                         if SUPPORTED_AUDIO_FORMATS.contains(&ext_str.as_str()) {
                             judeharley::maintenance::indexing::drop_index(
-                                watcher_pool.clone(),
+                                &db,
                                 file_path,
                                 path.as_ref(),
                             )
@@ -244,24 +223,16 @@ async fn async_watch<P: AsRef<Path>>(path: P, watcher_pool: PgPool) -> anyhow::R
             notify::event::EventKind::Remove(notify::event::RemoveKind::File) => {
                 debug!("file removed: {:?}", event.paths);
                 let file_path = event.paths.first().unwrap();
-                judeharley::maintenance::indexing::drop_index(
-                    watcher_pool.clone(),
-                    file_path,
-                    path.as_ref(),
-                )
-                .await
-                .unwrap();
+                judeharley::maintenance::indexing::drop_index(&db, file_path, path.as_ref())
+                    .await
+                    .unwrap();
             }
             notify::event::EventKind::Remove(notify::event::RemoveKind::Folder) => {
                 debug!("folder removed: {:?}", event.paths);
                 let file_path = event.paths.first().unwrap();
-                judeharley::maintenance::indexing::drop_index_folder(
-                    watcher_pool.clone(),
-                    file_path,
-                    path.as_ref(),
-                )
-                .await
-                .unwrap();
+                judeharley::maintenance::indexing::drop_index_folder(&db, file_path, path.as_ref())
+                    .await
+                    .unwrap();
             }
             _ => (),
         }
@@ -278,14 +249,14 @@ async fn main() -> anyhow::Result<()> {
     match args.subcmd {
         SubCommand::Indexing(indexing) => {
             debug!("indexing");
-            let pool = judeharley::connect_database(&indexing.database_url).await?;
+            let db = judeharley::connect_database(&indexing.database_url).await?;
 
-            judeharley::maintenance::indexing::index(pool.clone(), indexing.path).await?;
+            judeharley::maintenance::indexing::index(&db, indexing.path).await?;
 
             if let Some(playlist) = indexing.playlist {
                 info!("generating playlist");
 
-                judeharley::maintenance::indexing::create_playlist(pool, &playlist).await?;
+                judeharley::maintenance::indexing::create_playlist(&db, &playlist).await?;
             }
         }
         SubCommand::HouseKeeping(house_keeping) => {
@@ -293,9 +264,9 @@ async fn main() -> anyhow::Result<()> {
             // this is a continous list of tasks which runs forever
             // it should check the filesystem for new files
             // if they are new, index them into the database
-            let pool = judeharley::connect_database(&house_keeping.database_url).await?;
+            let db = judeharley::connect_database(&house_keeping.database_url).await?;
 
-            let tasks = vec![async_watch(house_keeping.music_path.clone(), pool.clone())];
+            let tasks = vec![async_watch(house_keeping.music_path.clone(), db.clone())];
 
             let (tx, mut rx) = tokio::sync::mpsc::channel(100);
             for task in tasks {

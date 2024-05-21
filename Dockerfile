@@ -8,7 +8,7 @@ COPY byers/ byers/
 COPY frohike/ frohike/
 COPY langley/ langley/
 COPY judeharley/ judeharley/
-COPY .sqlx/ .sqlx/
+COPY migration/ migration/
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
@@ -26,7 +26,7 @@ COPY byers/ byers/
 COPY frohike/ frohike/
 COPY langley/ langley/
 COPY judeharley/ judeharley/
-COPY .sqlx/ .sqlx/
+COPY migration/ migration/
 RUN cargo build --release
 
 FROM debian:bookworm-slim AS final

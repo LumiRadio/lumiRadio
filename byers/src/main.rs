@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use fred::prelude::{ClientLike, PubsubInterface};
 use poise::serenity_prelude as serenity;
 use poise::PrefixFrameworkOptions;
@@ -34,6 +36,23 @@ async fn main() {
 
     info!("Loading config from environment...");
     let config = crate::app_config::AppConfig::from_env();
+
+    let _guard = if let Some(sentry_dsn) = &config.sentry_dsn {
+        info!("Initializing Sentry...");
+        let guard = sentry::init(sentry::ClientOptions {
+            environment: Some(config.environment.clone().into()),
+            dsn: Some(
+                sentry::types::Dsn::from_str(sentry_dsn)
+                    .expect_or_log("failed to parse Sentry DSN"),
+            ),
+            ..Default::default()
+        });
+
+        Some(guard)
+    } else {
+        None
+    };
+
     let commands = vec![
         help(),
         song(),
@@ -122,7 +141,6 @@ async fn main() {
         comms: std::sync::Arc::new(tokio::sync::Mutex::new(
             ByersUnixStream::new().await.unwrap(),
         )),
-        google_config: config.google,
         redis_pool: redis_pool.clone(),
         redis_subscriber: subscriber_client.clone(),
         emoji: config.discord.emoji.clone(),
@@ -153,6 +171,11 @@ async fn main() {
                     crate::event_handlers::error::on_error(error)
                         .await
                         .expect_or_log("Failed to handle error");
+                })
+            },
+            pre_command: |ctx| {
+                Box::pin(async move {
+                    sentry::add_breadcrumb(BreadcrumbableContext(ctx).as_breadcrumbs().await);
                 })
             },
             prefix_options: PrefixFrameworkOptions {

@@ -13,7 +13,6 @@ use judeharley::communication::ByersUnixStream;
 pub mod new_slots;
 pub mod pvp;
 pub mod roll_dice;
-pub mod slots;
 
 #[async_trait]
 pub trait Minigame {

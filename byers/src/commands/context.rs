@@ -1,6 +1,5 @@
-use judeharley::db::DbSong;
+use judeharley::PlayedSongs;
 use poise::{serenity_prelude::CreateEmbed, CreateReply};
-use tracing_unwrap::ResultExt;
 
 use crate::prelude::{ApplicationContext, Error};
 
@@ -11,9 +10,7 @@ pub async fn what_song(
 ) -> Result<(), Error> {
     let data = ctx.data();
 
-    let song = DbSong::song_played_at(&data.db, message.timestamp.naive_utc())
-        .await
-        .expect_or_log("Failed to query database");
+    let song = PlayedSongs::get_playing_at(message.timestamp.naive_utc(), &data.db).await?;
     let Some(song) = song else {
         ctx.send(
             CreateReply::default().embed(CreateEmbed::new().title("No song found").description(

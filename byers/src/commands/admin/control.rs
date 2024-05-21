@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::commands::autocomplete_songs;
 use crate::prelude::*;
-use judeharley::{communication::LiquidsoapCommunication, db::DbSong};
+use judeharley::{communication::LiquidsoapCommunication, Songs, Users};
 use poise::{serenity_prelude::CreateEmbed, CreateReply};
 
 /// Reconnects the Liquidsoap command socket
@@ -21,13 +21,13 @@ pub async fn reconnect(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 #[poise::command(slash_command, ephemeral, owners_only)]
 pub async fn reindex(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
-    // let mut comms = ctx.data.comms.lock().await;
+    let mut comms = ctx.data.comms.lock().await;
 
     ctx.defer_ephemeral().await?;
-    judeharley::maintenance::indexing::index(data.db.clone(), "/music".into()).await?;
+    judeharley::maintenance::indexing::index(&data.db, "/music".into()).await?;
     let playlist_path = PathBuf::from("/music/playlist.m3u");
-    judeharley::maintenance::indexing::create_playlist(data.db.clone(), &playlist_path).await?;
-    // comms.send_wait("music.reload").await?;
+    judeharley::maintenance::indexing::create_playlist(&data.db, &playlist_path).await?;
+    comms.send_wait("playlist.m3u.reload").await?;
     ctx.send(
         CreateReply::default().content("Reindexed the song database and reloaded the playlist."),
     )
@@ -40,10 +40,12 @@ pub async fn reindex(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 #[poise::command(slash_command, ephemeral, owners_only)]
 pub async fn generate_playlist(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
+    let mut comms = ctx.data.comms.lock().await;
 
     let playlist_path = PathBuf::from("/music/playlist.m3u");
-    judeharley::maintenance::indexing::create_playlist(data.db.clone(), &playlist_path).await?;
+    judeharley::maintenance::indexing::create_playlist(&data.db, &playlist_path).await?;
 
+    comms.send_wait("playlist.m3u.reload").await?;
     ctx.send(
         CreateReply::default().content(
             "Regenerated the playlist. It should automatically be loaded into Liquidsoap!",
@@ -88,7 +90,7 @@ pub async fn song_info(
 ) -> Result<(), Error> {
     let data = ctx.data;
 
-    let Some(song) = DbSong::fetch_from_hash(&data.db, &song).await? else {
+    let Some(song) = Songs::get_by_hash(&song, &data.db).await? else {
         ctx.send(CreateReply::default().content("Song not found."))
             .await?;
         return Ok(());
@@ -97,7 +99,7 @@ pub async fn song_info(
     let tags = song.tags(&data.db).await?;
     let tags_str = tags
         .into_iter()
-        .map(|(k, _)| k)
+        .map(|t| t.tag)
         .collect::<Vec<_>>()
         .join(", ");
     // take 1024 characters or, if longer, 1021 characters and add ...
@@ -142,7 +144,7 @@ pub async fn song_tag(
 ) -> Result<(), Error> {
     let data = ctx.data;
 
-    let Some(song) = DbSong::fetch_from_hash(&data.db, &song).await? else {
+    let Some(song) = Songs::get_by_hash(&song, &data.db).await? else {
         ctx.send(CreateReply::default().content("Song not found."))
             .await?;
         return Ok(());
@@ -244,23 +246,24 @@ pub async fn queue(
     song: String,
 ) -> Result<(), Error> {
     let data = ctx.data;
-    let Some(song) = DbSong::fetch_from_hash(&ctx.data.db, &song).await? else {
+    let Some(song) = Songs::get_by_hash(&song, &ctx.data.db).await? else {
         ctx.send(CreateReply::default().content("Song not found."))
             .await?;
         return Ok(());
     };
+    let user = Users::get_or_insert(ctx.author().id.get(), &data.db).await?;
 
     {
         let mut comms = data.comms.lock().await;
         comms.priority_request(&song.file_path).await?;
     }
-    song.request(&data.db, ctx.author().id.get()).await?;
+    song.request(&user, &data.db).await?;
 
     ctx.send(
         CreateReply::default().embed(
             CreateEmbed::new()
                 .title("Song Queued")
-                .description(format!("Queued {song}")),
+                .description(format!("Queued {} - {}", &song.artist, &song.title)),
         ),
     )
     .await?;

@@ -6,7 +6,7 @@ use tracing_unwrap::ResultExt;
 use crate::prelude::*;
 use judeharley::{
     communication::ByersUnixStream,
-    db::{DbServerChannelConfig, DbSong},
+    prelude::{ServerChannelConfig, Songs},
 };
 
 async fn spawn_subscriber_handler(
@@ -49,7 +49,7 @@ pub async fn on_ready(
 
     spawn_hydration_reminder(data, ctx).await?;
 
-    let current_song = DbSong::last_played_song(&data.db).await;
+    let current_song = Songs::last_played(&data.db).await;
     if let Ok(Some(current_song)) = current_song {
         ctx.set_activity(Some(ActivityData::listening(format!(
             "{} - {}",
@@ -76,7 +76,7 @@ async fn spawn_hydration_reminder(
 
             info!("Sending hydration reminder");
 
-            let hydration_channels = DbServerChannelConfig::fetch_hydration_channels(&db)
+            let hydration_channels = ServerChannelConfig::get_all_hydration_channels(&db)
                 .await
                 .expect_or_log("Failed to fetch hydration channels");
 

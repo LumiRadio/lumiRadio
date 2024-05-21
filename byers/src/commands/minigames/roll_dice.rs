@@ -1,4 +1,6 @@
 use async_trait::async_trait;
+use judeharley::controllers::server_config::Params;
+use judeharley::controllers::users::UpdateParams;
 use poise::CreateReply;
 use rand::Rng;
 
@@ -8,8 +10,8 @@ use crate::{commands::minigames::Minigame, event_handlers::message::update_activ
 use judeharley::{
     communication::ByersUnixStream,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
-    db::{DbServerConfig, DbUser},
     prelude::DiscordTimestamp,
+    ServerConfig, Users,
 };
 
 pub struct DiceRoll {
@@ -37,8 +39,8 @@ impl DiceRoll {
 }
 
 pub enum DiceRollResult {
-    Win(i32),
-    WinSecret(i32),
+    Win(u32),
+    WinSecret(u32),
     Lose,
 }
 
@@ -140,19 +142,26 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data();
     let emoji_config = &data.emoji;
 
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
+    update_activity(ctx.data(), ctx.author().id, ctx.channel_id()).await?;
 
     let Some(guild_id) = ctx.guild_id() else {
         return Err(anyhow::anyhow!("This command can only be used in a server"));
     };
-    let mut guild_config = DbServerConfig::fetch_or_insert(&data.db, guild_id.get() as i64).await?;
+    let guild_config = ServerConfig::get_or_insert(guild_id.get(), &data.db).await?;
 
-    if guild_config.dice_roll == 0 {
-        guild_config.dice_roll = 111;
-        guild_config.update(&data.db).await?;
-    }
+    let guild_config = if guild_config.dice_roll == 0 {
+        guild_config
+            .update(
+                Params {
+                    dice_roll: Some(111),
+                    ..Default::default()
+                },
+                &data.db,
+            )
+            .await?
+    } else {
+        guild_config
+    };
 
     let user_cooldown = UserCooldownKey::new(ctx.author().id.get() as i64, "roll_dice");
     if let Some(over) = is_on_cooldown(&data.redis_pool, user_cooldown).await? {
@@ -166,7 +175,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         return Ok(());
     }
 
-    let mut user = DbUser::fetch_or_insert(&data.db, ctx.author().id.get() as i64).await?;
+    let user = Users::get_or_insert(ctx.author().id.get(), &data.db).await?;
     if user.boonbucks < 5 {
         ctx.send(CreateReply::default().embed(
             DiceRoll::prepare_embed().description("You need at least 5 Boondollars to play"),
@@ -175,19 +184,30 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         return Ok(());
     }
 
-    user.boonbucks -= 5;
-    user.update(&data.db).await?;
-
     let game = DiceRoll::new(guild_config.dice_roll);
     let result = game.play().await?;
 
     match result {
         DiceRollResult::WinSecret(total_winnings) => {
             let old_roll = guild_config.dice_roll;
-            guild_config.dice_roll = roll_over(guild_config.dice_roll);
-            guild_config.update(&data.db).await?;
-            user.boonbucks += total_winnings;
-            user.update(&data.db).await?;
+            let guild_config = guild_config
+                .update(
+                    Params {
+                        dice_roll: Some(roll_over(old_roll)),
+                        ..Default::default()
+                    },
+                    &data.db,
+                )
+                .await?;
+            let boonbucks = user.boonbucks as u32 + total_winnings - 5;
+            user.update(
+                UpdateParams {
+                    boonbucks: Some(boonbucks),
+                    ..Default::default()
+                },
+                &data.db,
+            )
+            .await?;
 
             ctx.send(
                 CreateReply::default().embed(DiceRoll::prepare_embed().description(format!(
@@ -202,8 +222,15 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             .await?;
         }
         DiceRollResult::Win(total_winnings) => {
-            user.boonbucks += total_winnings;
-            user.update(&data.db).await?;
+            let boonbucks = user.boonbucks as u32 + total_winnings - 5;
+            user.update(
+                UpdateParams {
+                    boonbucks: Some(boonbucks),
+                    ..Default::default()
+                },
+                &data.db,
+            )
+            .await?;
 
             ctx.send(
                 CreateReply::default().embed(DiceRoll::prepare_embed().description(format!(

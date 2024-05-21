@@ -4,8 +4,8 @@ use poise::{
 };
 
 use judeharley::{
-    db::{DbSlcbRank, DbUser},
-    BigDecimal,
+    sea_orm::{ActiveModelTrait, DbErr, IntoActiveModel, TransactionTrait},
+    Decimal, SlcbRank, Users,
 };
 
 use crate::{event_handlers::message::update_activity, prelude::*};
@@ -15,23 +15,21 @@ use crate::{event_handlers::message::update_activity, prelude::*};
 pub async fn boondollars(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data();
 
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
+    update_activity(data, ctx.author().id, ctx.channel_id()).await?;
 
-    let user = DbUser::fetch_or_insert(&data.db, ctx.author().id.get() as i64).await?;
+    let user = Users::get_or_insert(ctx.author().id.get(), &data.db).await?;
 
     // $username - Hours: $hours (Rank #$hourspos) - $currencyname: $points (Rank #$pointspos) - Echeladder: $rank • Next rung in $nxtrankreq hours. - You can check again in 5 minutes.
-    let hours = user.watched_time.clone();
-    let rounded_hours = (hours * BigDecimal::from(12)).with_scale(0) / BigDecimal::from(12);
-    let hours_pos = user.fetch_position_in_hours(&data.db).await?;
+    let hours = user.watched_time;
+    let rounded_hours = (hours * Decimal::from(12)).trunc_with_scale(0) / Decimal::from(12);
+    let hours_pos = user.hour_position(&data.db).await?;
     let points = user.boonbucks;
-    let points_pos = user.fetch_position_in_boonbucks(&data.db).await?;
-    let rank_name = DbSlcbRank::fetch_rank_for_user(&user, &data.db).await?;
-    let next_rank = DbSlcbRank::fetch_next_rank_for_user(&user, &data.db)
+    let points_pos = user.boondollar_position(&data.db).await?;
+    let rank_name = SlcbRank::get_rank_for_user(&user, &data.db).await?;
+    let next_rank = SlcbRank::get_next_rank_for_user(&user, &data.db)
         .await?
-        .map(|r| BigDecimal::from(r.hour_requirement) - user.watched_time)
-        .unwrap_or(BigDecimal::from(0));
+        .map(|r| Decimal::from(r.hour_requirement) - user.watched_time)
+        .unwrap_or(Decimal::from(0));
 
     let message = format!("{username} - Hours: {hours:.2} (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank:.0} hours. - You can check again in 5 minutes.", username = ctx.author().name, hours = rounded_hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
     ctx.say(message).await?;
@@ -46,13 +44,10 @@ async fn pay_user(
 ) -> Result<(), Error> {
     let data = ctx.data();
 
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
+    update_activity(data, ctx.author().id, ctx.channel_id()).await?;
 
-    let mut source_db_user =
-        DbUser::fetch_or_insert(&data.db, ctx.author().id.get() as i64).await?;
-    let mut target_db_user = DbUser::fetch_or_insert(&data.db, target_user.id.get() as i64).await?;
+    let source_db_user = Users::get_or_insert(ctx.author().id.get(), &data.db).await?;
+    let target_db_user = Users::get_or_insert(target_user.id.get(), &data.db).await?;
 
     if source_db_user.boonbucks < amount {
         ctx.send(
@@ -94,15 +89,24 @@ async fn pay_user(
         return Ok(());
     }
 
-    let transaction = data.db.begin().await?;
+    let source_boons = source_db_user.boonbucks;
+    let target_boons = target_db_user.boonbucks;
+    data.db
+        .transaction::<_, (), DbErr>(|txn| {
+            Box::pin(async move {
+                let mut source_active = source_db_user.into_active_model();
+                let mut target_active = target_db_user.into_active_model();
 
-    source_db_user.boonbucks -= amount;
-    target_db_user.boonbucks += amount;
+                source_active.boonbucks = judeharley::sea_orm::Set(source_boons - amount);
+                target_active.boonbucks = judeharley::sea_orm::Set(target_boons + amount);
 
-    source_db_user.update(&data.db).await?;
-    target_db_user.update(&data.db).await?;
+                source_active.save(txn).await?;
+                target_active.save(txn).await?;
 
-    transaction.commit().await?;
+                Ok(())
+            })
+        })
+        .await?;
 
     ctx.send(
         CreateReply::default().embed(CreateEmbed::new().title("Payment successful").description(

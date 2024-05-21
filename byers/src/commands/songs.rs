@@ -1,29 +1,35 @@
 use std::time::Duration;
 
 use futures::StreamExt;
-use judeharley::db::DbUser;
 use poise::serenity_prelude::{
     ButtonStyle, ComponentInteractionDataKind, CreateActionRow, CreateButton, CreateEmbed,
     CreateInteractionResponse, CreateInteractionResponseMessage, CreateSelectMenu,
     CreateSelectMenuKind, CreateSelectMenuOption,
 };
 use poise::CreateReply;
-use tracing_unwrap::{OptionExt, ResultExt};
 
-use crate::commands::autocomplete_songs;
+use crate::commands::{autocomplete_favourite_songs, autocomplete_songs};
 use crate::event_handlers::message::update_activity;
 use crate::prelude::*;
 use judeharley::{
     communication::LiquidsoapCommunication,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
-    db::DbSong,
-    DiscordTimestamp,
+    DiscordTimestamp, SongRequests, Songs, Users,
 };
 
 /// Song-related commands
 #[poise::command(
     slash_command,
-    subcommands("request", "playing", "history", "queue", "search"),
+    subcommands(
+        "request",
+        "playing",
+        "history",
+        "queue",
+        "search",
+        "favourite",
+        "unfavourite",
+        "request_favourite"
+    ),
     subcommand_required
 )]
 pub async fn song(_: ApplicationContext<'_>) -> Result<(), Error> {
@@ -35,11 +41,9 @@ pub async fn song(_: ApplicationContext<'_>) -> Result<(), Error> {
 pub async fn history(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
 
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
+    update_activity(data, ctx.author().id, ctx.channel_id()).await?;
 
-    let last_songs = DbSong::last_10_songs(&data.db).await?;
+    let last_songs = Songs::last_10_songs(&data.db).await?;
 
     let description = last_songs
         .into_iter()
@@ -60,16 +64,84 @@ pub async fn history(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+/// Marks the current song as a favourite song
+#[poise::command(slash_command, ephemeral)]
+pub async fn favourite(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    let data = ctx.data;
+
+    update_activity(data, ctx.author().id, ctx.channel_id()).await?;
+
+    let user = Users::get_or_insert(ctx.author().id.get(), &data.db).await?;
+    let Some(song) = Songs::last_played(&data.db).await? else {
+        ctx.send(
+            CreateReply::default().embed(
+                CreateEmbed::new()
+                    .title("Song Requests")
+                    .description("Nothing is currently playing!"),
+            ),
+        )
+        .await?;
+        return Ok(());
+    };
+
+    user.favourite_song(&song, &data.db).await?;
+    ctx.send(
+        CreateReply::default().embed(
+            CreateEmbed::new()
+                .title("Song Requests")
+                .description("Marked the currently playing song as favourite!"),
+        ),
+    )
+    .await?;
+
+    Ok(())
+}
+
+/// Unfavourites the specified song
+#[poise::command(slash_command, ephemeral)]
+pub async fn unfavourite(
+    ctx: ApplicationContext<'_>,
+    #[description = "The song to unfavourite"]
+    #[rest]
+    #[autocomplete = "autocomplete_favourite_songs"]
+    song: String,
+) -> Result<(), Error> {
+    let data = ctx.data;
+    let user = Users::get_or_insert(ctx.author().id.get(), &data.db).await?;
+
+    let Some(song) = Songs::get_by_hash(&song, &data.db).await? else {
+        ctx.send(
+            CreateReply::default().embed(
+                CreateEmbed::new()
+                    .title("Song Requests")
+                    .description("Could not find that song!"),
+            ),
+        )
+        .await?;
+        return Ok(());
+    };
+
+    user.unfavourite_song(&song, &data.db).await?;
+    ctx.send(
+        CreateReply::default().embed(
+            CreateEmbed::new()
+                .title("Song Requests")
+                .description("Unmarked the currently playing song as favourite!"),
+        ),
+    )
+    .await?;
+
+    Ok(())
+}
+
 /// Displays the currently playing song
 #[poise::command(slash_command)]
 pub async fn playing(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
 
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
+    update_activity(data, ctx.author().id, ctx.channel_id()).await?;
 
-    let Some(current_song) = DbSong::last_played_song(&data.db).await? else {
+    let Some(current_song) = Songs::last_played(&data.db).await? else {
         ctx.send(
             CreateReply::default().embed(
                 CreateEmbed::new()
@@ -101,9 +173,7 @@ pub async fn playing(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 pub async fn queue(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = ctx.data;
 
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
+    update_activity(data, ctx.author().id, ctx.channel_id()).await?;
 
     let mut comms = data.comms.lock().await;
     let requests = comms.song_requests().await?;
@@ -154,11 +224,11 @@ pub async fn search(
 ) -> Result<(), Error> {
     let data = ctx.data;
 
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
+    update_activity(data, ctx.author().id, ctx.channel_id()).await?;
 
-    let suggestions = DbSong::search(&data.db, &search)
+    let user = Users::get_or_insert(ctx.author().id.get(), &data.db).await?;
+
+    let suggestions = Songs::search(&search, &data.db)
         .await?
         .into_iter()
         .take(20)
@@ -256,17 +326,14 @@ pub async fn search(
 
             song.file_hash == values[0]
         })
-        .expect_or_log("Failed to find song");
+        .ok_or(anyhow::anyhow!("Failed to find song"))?;
 
     let _ = {
         let mut comms = data.comms.lock().await;
-        comms
-            .request_song(&song.file_path)
-            .await
-            .expect_or_log("Failed to request song")
+        comms.request_song(&song.file_path).await?
     };
 
-    song.request(&data.db, ctx.author().id.get()).await?;
+    song.request(&user, &data.db).await?;
 
     let cooldown_time = chrono::Duration::seconds(5400);
     let over = chrono::Utc::now() + cooldown_time;
@@ -302,20 +369,11 @@ pub async fn search(
     Ok(())
 }
 
-/// Requests a song for the radio
-#[poise::command(slash_command)]
-pub async fn request(
-    ctx: ApplicationContext<'_>,
-    #[description = "The song to request"]
-    #[rest]
-    #[autocomplete = "autocomplete_songs"]
-    song: String,
-) -> Result<(), Error> {
+async fn request_song(ctx: ApplicationContext<'_>, song: String) -> Result<(), Error> {
     let data = ctx.data();
 
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(data, ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
+    update_activity(data, ctx.author().id, ctx.channel_id()).await?;
+    let user = Users::get_or_insert(ctx.author().id.get(), &data.db).await?;
 
     let user_cooldown = UserCooldownKey::new(ctx.author().id.get() as i64, "song_request");
     if let Some(over) = is_on_cooldown(&data.redis_pool, user_cooldown).await? {
@@ -328,7 +386,7 @@ pub async fn request(
         return Ok(());
     }
 
-    let song = DbSong::fetch_from_hash(&data.db, &song).await?;
+    let song = Songs::get_by_hash(&song, &data.db).await?;
 
     let Some(song) = song else {
         ctx.send(
@@ -340,7 +398,7 @@ pub async fn request(
         return Ok(());
     };
 
-    let Some(currently_playing) = DbSong::last_played_song(&data.db).await? else {
+    let Some(currently_playing) = Songs::last_played(&data.db).await? else {
         ctx.send(
             CreateReply::default()
                 .embed(
@@ -367,7 +425,7 @@ pub async fn request(
         return Ok(());
     }
 
-    let last_played = song.last_requested(&data.db).await?;
+    let last_played = SongRequests::get_last_requested_for_song(&song, &data.db).await?;
     let cooldown_time = if song.duration < 300.0 {
         chrono::Duration::seconds(1800)
     } else if song.duration < 600.0 {
@@ -399,13 +457,10 @@ pub async fn request(
 
     let _ = {
         let mut comms = data.comms.lock().await;
-        comms
-            .request_song(&song.file_path)
-            .await
-            .expect_or_log("Failed to request song")
+        comms.request_song(&song.file_path).await?
     };
 
-    song.request(&data.db, ctx.author().id.get()).await?;
+    song.request(&user, &data.db).await?;
 
     let cooldown_time = chrono::Duration::seconds(5400);
     let over = chrono::Utc::now() + cooldown_time;
@@ -449,14 +504,11 @@ pub async fn request(
         .next()
         .await
     {
-        let interaction_user = DbUser::fetch_or_insert(&data.db, mci.user.id.get() as i64).await?;
+        let interaction_user = Users::get_or_insert(mci.user.id.get(), &data.db).await?;
 
         match mci.data.custom_id.as_ref() {
             "song_request_favourite" => {
-                interaction_user
-                    .mark_as_favourite(&song.file_hash, &data.db)
-                    .await
-                    .expect_or_log("Failed to mark as favourite");
+                interaction_user.favourite_song(&song, &data.db).await?;
                 mci.create_response(
                     ctx.serenity_context(),
                     CreateInteractionResponse::Message(
@@ -468,10 +520,7 @@ pub async fn request(
                 .await?;
             }
             "song_request_unfavourite" => {
-                interaction_user
-                    .mark_as_unfavourited(&song.file_hash, &data.db)
-                    .await
-                    .expect_or_log("Failed to unmark as favourite");
+                interaction_user.unfavourite_song(&song, &data.db).await?;
                 mci.create_response(
                     ctx.serenity_context(),
                     CreateInteractionResponse::Message(
@@ -487,4 +536,28 @@ pub async fn request(
     }
 
     Ok(())
+}
+
+/// Requests a song for the radio from your favourites
+#[poise::command(slash_command)]
+pub async fn request_favourite(
+    ctx: ApplicationContext<'_>,
+    #[description = "The song to request"]
+    #[rest]
+    #[autocomplete = "autocomplete_favourite_songs"]
+    song: String,
+) -> Result<(), Error> {
+    request_song(ctx, song).await
+}
+
+/// Requests a song for the radio
+#[poise::command(slash_command)]
+pub async fn request(
+    ctx: ApplicationContext<'_>,
+    #[description = "The song to request"]
+    #[rest]
+    #[autocomplete = "autocomplete_songs"]
+    song: String,
+) -> Result<(), Error> {
+    request_song(ctx, song).await
 }

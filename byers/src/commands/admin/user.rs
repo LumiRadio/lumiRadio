@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use judeharley::{db::DbUser, BigDecimal};
+use judeharley::{controllers::users::UpdateParams, Decimal, Users};
 use poise::{
     serenity_prelude::{CreateEmbed, User},
     CreateReply,
@@ -80,7 +80,7 @@ pub async fn get_grist(
 ) -> Result<(), Error> {
     let data = ctx.data();
 
-    let db_user = DbUser::fetch_or_insert(&data.db, user.id.get() as i64).await?;
+    let db_user = Users::get_or_insert(user.id.get(), &data.db).await?;
     let value = match grist_type {
         UserGristParameter::Amber => db_user.amber.to_string(),
         UserGristParameter::Amethyst => db_user.amethyst.to_string(),
@@ -126,7 +126,7 @@ pub async fn get(
 ) -> Result<(), Error> {
     let data = ctx.data();
 
-    let db_user = DbUser::fetch_or_insert(&data.db, user.id.get() as i64).await?;
+    let db_user = Users::get_or_insert(user.id.get(), &data.db).await?;
     let value = match property {
         UserParameter::WatchedTime => db_user.watched_time.to_string(),
         UserParameter::Boonbucks => db_user.boonbucks.to_string(),
@@ -156,70 +156,71 @@ pub async fn set_grist(
 ) -> Result<(), Error> {
     let data = ctx.data();
 
-    let mut db_user = DbUser::fetch_or_insert(&data.db, user.id.get() as i64).await?;
+    let db_user = Users::get_or_insert(user.id.get(), &data.db).await?;
+    let mut params = UpdateParams::default();
     match grist_type {
         UserGristParameter::Amber => {
-            db_user.amber = value;
+            params.amber = Some(value as u32);
         }
         UserGristParameter::Amethyst => {
-            db_user.amethyst = value;
+            params.amethyst = Some(value as u32);
         }
         UserGristParameter::Artifact => {
-            db_user.artifact = value;
+            params.artifact = Some(value as u32);
         }
         UserGristParameter::Caulk => {
-            db_user.caulk = value;
+            params.caulk = Some(value as u32);
         }
         UserGristParameter::Chalk => {
-            db_user.chalk = value;
+            params.chalk = Some(value as u32);
         }
         UserGristParameter::Cobalt => {
-            db_user.cobalt = value;
+            params.cobalt = Some(value as u32);
         }
         UserGristParameter::Diamond => {
-            db_user.diamond = value;
+            params.diamond = Some(value as u32);
         }
         UserGristParameter::Garnet => {
-            db_user.garnet = value;
+            params.garnet = Some(value as u32);
         }
         UserGristParameter::Gold => {
-            db_user.gold = value;
+            params.gold = Some(value as u32);
         }
         UserGristParameter::Iodine => {
-            db_user.iodine = value;
+            params.iodine = Some(value as u32);
         }
         UserGristParameter::Marble => {
-            db_user.marble = value;
+            params.marble = Some(value as u32);
         }
         UserGristParameter::Mercury => {
-            db_user.mercury = value;
+            params.mercury = Some(value as u32);
         }
         UserGristParameter::Quartz => {
-            db_user.quartz = value;
+            params.quartz = Some(value as u32);
         }
         UserGristParameter::Ruby => {
-            db_user.ruby = value;
+            params.ruby = Some(value as u32);
         }
         UserGristParameter::Rust => {
-            db_user.rust = value;
+            params.rust = Some(value as u32);
         }
         UserGristParameter::Shale => {
-            db_user.shale = value;
+            params.shale = Some(value as u32);
         }
         UserGristParameter::Sulfur => {
-            db_user.sulfur = value;
+            params.sulfur = Some(value as u32);
         }
         UserGristParameter::Tar => {
-            db_user.tar = value;
+            params.tar = Some(value as u32);
         }
         UserGristParameter::Uranium => {
-            db_user.uranium = value;
+            params.uranium = Some(value as u32);
         }
         UserGristParameter::Zillium => {
-            db_user.zillium = value;
+            params.zillium = Some(value as u32);
         }
     }
-    db_user.update(&data.db).await?;
+    db_user.update(params, &data.db).await?;
 
     ctx.send(
         CreateReply::default().embed(
@@ -243,19 +244,20 @@ pub async fn set(
 ) -> Result<(), Error> {
     let data = ctx.data();
 
-    let mut db_user = DbUser::fetch_or_insert(&data.db, user.id.get() as i64).await?;
+    let db_user = Users::get_or_insert(user.id.get(), &data.db).await?;
+    let mut params = UpdateParams::default();
     match property {
         UserParameter::WatchedTime => {
-            db_user.watched_time = value.parse::<BigDecimal>()?;
+            params.watched_time = Some(value.parse::<Decimal>()?);
         }
         UserParameter::Boonbucks => {
-            db_user.boonbucks = value.parse::<i32>()?;
+            params.boonbucks = Some(value.parse::<u32>()?);
         }
         UserParameter::Migrated => {
-            db_user.migrated = value.parse::<bool>()?;
+            params.migrated = Some(value.parse::<bool>()?);
         }
     }
-    db_user.update(&data.db).await?;
+    db_user.update(params, &data.db).await?;
 
     ctx.send(
         CreateReply::default().embed(

@@ -13,6 +13,4 @@ axum = { version = "0.6.20", features = ["macros"] }
 serde = { version = "1.0.188", features = ["derive"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
-
-[dependencies.sqlx]
-workspace = true
+judeharley = { path = "../judeharley" }

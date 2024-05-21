@@ -3,27 +3,30 @@ use fred::{
     pool::RedisPool,
     types::{PerformanceConfig, ReconnectPolicy, RedisConfig},
 };
-use sqlx::postgres::PgPoolOptions;
+use migration::MigratorTrait;
 
 pub use crate::prelude::*;
-pub use sqlx::{types::BigDecimal, PgPool};
+pub use sea_orm;
+pub use sea_orm::entity::prelude::Decimal;
 
 pub mod communication;
+pub mod controllers;
 pub mod cooldowns;
-pub mod db;
+pub mod custom_entities;
 pub mod discord;
+pub mod entities;
 pub mod prelude;
 
 pub mod maintenance;
 
-pub async fn migrate(db: &PgPool) -> Result<()> {
-    sqlx::migrate!().run(db).await.map_err(Into::into)
+pub async fn migrate(db: &sea_orm::DatabaseConnection) -> Result<()> {
+    migration::Migrator::up(db, None).await?;
+
+    Ok(())
 }
 
-pub async fn connect_database(url: &str) -> Result<PgPool> {
-    let db = PgPoolOptions::new().connect(url).await?;
-
-    Ok(db)
+pub async fn connect_database(url: &str) -> Result<sea_orm::DatabaseConnection> {
+    sea_orm::Database::connect(url).await.map_err(Into::into)
 }
 
 pub fn redis_pool(redis_url: &str) -> Result<RedisPool> {

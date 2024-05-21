@@ -4,6 +4,12 @@ All changes to the song list will be documented here!
 
 The format is based on [Keep a Changelog] and doesn't follow versioning, just regular dates.
 
+## 2024-05-05
+
+### Removed duplicates
+
+- [Beforus] by The Homestuck Fan Musicians
+
 ## 2024-05-03
 
 ### Added
@@ -43,3 +49,4 @@ The format is based on [Keep a Changelog] and doesn't follow versioning, just re
 [Empyreal Rhapsody]: https://vasterror.bandcamp.com/album/empyreal-rhapsody
 [Vast Error Vol. 5: Side 1]: https://vasterror.bandcamp.com/album/vast-error-vol-5-side-1
 [Vast Error Vol. 5: Side 2]: https://vasterror.bandcamp.com/album/vast-error-vol-5-side-2
+[Beforus]: https://unofficialmspafans.bandcamp.com/album/beforus

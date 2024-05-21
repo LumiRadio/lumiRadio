@@ -5,8 +5,8 @@ use fred::pool::RedisPool;
 use fred::prelude::PubsubInterface;
 use fred::types::{PerformanceConfig, ReconnectPolicy, RedisConfig};
 
+use judeharley::sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use tracing::{debug, info};
 
 #[derive(Deserialize, Debug)]
@@ -33,21 +33,14 @@ async fn played(
         );
     }
 
-    let db_song = sqlx::query!(
-        "SELECT file_hash FROM songs WHERE file_path = $1",
-        song.filename
-    )
-    .fetch_one(&app_state.db)
-    .await
-    .expect("Failed to query database");
+    let db_song = judeharley::Songs::get(&song.filename, &app_state.db)
+        .await
+        .expect("Failed to query database")
+        .expect("Song not found");
 
-    sqlx::query!(
-        "INSERT INTO played_songs (song_id) VALUES ($1)",
-        db_song.file_hash
-    )
-    .execute(&app_state.db)
-    .await
-    .expect("Failed to query database");
+    judeharley::PlayedSongs::insert(&db_song, &app_state.db)
+        .await
+        .expect("Failed to insert played song");
 
     let _ = app_state
         .redis_pool
@@ -65,7 +58,7 @@ async fn played(
 #[derive(Clone)]
 struct AppState {
     redis_pool: RedisPool,
-    db: PgPool,
+    db: DatabaseConnection,
 }
 
 #[tokio::main]
@@ -82,7 +75,7 @@ async fn main() {
     redis_pool.connect();
 
     let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let db = PgPool::connect(&db_url)
+    let db = judeharley::connect_database(&db_url)
         .await
         .expect("Failed to connect to database");
 

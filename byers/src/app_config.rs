@@ -1,28 +1,23 @@
 use serde::Deserialize;
 
+fn default_environment() -> String {
+    "development".into()
+}
+
 #[derive(Deserialize, Debug)]
 pub struct AppConfig {
     pub discord_token: String,
     pub database_url: String,
     pub redis_url: String,
 
-    pub liquidsoap: LiquidsoapConfig,
-
-    pub google: GoogleConfig,
     pub discord: DiscordConfig,
     pub secret: String,
-}
 
-#[derive(Deserialize, Debug)]
-pub struct LiquidsoapConfig {
-    pub host: String,
-    pub port: u16,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct GoogleConfig {
-    pub client_id: String,
-    pub client_secret: String,
+    pub sentry_dsn: Option<String>,
+    #[serde(default = "default_environment")]
+    pub environment: String,
+    #[serde(default = "Default::default")]
+    pub sentry_debug: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]

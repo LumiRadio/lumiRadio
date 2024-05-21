@@ -1,7 +1,7 @@
 use crate::event_handlers::message::update_activity;
 use crate::prelude::*;
 use fred::prelude::{Expiration, KeysInterface};
-use judeharley::{db::DbCan, DiscordTimestamp, PgPool};
+use judeharley::{sea_orm::DatabaseConnection, Cans, DiscordTimestamp, Users};
 use poise::{serenity_prelude::CreateEmbed, CreateReply};
 
 /// Adds... things
@@ -24,11 +24,9 @@ fn can_name(prefix: &str, number_of_cans: i64) -> String {
 }
 
 async fn addcan_action(ctx: Context<'_>) -> Result<(), Error> {
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(ctx.data(), ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
+    update_activity(ctx.data(), ctx.author().id, ctx.channel_id()).await?;
 
-    let can_count = DbCan::count(&ctx.data().db).await?;
+    let can_count = Cans::count(&ctx.data().db).await?;
     let can_town_name = can_name("Can", can_count);
     if ctx
         .data()
@@ -57,7 +55,7 @@ async fn addcan_action(ctx: Context<'_>) -> Result<(), Error> {
 
     add_can(&ctx.data().db, ctx.author().id.get()).await?;
 
-    let can_count = DbCan::count(&ctx.data().db).await?;
+    let can_count = Cans::count(&ctx.data().db).await?;
     let can_town_name = can_name("Can", can_count);
     let now_in_35_seconds = chrono::Utc::now() + chrono::Duration::seconds(35);
     ctx.send(
@@ -76,11 +74,9 @@ async fn addcan_action(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(ctx.data(), ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
+    update_activity(ctx.data(), ctx.author().id, ctx.channel_id()).await?;
 
-    let can_count = DbCan::count(&ctx.data().db).await?;
+    let can_count = Cans::count(&ctx.data().db).await?;
     let can_town_name = can_name("Bear", can_count);
     if ctx
         .data()
@@ -109,7 +105,7 @@ async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
 
     add_can(&ctx.data().db, ctx.author().id.get()).await?;
 
-    let can_count = DbCan::count(&ctx.data().db).await?;
+    let can_count = Cans::count(&ctx.data().db).await?;
     let can_town_name = can_name("Bear", can_count);
     let now_in_35_seconds = chrono::Utc::now() + chrono::Duration::seconds(35);
     ctx.send(
@@ -151,8 +147,9 @@ pub async fn addbear(
     addbear_action(ctx).await
 }
 
-async fn add_can(db: &PgPool, user_id: u64) -> Result<(), Error> {
-    DbCan::add_one(db, user_id as i64, true).await?;
+async fn add_can(db: &DatabaseConnection, user_id: u64) -> Result<(), Error> {
+    let user = Users::get_or_insert(user_id, db).await?;
+    Cans::insert(&user, true, db).await?;
 
     Ok(())
 }
@@ -184,9 +181,7 @@ pub async fn bear(
 /// no
 #[poise::command(slash_command)]
 pub async fn john(ctx: ApplicationContext<'_>) -> Result<(), Error> {
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(ctx.data, ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
+    update_activity(ctx.data(), ctx.author().id, ctx.channel_id()).await?;
 
     ctx.send(CreateReply::default().embed(CreateEmbed::new().title("no").description("just no")))
         .await?;

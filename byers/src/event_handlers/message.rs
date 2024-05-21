@@ -3,30 +3,32 @@ use fred::{
     prelude::{KeysInterface, RedisClient},
     types::Expiration,
 };
-use poise::serenity_prelude::{self as serenity, ChannelId, GuildId, Message, UserId};
+use poise::serenity_prelude::{self as serenity, ChannelId, Message, UserId};
 use tracing::info;
 
 use crate::prelude::*;
 use judeharley::{
     communication::ByersUnixStream,
-    db::{DbServerChannelConfig, DbUser},
-    BigDecimal, PgPool,
+    controllers::users::UpdateParams,
+    prelude::Users,
+    sea_orm::{prelude::Decimal, DatabaseConnection},
+    ServerChannelConfig,
 };
 
 #[async_trait::async_trait]
-trait UserMessageHandlerExt {
+trait UserMessageHandlerExt: Sized {
     fn redis_message_cooldown_key(&self) -> String;
     fn user_id(&self) -> serenity::UserId;
-    async fn update_watched_time(&mut self, db: &PgPool) -> Result<(), Error>;
+    async fn update_watched_time(self, db: &DatabaseConnection) -> Result<Self, Error>;
     async fn update_boondollars(
-        &mut self,
+        self,
         redis_client: &RedisClient,
-        db: &PgPool,
-    ) -> Result<(), Error>;
+        db: &DatabaseConnection,
+    ) -> Result<Self, Error>;
 }
 
 #[async_trait::async_trait]
-impl UserMessageHandlerExt for DbUser {
+impl UserMessageHandlerExt for Users {
     fn redis_message_cooldown_key(&self) -> String {
         format!("message_cooldown:{}", self.id)
     }
@@ -35,46 +37,64 @@ impl UserMessageHandlerExt for DbUser {
         serenity::UserId::new(self.id as u64)
     }
 
-    async fn update_watched_time(&mut self, db: &PgPool) -> Result<(), Error> {
-        if self.last_message_sent.is_none() {
+    async fn update_watched_time(self, db: &DatabaseConnection) -> Result<Self, Error> {
+        let user = if self.last_message_sent.is_none() {
             // first message
             info!("User {} sent their first message", self.id);
-            self.last_message_sent = Some(chrono::Utc::now().naive_utc());
+            let last_message_sent = Some(chrono::Utc::now().naive_utc());
+            self.update(
+                UpdateParams {
+                    last_message_sent,
+                    ..Default::default()
+                },
+                db,
+            )
+            .await?
         } else {
             let now = chrono::Utc::now().naive_utc();
-            // check if the user has sent a message in the last 15 minutes
-            // if so, add the time difference to their watched time
-            // if not, do nothing
             let time_diff = now - self.last_message_sent.unwrap();
-            self.last_message_sent = Some(now);
+            let last_message_sent = Some(now);
 
-            if time_diff.num_minutes() <= 15 {
+            let watched_time = if time_diff.num_minutes() <= 15 {
                 info!(
                     "User {} sent a message within 15 minutes, adding {} seconds to their watched time",
                     self.id,
                     time_diff.num_seconds()
                 );
 
-                self.watched_time += BigDecimal::from(time_diff.num_seconds()) / 3600;
-            }
-        }
+                Some(
+                    self.watched_time
+                        + Decimal::from(time_diff.num_seconds()) / Decimal::from(3600),
+                )
+            } else {
+                None
+            };
 
-        self.update(db).await?;
+            self.update(
+                UpdateParams {
+                    last_message_sent,
+                    watched_time,
+                    ..Default::default()
+                },
+                db,
+            )
+            .await?
+        };
 
-        Ok(())
+        Ok(user)
     }
 
     async fn update_boondollars(
-        &mut self,
+        self,
         redis_client: &RedisClient,
-        db: &PgPool,
-    ) -> Result<(), Error> {
+        db: &DatabaseConnection,
+    ) -> Result<Self, Error> {
         let cooldown_key = self.redis_message_cooldown_key();
         if let Some(cooldown) = redis_client.get::<Option<String>, _>(&cooldown_key).await? {
             let cooldown = NaiveDateTime::parse_from_str(&cooldown, "%Y-%m-%d %H:%M:%S%.f")?;
 
             if cooldown > chrono::Utc::now().naive_utc() {
-                return Ok(());
+                return Ok(self);
             }
         }
 
@@ -92,11 +112,16 @@ impl UserMessageHandlerExt for DbUser {
 
         info!("User {} sent a message, awarding 3 Boondollars", self.id);
 
-        self.boonbucks += 3;
-
-        self.update(db).await?;
-
-        Ok(())
+        let new_boonbucks = self.boonbucks + 3;
+        self.update(
+            UpdateParams {
+                boonbucks: Some(new_boonbucks as u32),
+                ..Default::default()
+            },
+            db,
+        )
+        .await
+        .map_err(Into::into)
     }
 }
 
@@ -104,23 +129,23 @@ pub async fn update_activity(
     data: &Data<ByersUnixStream>,
     author: UserId,
     channel_id: ChannelId,
-    guild_id: GuildId,
 ) -> Result<(), Error> {
-    let Some(channel_config) =
-        DbServerChannelConfig::fetch(&data.db, channel_id.get() as i64, guild_id.get() as i64)
-            .await?
-    else {
+    let Some(channel_config) = ServerChannelConfig::get(channel_id.get(), &data.db).await? else {
         return Ok(());
     };
 
-    let mut user = DbUser::fetch_or_insert(&data.db, author.get() as i64).await?;
+    let user = Users::get_or_insert(author.get(), &data.db).await?;
 
-    if channel_config.allow_watch_time_accumulation {
-        user.update_watched_time(&data.db).await?;
-    }
+    let user = if channel_config.allow_watch_time_accumulation {
+        user.update_watched_time(&data.db).await?
+    } else {
+        user
+    };
     if channel_config.allow_point_accumulation {
-        user.update_boondollars(&data.redis_pool, &data.db).await?;
-    }
+        user.update_boondollars(&data.redis_pool, &data.db).await?
+    } else {
+        user
+    };
 
     Ok(())
 }
@@ -130,11 +155,7 @@ pub async fn message_handler(message: &Message, data: &Data<ByersUnixStream>) ->
         return Ok(());
     }
 
-    let Some(guild_id) = message.guild_id else {
-        return Ok(());
-    };
-
-    update_activity(data, message.author.id, message.channel_id, guild_id).await?;
+    update_activity(data, message.author.id, message.channel_id).await?;
 
     Ok(())
 }

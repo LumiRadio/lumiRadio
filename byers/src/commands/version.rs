@@ -1,13 +1,8 @@
-use crate::event_handlers::message::update_activity;
 use crate::prelude::*;
 
 /// Shows the current version of Byers
 #[poise::command(slash_command, ephemeral, owners_only)]
 pub async fn version(ctx: Context<'_>) -> Result<(), Error> {
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(ctx.data(), ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
-
     let version = env!("CARGO_PKG_VERSION");
     let changelog =
         "<https://github.com/LumiRadio/lumiRadio/blob/develop/CHANGELOG.md>".to_string();

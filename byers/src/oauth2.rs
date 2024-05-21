@@ -9,9 +9,8 @@ use axum::{
 use axum_sessions::{extractors::WritableSession, SessionLayer};
 use fred::pool::RedisPool;
 use judeharley::{
-    db::{DbSong, DbUser},
     discord::{DiscordConnection, MinimalDiscordUser},
-    PgPool,
+    sea_orm::DatabaseConnection,
 };
 use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
@@ -30,7 +29,7 @@ static OAUTH2_FAILED_DISCORD_HTML: &str = include_str!("static/oauth2_discord.ht
 
 #[derive(FromRef, Debug, Clone)]
 struct AppState {
-    db: PgPool,
+    db: DatabaseConnection,
     discord_config: DiscordConfig,
 }
 
@@ -86,7 +85,7 @@ async fn oauth2_login(
 }
 
 async fn oauth2_callback(
-    State(db): State<PgPool>,
+    State(db): State<DatabaseConnection>,
     State(discord): State<DiscordConfig>,
     Query(params): Query<OAuth2CallbackParams>,
     mut session: WritableSession,
@@ -134,12 +133,12 @@ async fn oauth2_callback(
     let logged_in_user = MinimalDiscordUser::fetch(token.access_token().secret())
         .await
         .expect_or_log("Failed to fetch Discord user");
-    let user = DbUser::fetch_or_insert(&db, logged_in_user.id.parse().unwrap_or_log())
+    let user = judeharley::Users::get_or_insert(logged_in_user.id.parse().unwrap_or_log(), &db)
         .await
-        .expect_or_log("Failed to fetch or insert user");
-    user.add_linked_channels(&db, youtube_connections)
+        .expect_or_log("Failed to get or insert user");
+    user.insert_channels(&youtube_connections, &db)
         .await
-        .expect_or_log("Failed to add linked channels");
+        .expect_or_log("Failed to insert channels");
 
     let next = session.get::<String>("next");
     if let Some(next) = next {
@@ -175,8 +174,8 @@ struct Song {
     duration: f64,
 }
 
-impl From<DbSong> for Song {
-    fn from(value: DbSong) -> Self {
+impl From<judeharley::Songs> for Song {
+    fn from(value: judeharley::Songs) -> Self {
         Self {
             id: value.file_hash,
             title: value.title,
@@ -188,7 +187,7 @@ impl From<DbSong> for Song {
 }
 
 async fn song_list(State(app_state): State<AppState>) -> ApiResponse<Vec<Song>> {
-    let songs = match DbSong::fetch_all(&app_state.db).await {
+    let songs = match judeharley::Songs::get_all(&app_state.db).await {
         Ok(songs) => songs,
         Err(e) => {
             error!("Failed to fetch songs: {}", e);
@@ -205,7 +204,7 @@ async fn song_list(State(app_state): State<AppState>) -> ApiResponse<Vec<Song>> 
 
 pub async fn oauth2_server(
     secret: String,
-    db: PgPool,
+    db: DatabaseConnection,
     redis: RedisPool,
     discord_config: DiscordConfig,
     ctrl_c: Receiver<()>,

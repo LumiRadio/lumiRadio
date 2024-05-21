@@ -7,9 +7,7 @@ pub async fn help(
     ctx: Context<'_>,
     #[description = "Specific command to show help about"] command: Option<String>,
 ) -> Result<(), Error> {
-    if let Some(guild_id) = ctx.guild_id() {
-        update_activity(ctx.data(), ctx.author().id, ctx.channel_id(), guild_id).await?;
-    }
+    update_activity(ctx.data(), ctx.author().id, ctx.channel_id()).await?;
 
     let config = poise::builtins::HelpConfiguration {
         extra_text_at_bottom: r#"Use `/help [command]` for more info on a command."#,

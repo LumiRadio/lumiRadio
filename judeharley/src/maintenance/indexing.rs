@@ -1,11 +1,16 @@
 use std::path::{Path, PathBuf};
 
 use audiotags::{AudioTagEdit, Id3v2Tag};
+use sea_orm::DatabaseConnection;
 use sha2::{Digest, Sha256};
-use sqlx::PgPool;
 use tracing::{debug, error, info, warn};
 
-use crate::{db::DbSong, maintenance::rewrite_music_path, prelude::*};
+use crate::{
+    controllers::song_tags::InsertParams as TagParams,
+    controllers::songs::InsertParams,
+    maintenance::rewrite_music_path,
+    prelude::{Songs, *},
+};
 
 pub trait WavTag {
     fn read_from_wav_path(path: impl AsRef<Path>) -> Result<Self>
@@ -25,9 +30,9 @@ impl WavTag for Id3v2Tag {
 }
 
 #[tracing::instrument(skip(db))]
-pub async fn index(db: PgPool, directory: PathBuf) -> Result<()> {
+pub async fn index(db: &DatabaseConnection, directory: PathBuf) -> Result<()> {
     info!("Pruning indexing database");
-    DbSong::prune(&db).await?;
+    Songs::prune(db).await?;
 
     let files = walkdir::WalkDir::new(&directory)
         .into_iter()
@@ -58,7 +63,7 @@ pub async fn index(db: PgPool, directory: PathBuf) -> Result<()> {
     let len = files.len();
     let mut failed_files = vec![];
     for file in files {
-        let result = index_file(db.clone(), &file, &directory).await;
+        let result = index_file(db, &file, &directory).await;
         if let Err(e) = result {
             error!("failed to index file: {}", e);
             failed_files.push(file);
@@ -74,7 +79,7 @@ pub async fn index(db: PgPool, directory: PathBuf) -> Result<()> {
 }
 
 #[tracing::instrument(skip(db))]
-pub async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> Result<()> {
+pub async fn index_file(db: &DatabaseConnection, path: &Path, music_path: &Path) -> Result<()> {
     if !SUPPORTED_AUDIO_FORMATS.contains(
         &path
             .extension()
@@ -119,45 +124,61 @@ pub async fn index_file(db: PgPool, path: &Path, music_path: &Path) -> Result<()
         path.display()
     );
 
-    let new_song = DbSong {
-        title: title.replace(char::from(0), ""),
-        artist: artist.replace(char::from(0), ""),
-        album: album.replace(char::from(0), ""),
-        file_path: path.display().to_string(),
-        duration: meta.duration,
-        file_hash: hash_str.clone(),
-        bitrate: meta.bitrate as i32,
-    };
-    new_song.insert(&db).await?;
+    let song = Songs::insert(
+        InsertParams {
+            title: title.replace(char::from(0), ""),
+            artist: artist.replace(char::from(0), ""),
+            album: album.replace(char::from(0), ""),
+            file_path: path.display().to_string(),
+            file_hash: hash_str.clone(),
+            duration: meta.duration,
+            bitrate: meta.bitrate as i32,
+        },
+        db,
+    )
+    .await?;
 
-    new_song.add_tags(&db, &meta.tags).await?;
+    Tags::insert_many(
+        &song,
+        &meta
+            .tags
+            .into_iter()
+            .map(|(k, v)| TagParams { tag: k, value: v })
+            .collect::<Vec<_>>(),
+        db,
+    )
+    .await?;
 
     Ok(())
 }
 
-pub async fn drop_index(db: PgPool, path: &Path, music_path: &Path) -> Result<()> {
+pub async fn drop_index(db: &DatabaseConnection, path: &Path, music_path: &Path) -> Result<()> {
     let db_path = rewrite_music_path(path, music_path)?;
     info!("Dropping index for {}", path.display());
 
-    DbSong::delete_by_path(&db, &db_path).await?;
+    Songs::delete_by_path(&db_path, db).await?;
 
     Ok(())
 }
 
-pub async fn drop_index_folder(db: PgPool, folder_path: &Path, music_path: &Path) -> Result<()> {
+pub async fn drop_index_folder(
+    db: &DatabaseConnection,
+    folder_path: &Path,
+    music_path: &Path,
+) -> Result<()> {
     let db_path = rewrite_music_path(folder_path, music_path)?;
     info!("Dropping index for {}", folder_path.display());
 
-    let songs = DbSong::fetch_by_directory(&db, &db_path).await?;
+    let songs = Songs::get_by_directory(&db_path, db).await?;
     for song in songs {
-        song.delete(&db).await?;
+        song.delete(db).await?;
     }
 
     Ok(())
 }
 
-pub async fn create_playlist(db: PgPool, playlist_path: &Path) -> Result<()> {
-    let songs = DbSong::fetch_all_paths(&db)
+pub async fn create_playlist(db: &DatabaseConnection, playlist_path: &Path) -> Result<()> {
+    let songs = Songs::get_all_paths(db)
         .await?
         .into_iter()
         .map(m3u::path_entry)

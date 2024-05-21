@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.3.0] - 2024-05-03
+
+### Added
+
+- Implemented Sentry into Byers to catch errors
+- Added `/song favourite` to favourite the currently playing song
+- Added `/song unfavourite` to unfavourite the specified song
+- Added `/song request_favourite` to search and request one of your favourited songs
+
+### Changed
+
+- Migrated from sqlx to SeaORM
+
+### Fixed
+
+- Fixed the slot machine showing "you lost" even though there was a payout
+- Fixed Byers not actually giving people its lunch money when it loses
+- Fixed the slot machine incorrectly ignoring proper payout of Bar symbols
+
 ## [1.2.1] - 2024-05-03
 
 ### Fixed
@@ -312,3 +331,7 @@ and this project adheres to [Semantic Versioning].
 [1.1.6]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.5..v1.1.6
 [1.1.7]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.6..v1.1.7
 [1.1.8]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.7..v1.1.8
+[1.1.9]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.8..v1.1.9
+[1.2.0]: https://github.com/LumiRadio/lumiRadio/compare/v1.1.9..v1.2.0
+[1.2.1]: https://github.com/LumiRadio/lumiRadio/compare/v1.2.0..v1.2.1
+[1.3.0]: https://github.com/LumiRadio/lumiRadio/compare/v1.2.0..v1.3.0

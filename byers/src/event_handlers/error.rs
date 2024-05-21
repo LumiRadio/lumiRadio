@@ -39,11 +39,14 @@ pub async fn on_error(error: FrameworkError<'_>) -> Result<(), Error> {
         } => {
             send_cooldown_embed(ctx, remaining_cooldown).await?;
         }
+        FrameworkError::Command { error, ctx, .. } => {
+            let err_str = error.to_string();
+            error!("Error in command: {}", err_str);
+            sentry_anyhow::capture_anyhow(&error);
+            ctx.say(err_str).await?;
+        }
         _ => {
-            let result = poise::builtins::on_error(error).await;
-            if let Err(error) = result {
-                error!("Discord error: {}", error);
-            }
+            poise::builtins::on_error(error).await?;
         }
     }
 

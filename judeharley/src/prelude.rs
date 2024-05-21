@@ -7,6 +7,16 @@ use fred::{
 pub(crate) type Error = JudeHarleyError;
 pub(crate) type Result<T> = std::result::Result<T, Error>;
 
+pub use crate::custom_entities::songs::Model as Songs;
+pub use crate::entities::{
+    cans::Model as Cans, connected_youtube_accounts::Model as ConnectedYoutubeAccounts,
+    favourite_songs::Model as FavouriteSongs, played_songs::Model as PlayedSongs,
+    server_channel_config::Model as ServerChannelConfig, server_config::Model as ServerConfig,
+    server_role_config::Model as ServerRoleConfig, slcb_currency::Model as SlcbCurrency,
+    slcb_rank::Model as SlcbRank, song_requests::Model as SongRequests, song_tags::Model as Tags,
+    users::Model as Users,
+};
+
 pub static SUPPORTED_AUDIO_FORMATS: [&str; 4] = ["mp3", "flac", "ogg", "wav"];
 
 #[derive(Debug, thiserror::Error)]
@@ -15,9 +25,13 @@ pub enum JudeHarleyError {
     SongNotFound,
 
     #[error(transparent)]
-    Sqlx(#[from] sqlx::Error),
+    SeaOrmDb(#[from] sea_orm::DbErr),
     #[error(transparent)]
-    SqlxMigration(#[from] sqlx::migrate::MigrateError),
+    SeaOrmSql(#[from] sea_orm::SqlErr),
+    #[error(transparent)]
+    SeaOrmRuntime(#[from] sea_orm::RuntimeErr),
+    #[error(transparent)]
+    SeaOrmConn(#[from] sea_orm::ConnAcquireErr),
     #[error(transparent)]
     Redis(#[from] fred::prelude::RedisError),
     #[error(transparent)]
