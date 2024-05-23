@@ -1,7 +1,3 @@
 [alias]
-addm = "sqlx migrate add --source judeharley/migrations -r "
-runm = "sqlx migrate run --source judeharley/migrations -D postgres://byers:byers@localhost/byers"
-revertm = "sqlx migrate revert --source judeharley/migrations -D postgres://byers:byers@localhost/byers"
-prepare = "sqlx prepare --workspace --database-url postgres://byers:byers@localhost/byers"
 index = "run --package=frohike -- indexing -D postgres://byers:byers@localhost/byers"
 frohike = "run --package=frohike --"

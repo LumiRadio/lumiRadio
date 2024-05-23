@@ -3,7 +3,7 @@ use fred::{
     prelude::{KeysInterface, RedisClient},
     types::Expiration,
 };
-use poise::serenity_prelude::{self as serenity, ChannelId, Message, UserId};
+use poise::serenity_prelude::{ChannelId, Message, UserId};
 use tracing::info;
 
 use crate::prelude::*;
@@ -18,7 +18,6 @@ use judeharley::{
 #[async_trait::async_trait]
 trait UserMessageHandlerExt: Sized {
     fn redis_message_cooldown_key(&self) -> String;
-    fn user_id(&self) -> serenity::UserId;
     async fn update_watched_time(self, db: &DatabaseConnection) -> Result<Self, Error>;
     async fn update_boondollars(
         self,
@@ -31,10 +30,6 @@ trait UserMessageHandlerExt: Sized {
 impl UserMessageHandlerExt for Users {
     fn redis_message_cooldown_key(&self) -> String {
         format!("message_cooldown:{}", self.id)
-    }
-
-    fn user_id(&self) -> serenity::UserId {
-        serenity::UserId::new(self.id as u64)
     }
 
     async fn update_watched_time(self, db: &DatabaseConnection) -> Result<Self, Error> {

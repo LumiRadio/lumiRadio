@@ -8,7 +8,7 @@ In order to develop and test for the radio, you can follow the steps below to ge
 
 Another dependency that the radio requires is `ffmpeg` and the headers for it as well as `Clang`.
 
-Additionally, as this project uses sqlx, you will need to install the sqlx-cli (`cargo install sqlx-cli`).
+Additionally, as this project uses SeaORM, you will need to install the sqlx-cli (`cargo install sea-orm-cli`).
 
 1. You will need to [create a Discord bot](https://discord.com/developers/applications)
     - Make note of your client ID, client secret and the bot token, you will need those later!
@@ -20,9 +20,9 @@ Additionally, as this project uses sqlx, you will need to install the sqlx-cli (
     - I recommend changing the `_TAG` variables to `dev` if you plan to change the code
       - If you do so, you will need to build the container using `docker compose build byers`, which can take quite some time and consume a fair amount of resources!
 5. Spin up the database using `docker compose up -d db`
-6. Migrate the database using `cargo runm`
+6. Migrate the database using `make migrate`
     - If you changed the Postgres variables (starting with `PG`), you will have to use
-      `cargo sqlx migrate run --source judeharley/migrations -D postgres://[PG_USER]:[PG_PASSWORD]@localhost/[PG_DATABASE]`
+      `sea migrate up -u postgres://[PG_USER]:[PG_PASSWORD]@localhost/[PG_DATABASE]`
     - The same goes for other aliases in this project.
 7. Run the initial indexing using `cargo index -p "[RADIO_MUSIC]/playlist.m3u" "[RADIO_MUSIC]"`
     - Like mentioned in 6., if you changed the Postgres variables, this will be `cargo run --package=frohike -- indexing -D postgres://[PG_USER]:[PG_PASSWORD]@localhost/[PG_DATABASE] -p "[RADIO_MUSIC]/playlist.m3u" "[RADIO_MUSIC]"`

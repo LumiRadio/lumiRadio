@@ -173,11 +173,6 @@ async fn main() {
                         .expect_or_log("Failed to handle error");
                 })
             },
-            pre_command: |ctx| {
-                Box::pin(async move {
-                    sentry::add_breadcrumb(BreadcrumbableContext(ctx).as_breadcrumbs().await);
-                })
-            },
             prefix_options: PrefixFrameworkOptions {
                 prefix: Some("!".to_string()),
                 ignore_bots: true,

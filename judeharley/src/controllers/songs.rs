@@ -149,7 +149,7 @@ impl Model {
                 SELECT to_tsquery(string_agg(lexeme || ':*', ' & ' ORDER BY positions)) AS query
                 FROM unnest(to_tsvector($1))
             )
-            SELECT title, artist, album, file_path, duration, file_hash, bitrate
+            SELECT songs.*
             FROM songs, search
             WHERE tsvector @@ query
             "#,
@@ -172,7 +172,7 @@ impl Model {
                 SELECT to_tsquery(string_agg(lexeme || ':*', ' & ' ORDER BY positions)) AS query
                 FROM unnest(to_tsvector($1))
             )
-            SELECT title, artist, album, file_path, duration, file_hash, bitrate
+            SELECT songs.*
             FROM search, favourite_songs
             JOIN songs ON favourite_songs.song_id = songs.file_hash
             WHERE favourite_songs.user_id = $2 AND tsvector @@ query

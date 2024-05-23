@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.3.1] - 2024-05-23
+
+### Changed
+
+- Moved breadcrumbing to the error handler to only capture the most recent command
+
+### Fixed
+
+- Fixed song requests not working due to missing columns
+
 ## [1.3.0] - 2024-05-03
 
 ### Added

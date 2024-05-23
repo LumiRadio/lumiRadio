@@ -42,6 +42,7 @@ pub async fn on_error(error: FrameworkError<'_>) -> Result<(), Error> {
         FrameworkError::Command { error, ctx, .. } => {
             let err_str = error.to_string();
             error!("Error in command: {}", err_str);
+            sentry::add_breadcrumb(BreadcrumbableContext(ctx).as_breadcrumbs().await);
             sentry_anyhow::capture_anyhow(&error);
             ctx.say(err_str).await?;
         }
