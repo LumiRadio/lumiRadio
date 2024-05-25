@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.3.2] - 2024-05-23
+
+### Added
+
+- Added some rudimentary Sentry upload for command panics
+
+### Changed
+
+- Show all favourites if the search query is empty
+
 ## [1.3.1] - 2024-05-23
 
 ### Changed

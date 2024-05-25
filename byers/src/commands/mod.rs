@@ -49,10 +49,19 @@ pub async fn autocomplete_songs(
     partial: &str,
 ) -> impl Iterator<Item = poise::serenity_prelude::AutocompleteChoice> {
     let data = ctx.data();
-
-    let songs = Songs::search(partial, &data.db)
+    let user = Users::get_or_insert(ctx.author().id.get(), &data.db)
         .await
         .expect_or_log("Failed to query database");
+
+    let songs = if partial.is_empty() {
+        user.list_favourites(&data.db)
+            .await
+            .expect_or_log("Failed to query database")
+    } else {
+        Songs::search(partial, &data.db)
+        .await
+        .expect_or_log("Failed to query database")
+    };
 
     songs.into_iter().take(20).map(|song| {
         AutocompleteChoice::new(
@@ -73,9 +82,15 @@ pub async fn autocomplete_favourite_songs(
         .await
         .expect_or_log("Failed to query database");
 
-    let songs = Songs::search_favourited_songs(partial, &user, &data.db)
-        .await
-        .expect_or_log("Failed to query database");
+    let songs = if partial.is_empty() {
+        user.list_favourites(&data.db)
+            .await
+            .expect_or_log("Failed to query database")
+    } else {
+        Songs::search_favourited_songs(partial, &user, &data.db)
+            .await
+            .expect_or_log("Failed to query database")
+    };
 
     songs.into_iter().take(20).map(|song| {
         AutocompleteChoice::new(

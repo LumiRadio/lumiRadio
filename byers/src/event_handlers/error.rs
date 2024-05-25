@@ -45,6 +45,23 @@ pub async fn on_error(error: FrameworkError<'_>) -> Result<(), Error> {
             sentry::add_breadcrumb(BreadcrumbableContext(ctx).as_breadcrumbs().await);
             sentry_anyhow::capture_anyhow(&error);
             ctx.say(err_str).await?;
+        },
+        FrameworkError::CommandPanic { ref payload, ref ctx, .. } => {
+            let payload_clone = payload.clone();
+            sentry::add_breadcrumb(BreadcrumbableContext(*ctx).as_breadcrumbs().await);
+            if let Some(payload) = payload_clone {
+                sentry_anyhow::capture_anyhow(&anyhow::anyhow!(payload));
+            } else {
+                sentry_anyhow::capture_anyhow(&anyhow::anyhow!("Panic in command"));
+            }
+            
+            let embed = poise::serenity_prelude::CreateEmbed::default()
+                .title("Internal error")
+                .color((255, 0, 0))
+                .description("An unexpected internal error has occurred.");
+
+            ctx.send(CreateReply::default().embed(embed).ephemeral(true))
+                .await?;
         }
         _ => {
             poise::builtins::on_error(error).await?;

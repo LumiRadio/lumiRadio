@@ -89,6 +89,7 @@ If you don't remember your old YouTube name or you no longer have access to your
         SituwaitionOptsBuilder::default()
             .timeout(Duration::from_secs(120))
             .check_interval(Duration::from_secs(1))
+            .check_cooldown(None)
             .build()
             .unwrap(),
     )
