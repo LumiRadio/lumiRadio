@@ -28,7 +28,7 @@ pub async fn boondollars(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let rank_name = SlcbRank::get_rank_for_user(&user, &data.db).await?;
     let next_rank = SlcbRank::get_next_rank_for_user(&user, &data.db)
         .await?
-        .map(|r| r.hour_requirement as i64 - user.watched_time)
+        .map(|r| r.hour_requirement as i64 - user.watched_time / 3600)
         .unwrap_or(0);
 
     let message = format!("{username} - Hours: {hours:.2}/{seconds}s (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank:.0} hours. - You can check again in 5 minutes.", username = ctx.author().name, hours = rounded_hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
