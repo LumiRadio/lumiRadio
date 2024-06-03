@@ -3,4 +3,7 @@ entity:
 migrate:
 	sea migrate up -u postgres://byers:byers@localhost/byers
 
+undo:
+	sea migrate down -u postgres://byers:byers@localhost/byers
+
 .PHONY: entity

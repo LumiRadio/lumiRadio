@@ -8,12 +8,6 @@ impl Model {
         user: &UserModel,
         db: &DatabaseConnection,
     ) -> Result<String, JudeHarleyError> {
-        let watched_time: i32 = user
-            .watched_time
-            .clone()
-            .trunc_with_scale(0)
-            .try_into()
-            .expect("Invalid watched time");
         let linked_channels = user
             .linked_channels(db)
             .await?
@@ -22,7 +16,7 @@ impl Model {
             .collect::<Vec<_>>();
 
         let rank = Entity::find()
-            .filter(Column::HourRequirement.lte(watched_time))
+            .filter(Column::HourRequirement.lte(user.watched_time))
             .filter(
                 Column::ChannelId
                     .is_null()
@@ -42,12 +36,6 @@ impl Model {
         user: &UserModel,
         db: &DatabaseConnection,
     ) -> Result<Option<Self>, JudeHarleyError> {
-        let watched_time: i32 = user
-            .watched_time
-            .clone()
-            .trunc_with_scale(0)
-            .try_into()
-            .expect("Invalid watched time");
         let linked_channels = user
             .linked_channels(db)
             .await?
@@ -56,7 +44,7 @@ impl Model {
             .collect::<Vec<_>>();
 
         Entity::find()
-            .filter(Column::HourRequirement.gt(watched_time))
+            .filter(Column::HourRequirement.gt(user.watched_time))
             .filter(
                 Column::ChannelId
                     .is_null()

@@ -8,7 +8,7 @@ use crate::entities::{
 };
 use crate::{custom_entities::songs::*, JudeHarleyError};
 
-pub struct InsertParams {
+pub struct NewSong {
     pub title: String,
     pub artist: String,
     pub album: String,
@@ -25,7 +25,7 @@ struct PathQuery {
 
 impl Model {
     pub async fn insert(
-        params: InsertParams,
+        params: NewSong,
         db: &DatabaseConnection,
     ) -> Result<Self, JudeHarleyError> {
         ActiveModel {

@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use judeharley::{controllers::users::UpdateParams, Decimal, Users};
+use judeharley::{sea_orm::Set, Users};
 use poise::{
     serenity_prelude::{CreateEmbed, User},
     CreateReply,
@@ -157,67 +157,67 @@ pub async fn set_grist(
     let data = ctx.data();
 
     let db_user = Users::get_or_insert(user.id.get(), &data.db).await?;
-    let mut params = UpdateParams::default();
+    let mut params = judeharley::entities::users::ActiveModel::default();
     match grist_type {
         UserGristParameter::Amber => {
-            params.amber = Some(value as u32);
+            params.amber = Set(value);
         }
         UserGristParameter::Amethyst => {
-            params.amethyst = Some(value as u32);
+            params.amethyst = Set(value);
         }
         UserGristParameter::Artifact => {
-            params.artifact = Some(value as u32);
+            params.artifact = Set(value);
         }
         UserGristParameter::Caulk => {
-            params.caulk = Some(value as u32);
+            params.caulk = Set(value);
         }
         UserGristParameter::Chalk => {
-            params.chalk = Some(value as u32);
+            params.chalk = Set(value);
         }
         UserGristParameter::Cobalt => {
-            params.cobalt = Some(value as u32);
+            params.cobalt = Set(value);
         }
         UserGristParameter::Diamond => {
-            params.diamond = Some(value as u32);
+            params.diamond = Set(value);
         }
         UserGristParameter::Garnet => {
-            params.garnet = Some(value as u32);
+            params.garnet = Set(value);
         }
         UserGristParameter::Gold => {
-            params.gold = Some(value as u32);
+            params.gold = Set(value);
         }
         UserGristParameter::Iodine => {
-            params.iodine = Some(value as u32);
+            params.iodine = Set(value);
         }
         UserGristParameter::Marble => {
-            params.marble = Some(value as u32);
+            params.marble = Set(value);
         }
         UserGristParameter::Mercury => {
-            params.mercury = Some(value as u32);
+            params.mercury = Set(value);
         }
         UserGristParameter::Quartz => {
-            params.quartz = Some(value as u32);
+            params.quartz = Set(value);
         }
         UserGristParameter::Ruby => {
-            params.ruby = Some(value as u32);
+            params.ruby = Set(value);
         }
         UserGristParameter::Rust => {
-            params.rust = Some(value as u32);
+            params.rust = Set(value);
         }
         UserGristParameter::Shale => {
-            params.shale = Some(value as u32);
+            params.shale = Set(value);
         }
         UserGristParameter::Sulfur => {
-            params.sulfur = Some(value as u32);
+            params.sulfur = Set(value);
         }
         UserGristParameter::Tar => {
-            params.tar = Some(value as u32);
+            params.tar = Set(value);
         }
         UserGristParameter::Uranium => {
-            params.uranium = Some(value as u32);
+            params.uranium = Set(value);
         }
         UserGristParameter::Zillium => {
-            params.zillium = Some(value as u32);
+            params.zillium = Set(value);
         }
     }
     db_user.update(params, &data.db).await?;
@@ -245,16 +245,16 @@ pub async fn set(
     let data = ctx.data();
 
     let db_user = Users::get_or_insert(user.id.get(), &data.db).await?;
-    let mut params = UpdateParams::default();
+    let mut params = judeharley::entities::users::ActiveModel::default();
     match property {
         UserParameter::WatchedTime => {
-            params.watched_time = Some(value.parse::<Decimal>()?);
+            params.watched_time = Set(value.parse::<i64>()?);
         }
         UserParameter::Boonbucks => {
-            params.boonbucks = Some(value.parse::<u32>()?);
+            params.boonbucks = Set(value.parse::<i32>()?);
         }
         UserParameter::Migrated => {
-            params.migrated = Some(value.parse::<bool>()?);
+            params.migrated = Set(value.parse::<bool>()?);
         }
     }
     db_user.update(params, &data.db).await?;

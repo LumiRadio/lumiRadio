@@ -343,6 +343,12 @@ impl MigrationTrait for Migration {
                             .string_len(255)
                             .not_null(),
                     )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("favourite_songs_user_id")
+                            .from(FavouriteSongs::Table, FavouriteSongs::UserId)
+                            .to(Users::Table, Users::Id),
+                    )
                     .to_owned(),
             )
             .await?;

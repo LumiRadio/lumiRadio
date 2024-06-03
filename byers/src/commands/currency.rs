@@ -5,7 +5,7 @@ use poise::{
 
 use judeharley::{
     sea_orm::{ActiveModelTrait, DbErr, IntoActiveModel, TransactionTrait},
-    Decimal, SlcbRank, Users,
+    SlcbRank, Users,
 };
 
 use crate::{event_handlers::message::update_activity, prelude::*};
@@ -20,18 +20,18 @@ pub async fn boondollars(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let user = Users::get_or_insert(ctx.author().id.get(), &data.db).await?;
 
     // $username - Hours: $hours (Rank #$hourspos) - $currencyname: $points (Rank #$pointspos) - Echeladder: $rank • Next rung in $nxtrankreq hours. - You can check again in 5 minutes.
-    let hours = user.watched_time;
-    let rounded_hours = (hours * Decimal::from(12)).trunc_with_scale(0) / Decimal::from(12);
+    let seconds = user.watched_time;
+    let rounded_hours = seconds as f64 / 3600.0;
     let hours_pos = user.hour_position(&data.db).await?;
     let points = user.boonbucks;
     let points_pos = user.boondollar_position(&data.db).await?;
     let rank_name = SlcbRank::get_rank_for_user(&user, &data.db).await?;
     let next_rank = SlcbRank::get_next_rank_for_user(&user, &data.db)
         .await?
-        .map(|r| Decimal::from(r.hour_requirement) - user.watched_time)
-        .unwrap_or(Decimal::from(0));
+        .map(|r| r.hour_requirement as i64 - user.watched_time)
+        .unwrap_or(0);
 
-    let message = format!("{username} - Hours: {hours:.2} (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank:.0} hours. - You can check again in 5 minutes.", username = ctx.author().name, hours = rounded_hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
+    let message = format!("{username} - Hours: {hours:.2}/{seconds}s (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank:.0} hours. - You can check again in 5 minutes.", username = ctx.author().name, hours = rounded_hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
     ctx.say(message).await?;
 
     Ok(())

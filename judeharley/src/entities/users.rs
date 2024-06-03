@@ -7,7 +7,7 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: i64,
-    pub watched_time: Decimal,
+    pub watched_time: i64,
     pub boonbucks: i32,
     pub created_at: DateTime,
     pub updated_at: DateTime,
@@ -43,8 +43,6 @@ pub enum Relation {
     ConnectedYoutubeAccounts,
     #[sea_orm(has_many = "super::favourite_songs::Entity")]
     FavouriteSongs,
-    #[sea_orm(has_many = "super::song_requests::Entity")]
-    SongRequests,
 }
 
 impl Related<super::cans::Entity> for Entity {
@@ -62,12 +60,6 @@ impl Related<super::connected_youtube_accounts::Entity> for Entity {
 impl Related<super::favourite_songs::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::FavouriteSongs.def()
-    }
-}
-
-impl Related<super::song_requests::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::SongRequests.def()
     }
 }
 

@@ -1,6 +1,5 @@
 use async_trait::async_trait;
-use judeharley::controllers::server_config::Params;
-use judeharley::controllers::users::UpdateParams;
+use judeharley::sea_orm::Set;
 use poise::CreateReply;
 use rand::Rng;
 
@@ -152,8 +151,8 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let guild_config = if guild_config.dice_roll == 0 {
         guild_config
             .update(
-                Params {
-                    dice_roll: Some(111),
+                judeharley::entities::server_config::ActiveModel {
+                    dice_roll: Set(111),
                     ..Default::default()
                 },
                 &data.db,
@@ -192,8 +191,8 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             let old_roll = guild_config.dice_roll;
             let guild_config = guild_config
                 .update(
-                    Params {
-                        dice_roll: Some(roll_over(old_roll)),
+                    judeharley::entities::server_config::ActiveModel {
+                        dice_roll: Set(roll_over(old_roll)),
                         ..Default::default()
                     },
                     &data.db,
@@ -201,8 +200,8 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                 .await?;
             let boonbucks = user.boonbucks as u32 + total_winnings - 5;
             user.update(
-                UpdateParams {
-                    boonbucks: Some(boonbucks),
+                judeharley::entities::users::ActiveModel {
+                    boonbucks: Set(boonbucks as i32),
                     ..Default::default()
                 },
                 &data.db,
@@ -224,8 +223,8 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         DiceRollResult::Win(total_winnings) => {
             let boonbucks = user.boonbucks as u32 + total_winnings - 5;
             user.update(
-                UpdateParams {
-                    boonbucks: Some(boonbucks),
+                judeharley::entities::users::ActiveModel {
+                    boonbucks: Set(boonbucks as i32),
                     ..Default::default()
                 },
                 &data.db,

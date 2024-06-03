@@ -10,7 +10,7 @@ use situwaition::{
 use tracing::error;
 
 use crate::{event_handlers::message::update_activity, prelude::*};
-use judeharley::{controllers::users::UpdateParams, Decimal, SlcbCurrency, Users};
+use judeharley::{sea_orm::Set, SlcbCurrency, Users};
 
 /// Commands related to importing data from YouTube
 #[poise::command(slash_command, subcommands("link"))]
@@ -165,13 +165,13 @@ If you don't remember your old YouTube name or you no longer have access to your
         return Ok(());
     };
 
-    let new_watch_time = user.watched_time + Decimal::from(slcb_account.hours);
-    let new_boonbucks = user.boonbucks as u32 + slcb_account.points as u32;
+    let new_watch_time = user.watched_time + slcb_account.hours as i64 * 3600;
+    let new_boonbucks = user.boonbucks + slcb_account.points;
     user.update(
-        UpdateParams {
-            watched_time: Some(new_watch_time),
-            boonbucks: Some(new_boonbucks),
-            migrated: Some(true),
+        judeharley::entities::users::ActiveModel {
+            watched_time: Set(new_watch_time),
+            boonbucks: Set(new_boonbucks),
+            migrated: Set(true),
             ..Default::default()
         },
         &data.db,

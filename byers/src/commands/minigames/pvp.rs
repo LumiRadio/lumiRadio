@@ -1,8 +1,7 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use judeharley::controllers::server_config::Params;
-use judeharley::controllers::users::UpdateParams;
+use judeharley::sea_orm::Set;
 use poise::serenity_prelude::{
     ButtonStyle, CreateActionRow, CreateButton, CreateInteractionResponse,
     CreateInteractionResponseMessage, Mentionable, User,
@@ -100,8 +99,8 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
             let new_jackpot = server_config.slot_jackpot + cost;
             challenger
                 .update(
-                    UpdateParams {
-                        boonbucks: Some(new_boonbucks as u32),
+                    judeharley::entities::users::ActiveModel {
+                        boonbucks: Set(new_boonbucks as i32),
                         ..Default::default()
                     },
                     &data.db,
@@ -109,8 +108,8 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
                 .await?;
             server_config
                 .update(
-                    Params {
-                        slot_jackpot: Some(new_jackpot),
+                    judeharley::entities::server_config::ActiveModel {
+                        slot_jackpot: Set(new_jackpot),
                         ..Default::default()
                     },
                     &data.db,
@@ -134,8 +133,8 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
             let new_boonbucks = challenger.boonbucks + server_config.slot_jackpot;
             challenger
                 .update(
-                    UpdateParams {
-                        boonbucks: Some(new_boonbucks as u32),
+                    judeharley::entities::users::ActiveModel {
+                        boonbucks: Set(new_boonbucks as i32),
                         ..Default::default()
                     },
                     &data.db,
@@ -143,8 +142,8 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
                 .await?;
             server_config
                 .update(
-                    Params {
-                        slot_jackpot: Some(10),
+                    judeharley::entities::server_config::ActiveModel {
+                        slot_jackpot: Set(10),
                         ..Default::default()
                     },
                     &data.db,
@@ -287,8 +286,8 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
 
             challenger
                 .update(
-                    UpdateParams {
-                        boonbucks: Some(challenger_boonbucks as u32),
+                    judeharley::entities::users::ActiveModel {
+                        boonbucks: Set(challenger_boonbucks as i32),
                         ..Default::default()
                     },
                     &data.db,
@@ -297,8 +296,8 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
 
             challenged
                 .update(
-                    UpdateParams {
-                        boonbucks: Some(challenged_boonbucks as u32),
+                    judeharley::entities::users::ActiveModel {
+                        boonbucks: Set(challenged_boonbucks as i32),
                         ..Default::default()
                     },
                     &data.db,
@@ -321,8 +320,8 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
 
             challenger
                 .update(
-                    UpdateParams {
-                        boonbucks: Some(challenger_boonbucks as u32),
+                    judeharley::entities::users::ActiveModel {
+                        boonbucks: Set(challenger_boonbucks as i32),
                         ..Default::default()
                     },
                     &data.db,
@@ -331,8 +330,8 @@ async fn pvp_action(ctx: ApplicationContext<'_>, user: User) -> Result<(), Error
 
             challenged
                 .update(
-                    UpdateParams {
-                        boonbucks: Some(challenged_boonbucks as u32),
+                    judeharley::entities::users::ActiveModel {
+                        boonbucks: Set(challenged_boonbucks as i32),
                         ..Default::default()
                     },
                     &data.db,

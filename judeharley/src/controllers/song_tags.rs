@@ -3,15 +3,12 @@ use crate::entities::song_tags::*;
 use crate::JudeHarleyError;
 use sea_orm::{prelude::*, Set};
 
-pub struct InsertParams {
-    pub tag: String,
-    pub value: String,
-}
+pub struct NewTag(pub String, pub String);
 
 impl Model {
     pub async fn insert_many(
         song: &SongModel,
-        tags: &[InsertParams],
+        tags: &[NewTag],
         db: &DatabaseConnection,
     ) -> Result<(), JudeHarleyError> {
         Entity::delete_many()
@@ -23,8 +20,8 @@ impl Model {
             tags.iter()
                 .map(|t| ActiveModel {
                     song_id: Set(song.file_hash.clone()),
-                    tag: Set(t.tag.clone()),
-                    value: Set(t.value.clone()),
+                    tag: Set(t.0.clone()),
+                    value: Set(t.1.clone()),
                     ..Default::default()
                 })
                 .collect::<Vec<_>>(),

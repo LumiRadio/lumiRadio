@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 use async_trait::async_trait;
-use judeharley::controllers::users::UpdateParams;
+use judeharley::sea_orm::Set;
 use poise::serenity_prelude::CreateEmbed;
 use poise::CreateReply;
 use rand::seq::SliceRandom;
@@ -314,8 +314,8 @@ pub async fn slots(
     let new_boonbucks = user.boonbucks - bet;
     let user = user
         .update(
-            UpdateParams {
-                boonbucks: Some(new_boonbucks as u32),
+            judeharley::entities::users::ActiveModel {
+                boonbucks: Set(new_boonbucks),
                 ..Default::default()
             },
             &data.db,
@@ -408,8 +408,8 @@ pub async fn slots(
 
     let new_boonbucks = user.boonbucks + payout as i32 * bet;
     user.update(
-        UpdateParams {
-            boonbucks: Some(new_boonbucks as u32),
+        judeharley::entities::users::ActiveModel {
+            boonbucks: Set(new_boonbucks),
             ..Default::default()
         },
         &data.db,

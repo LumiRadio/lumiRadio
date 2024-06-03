@@ -1,13 +1,7 @@
-use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel, Set};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 
 use crate::entities::server_config::*;
 use crate::prelude::JudeHarleyError;
-
-#[derive(Default)]
-pub struct Params {
-    pub slot_jackpot: Option<i32>,
-    pub dice_roll: Option<i32>,
-}
 
 impl Model {
     pub async fn get(id: u64, db: &DatabaseConnection) -> Result<Option<Self>, JudeHarleyError> {
@@ -33,20 +27,14 @@ impl Model {
     }
 
     pub async fn update(
-        self,
-        params: Params,
+        &self,
+        params: ActiveModel,
         db: &DatabaseConnection,
     ) -> Result<Self, JudeHarleyError> {
-        let mut config = self.into_active_model();
-
-        if let Some(slot_jackpot) = params.slot_jackpot {
-            config.slot_jackpot = Set(slot_jackpot);
-        }
-
-        if let Some(dice_roll) = params.dice_roll {
-            config.dice_roll = Set(dice_roll);
-        }
-
-        config.update(db).await.map_err(Into::into)
+        Entity::update(params)
+            .filter(Column::Id.eq(self.id))
+            .exec(db)
+            .await
+            .map_err(Into::into)
     }
 }

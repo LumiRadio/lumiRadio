@@ -1,11 +1,7 @@
-use sea_orm::{prelude::*, IntoActiveModel, Set};
+use sea_orm::{prelude::*, Set};
 
 use crate::entities::server_role_config::*;
 use crate::prelude::JudeHarleyError;
-
-pub struct Params {
-    pub minimum_hours: Option<i32>,
-}
 
 impl Model {
     pub async fn get_by_role(
@@ -57,16 +53,15 @@ impl Model {
     }
 
     pub async fn update(
-        self,
-        params: Params,
+        &self,
+        params: ActiveModel,
         db: &DatabaseConnection,
     ) -> Result<Self, JudeHarleyError> {
-        let mut config = self.into_active_model();
-
-        if let Some(minimum_hours) = params.minimum_hours {
-            config.minimum_hours = Set(minimum_hours);
-        }
-
-        config.update(db).await.map_err(Into::into)
+        Entity::update(params)
+            .filter(Column::GuildId.eq(self.guild_id))
+            .filter(Column::RoleId.eq(self.role_id))
+            .exec(db)
+            .await
+            .map_err(Into::into)
     }
 }

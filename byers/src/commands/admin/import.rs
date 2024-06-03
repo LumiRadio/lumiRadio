@@ -5,7 +5,7 @@ use poise::{
 use tracing_unwrap::ResultExt;
 
 use crate::prelude::*;
-use judeharley::{controllers::users::UpdateParams, Decimal, SlcbCurrency, Users};
+use judeharley::{sea_orm::Set, SlcbCurrency, Users};
 
 pub async fn autocomplete_channels(
     ctx: ApplicationContext<'_>,
@@ -60,13 +60,13 @@ pub async fn import_manually(
         return Ok(());
     }
 
-    let new_watch_time = user.watched_time + Decimal::from(hours);
+    let new_watch_time = user.watched_time + hours as i64 * 3600;
     let new_boonbucks = user.boonbucks + points;
     user.update(
-        UpdateParams {
-            watched_time: Some(new_watch_time),
-            boonbucks: Some(new_boonbucks as u32),
-            migrated: Some(true),
+        judeharley::entities::users::ActiveModel {
+            watched_time: Set(new_watch_time),
+            boonbucks: Set(new_boonbucks),
+            migrated: Set(true),
             ..Default::default()
         },
         &data.db,
@@ -115,13 +115,13 @@ pub async fn import(
         unreachable!("Autocomplete should prevent this from happening");
     };
 
-    let new_watch_time = user.watched_time + Decimal::from(slcb_user.hours);
+    let new_watch_time = user.watched_time + slcb_user.hours as i64 * 3600;
     let new_boonbucks = user.boonbucks + slcb_user.points;
     user.update(
-        UpdateParams {
-            watched_time: Some(new_watch_time),
-            boonbucks: Some(new_boonbucks as u32),
-            migrated: Some(true),
+        judeharley::entities::users::ActiveModel {
+            watched_time: Set(new_watch_time),
+            boonbucks: Set(new_boonbucks),
+            migrated: Set(true),
             ..Default::default()
         },
         &data.db,

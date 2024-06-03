@@ -1,14 +1,7 @@
-use sea_orm::{prelude::*, IntoActiveModel, Set};
+use sea_orm::{prelude::*, Set};
 
 use crate::entities::server_channel_config::*;
 use crate::prelude::JudeHarleyError;
-
-#[derive(Default)]
-pub struct UpdateParams {
-    pub allow_watch_time_accumulation: Option<bool>,
-    pub allow_point_accumulation: Option<bool>,
-    pub hydration_reminder: Option<bool>,
-}
 
 impl Model {
     pub async fn get(id: u64, db: &DatabaseConnection) -> Result<Option<Self>, JudeHarleyError> {
@@ -33,25 +26,15 @@ impl Model {
     }
 
     pub async fn update(
-        self,
-        params: UpdateParams,
+        &self,
+        params: ActiveModel,
         db: &DatabaseConnection,
     ) -> Result<Self, JudeHarleyError> {
-        let mut config = self.into_active_model();
-
-        if let Some(allow_watch_time_accumulation) = params.allow_watch_time_accumulation {
-            config.allow_watch_time_accumulation = Set(allow_watch_time_accumulation);
-        }
-
-        if let Some(allow_point_accumulation) = params.allow_point_accumulation {
-            config.allow_point_accumulation = Set(allow_point_accumulation);
-        }
-
-        if let Some(hydration_reminder) = params.hydration_reminder {
-            config.hydration_reminder = Set(hydration_reminder);
-        }
-
-        config.update(db).await.map_err(Into::into)
+        Entity::update(params)
+            .filter(Column::Id.eq(self.id))
+            .exec(db)
+            .await
+            .map_err(Into::into)
     }
 
     pub async fn get_all_hydration_channels(

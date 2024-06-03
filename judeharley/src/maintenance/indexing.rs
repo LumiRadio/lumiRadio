@@ -6,8 +6,8 @@ use sha2::{Digest, Sha256};
 use tracing::{debug, error, info, warn};
 
 use crate::{
-    controllers::song_tags::InsertParams as TagParams,
-    controllers::songs::InsertParams,
+    controllers::song_tags::NewTag,
+    controllers::songs::NewSong,
     maintenance::rewrite_music_path,
     prelude::{Songs, *},
 };
@@ -125,7 +125,7 @@ pub async fn index_file(db: &DatabaseConnection, path: &Path, music_path: &Path)
     );
 
     let song = Songs::insert(
-        InsertParams {
+        NewSong {
             title: title.replace(char::from(0), ""),
             artist: artist.replace(char::from(0), ""),
             album: album.replace(char::from(0), ""),
@@ -143,7 +143,7 @@ pub async fn index_file(db: &DatabaseConnection, path: &Path, music_path: &Path)
         &meta
             .tags
             .into_iter()
-            .map(|(k, v)| TagParams { tag: k, value: v })
+            .map(|(k, v)| NewTag(k, v))
             .collect::<Vec<_>>(),
         db,
     )

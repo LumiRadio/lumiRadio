@@ -1,5 +1,4 @@
-use chrono::NaiveDateTime;
-use sea_orm::{prelude::*, FromQueryResult, IntoActiveModel, QueryOrder, QuerySelect, Set};
+use sea_orm::{prelude::*, FromQueryResult, QueryOrder, QuerySelect, Set};
 
 use crate::controllers::CountQuery;
 use crate::custom_entities::songs::Model as SongModel;
@@ -10,34 +9,6 @@ use crate::entities::connected_youtube_accounts::{
 };
 use crate::entities::favourite_songs::Model as FavouriteSongModel;
 use crate::{entities::users::*, JudeHarleyError};
-
-#[derive(Debug, Clone, Default)]
-pub struct UpdateParams {
-    pub watched_time: Option<sea_orm::entity::prelude::Decimal>,
-    pub last_message_sent: Option<NaiveDateTime>,
-    pub boonbucks: Option<u32>,
-    pub migrated: Option<bool>,
-    pub amber: Option<u32>,
-    pub amethyst: Option<u32>,
-    pub artifact: Option<u32>,
-    pub caulk: Option<u32>,
-    pub chalk: Option<u32>,
-    pub cobalt: Option<u32>,
-    pub diamond: Option<u32>,
-    pub garnet: Option<u32>,
-    pub gold: Option<u32>,
-    pub iodine: Option<u32>,
-    pub marble: Option<u32>,
-    pub mercury: Option<u32>,
-    pub quartz: Option<u32>,
-    pub ruby: Option<u32>,
-    pub rust: Option<u32>,
-    pub shale: Option<u32>,
-    pub sulfur: Option<u32>,
-    pub tar: Option<u32>,
-    pub uranium: Option<u32>,
-    pub zillium: Option<u32>,
-}
 
 #[derive(FromQueryResult)]
 struct UserCount {
@@ -141,87 +112,15 @@ impl Model {
     }
 
     pub async fn update(
-        self,
-        params: UpdateParams,
+        &self,
+        params: ActiveModel,
         db: &DatabaseConnection,
     ) -> Result<Self, JudeHarleyError> {
-        let mut user = self.into_active_model();
-
-        if let Some(watched_time) = params.watched_time {
-            user.watched_time = Set(watched_time);
-        }
-        if let Some(boonbucks) = params.boonbucks {
-            user.boonbucks = Set(boonbucks as i32);
-        }
-        if let Some(migrated) = params.migrated {
-            user.migrated = Set(migrated);
-        }
-        if let Some(amber) = params.amber {
-            user.amber = Set(amber as i32);
-        }
-        if let Some(amethyst) = params.amethyst {
-            user.amethyst = Set(amethyst as i32);
-        }
-        if let Some(artifact) = params.artifact {
-            user.artifact = Set(artifact as i32);
-        }
-        if let Some(caulk) = params.caulk {
-            user.caulk = Set(caulk as i32);
-        }
-        if let Some(chalk) = params.chalk {
-            user.chalk = Set(chalk as i32);
-        }
-        if let Some(cobalt) = params.cobalt {
-            user.cobalt = Set(cobalt as i32);
-        }
-        if let Some(diamond) = params.diamond {
-            user.diamond = Set(diamond as i32);
-        }
-        if let Some(garnet) = params.garnet {
-            user.garnet = Set(garnet as i32);
-        }
-        if let Some(gold) = params.gold {
-            user.gold = Set(gold as i32);
-        }
-        if let Some(iodine) = params.iodine {
-            user.iodine = Set(iodine as i32);
-        }
-        if let Some(marble) = params.marble {
-            user.marble = Set(marble as i32);
-        }
-        if let Some(mercury) = params.mercury {
-            user.mercury = Set(mercury as i32);
-        }
-        if let Some(quartz) = params.quartz {
-            user.quartz = Set(quartz as i32);
-        }
-        if let Some(ruby) = params.ruby {
-            user.ruby = Set(ruby as i32);
-        }
-        if let Some(rust) = params.rust {
-            user.rust = Set(rust as i32);
-        }
-        if let Some(shale) = params.shale {
-            user.shale = Set(shale as i32);
-        }
-        if let Some(sulfur) = params.sulfur {
-            user.sulfur = Set(sulfur as i32);
-        }
-        if let Some(tar) = params.tar {
-            user.tar = Set(tar as i32);
-        }
-        if let Some(uranium) = params.uranium {
-            user.uranium = Set(uranium as i32);
-        }
-        if let Some(zillium) = params.zillium {
-            user.zillium = Set(zillium as i32);
-        }
-        if let Some(last_message_sent) = params.last_message_sent {
-            user.last_message_sent = Set(Some(last_message_sent));
-        }
-
-        user.updated_at = Set(chrono::Utc::now().naive_utc());
-        user.update(db).await.map_err(Into::into)
+        Entity::update(params)
+            .filter(Column::Id.eq(self.id))
+            .exec(db)
+            .await
+            .map_err(Into::into)
     }
 
     pub async fn favourite_song(

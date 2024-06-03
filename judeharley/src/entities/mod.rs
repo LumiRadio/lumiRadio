@@ -2,7 +2,6 @@
 
 pub mod prelude;
 
-pub mod bp_counters;
 pub mod cans;
 pub mod connected_youtube_accounts;
 pub mod favourite_songs;
@@ -14,4 +13,5 @@ pub mod slcb_currency;
 pub mod slcb_rank;
 pub mod song_requests;
 pub mod song_tags;
+pub mod songs;
 pub mod users;

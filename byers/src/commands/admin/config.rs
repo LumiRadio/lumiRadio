@@ -5,11 +5,7 @@ use poise::{
 
 use crate::prelude::*;
 use judeharley::{
-    controllers::{
-        server_channel_config::UpdateParams as ServerChannelConfigParams, server_config::Params,
-        server_role_config::Params as RoleParams,
-    },
-    Cans, ServerChannelConfig, ServerConfig, ServerRoleConfig, Users,
+    sea_orm::Set, Cans, ServerChannelConfig, ServerConfig, ServerRoleConfig, Users
 };
 
 /// Configuration-related commands
@@ -59,8 +55,8 @@ pub async fn set_quest_roll(ctx: ApplicationContext<'_>, roll: i32) -> Result<()
         ServerConfig::get_or_insert(ctx.guild_id().unwrap().get(), &data.db).await?;
     server_config
         .update(
-            Params {
-                dice_roll: Some(roll),
+            judeharley::entities::server_config::ActiveModel {
+                dice_roll: Set(roll),
                 ..Default::default()
             },
             &data.db,
@@ -96,8 +92,9 @@ pub async fn manage_role(
             .await?;
     role_config
         .update(
-            RoleParams {
-                minimum_hours: Some(hours),
+            judeharley::entities::server_role_config::ActiveModel {
+                minimum_hours: Set(hours),
+                ..Default::default()
             },
             &data.db,
         )
@@ -177,16 +174,14 @@ pub async fn manage_channel(
     let data = ctx.data;
 
     let channel_config = ServerChannelConfig::get_or_insert(channel.id().get(), &data.db).await?;
-    channel_config
-        .update(
-            ServerChannelConfigParams {
-                allow_point_accumulation: Some(allow_point_accumulation),
-                allow_watch_time_accumulation: Some(allow_watch_time_accumulation),
-                hydration_reminder: Some(hydration_reminder),
-            },
-            &data.db,
-        )
-        .await?;
+    
+
+    channel_config.update(judeharley::entities::server_channel_config::ActiveModel {
+        allow_point_accumulation: Set(allow_point_accumulation),
+        allow_watch_time_accumulation: Set(allow_watch_time_accumulation),
+        hydration_reminder: Set(hydration_reminder),
+        ..Default::default()
+    }, &data.db).await?;
 
     ctx.send(
         CreateReply::default().embed(
