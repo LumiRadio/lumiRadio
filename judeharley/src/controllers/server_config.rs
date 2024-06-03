@@ -1,4 +1,4 @@
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
+use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 
 use crate::entities::server_config::*;
 use crate::prelude::JudeHarleyError;
@@ -28,9 +28,11 @@ impl Model {
 
     pub async fn update(
         &self,
-        params: ActiveModel,
+        mut params: ActiveModel,
         db: &DatabaseConnection,
     ) -> Result<Self, JudeHarleyError> {
+        params.id = ActiveValue::unchanged(self.id);
+
         Entity::update(params)
             .filter(Column::Id.eq(self.id))
             .exec(db)
