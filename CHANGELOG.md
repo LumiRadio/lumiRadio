@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.3.3] - 2024-06-03
+
+### Changed
+
+- Changed hour counting to second counting
+- Changed activity counting to count 15 minutes if users haven't sent a message within 15 minutes
+
 ## [1.3.2] - 2024-05-23
 
 ### Added
