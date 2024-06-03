@@ -16,7 +16,7 @@ impl Model {
             .collect::<Vec<_>>();
 
         let rank = Entity::find()
-            .filter(Column::HourRequirement.lte(user.watched_time))
+            .filter(Column::HourRequirement.lte(user.watched_time / 3600))
             .filter(
                 Column::ChannelId
                     .is_null()
@@ -44,7 +44,7 @@ impl Model {
             .collect::<Vec<_>>();
 
         Entity::find()
-            .filter(Column::HourRequirement.gt(user.watched_time))
+            .filter(Column::HourRequirement.gt(user.watched_time / 3600))
             .filter(
                 Column::ChannelId
                     .is_null()
