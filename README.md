@@ -45,4 +45,5 @@ Note that the command differs from the one from the development section in that 
 
 Another alternative would be to run the `/admin reindex` command on Byers.
 
-If you want to stream to an external Icecast instance instead of the provided one, you can remove the ice service from the `docker-compose.yml` file.
+The Icecast server that was present in previous versions of the radio has now been removed by default from the repository due to a lack of maintainability.
+If you want to host your own streaming server, please look into how to properly set up an Icecast 2 server.
