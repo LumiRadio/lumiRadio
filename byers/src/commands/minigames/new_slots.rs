@@ -342,6 +342,9 @@ pub async fn slots(
             ),
         )
         .await?;
+
+        set_cooldown(&data.redis_pool, user_cooldown, 5 * 60).await?;
+
         return Ok(());
     };
 

@@ -1,16 +1,6 @@
 version: "3"
 
 services:
-  ice:
-    image: ghcr.io/lumiradio/icecast
-    build:
-      context: ./docker/icecast
-      dockerfile: Dockerfile
-    command: ["/bin/sh", "-c", "/usr/bin/icecast2 -c /etc/icecast2/icecast.xml"]
-    ports:
-      - 8000:8000
-    volumes:
-      - ./docker/icecast/icecast.xml:/etc/icecast2/icecast.xml
   redis:
     image: redis:7.0.11-alpine
   liquidsoap:
@@ -30,8 +20,6 @@ services:
       ICECAST_PASSWORD: ${ICECAST_PASSWORD:-hackme}
       ICECAST_MOUNT: ${ICECAST_MOUNT:-lumiradio}
       LANGLEY_URL: http://langley:8000/played
-    depends_on:
-      - ice
   db:
     image: postgres:12
     volumes:
@@ -66,6 +54,7 @@ services:
       DISCORD__EMOJI__D6_4: ${DICE_FOUR_EMOJI:-<:d6_4:1193962769217761330>}
       DISCORD__EMOJI__D6_5: ${DICE_FIVE_EMOJI:-<:d6_5:1193962768097869834>}
       DISCORD__EMOJI__D6_6: ${DICE_SIX_EMOJI:-<:d6_6:1193962765937823805>}
+      # If you want to enable Sentry, uncomment the following 2 lines and set SENTRY_DSN
       # SENTRY_DSN: ${SENTRY_DSN}
       # RUST_BACKTRACE: 1
     volumes:

@@ -3,12 +3,9 @@ members = ["judeharley", "byers", "langley", "frohike", "migration"]
 resolver = "2"
 
 [workspace.package]
-version = "1.3.3"
+version = "1.3.4"
 authors = ["cozyGalvinism <jean@der-capta.in>"]
 edition = "2021"
-
-[workspace.dependencies]
-judeharley = { git = "https://github.com/lumiRadio/lumiRadio" }
 
 [profile.release.package.byers]
 debug = true

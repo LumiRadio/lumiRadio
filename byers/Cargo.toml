@@ -37,5 +37,5 @@ ellipse = "0.2.0"
 situwaition = { version = "0.3.2", features = ["tokio"] }
 serde_json = "1.0.107"
 judeharley = { path = "../judeharley" }
-sentry = { version = "0.32" }
-sentry-anyhow = { version = "0.32", features = ["backtrace"] }
+sentry = { version = "0.34" }
+sentry-anyhow = { version = "0.34", features = ["backtrace"] }
