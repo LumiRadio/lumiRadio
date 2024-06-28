@@ -286,6 +286,8 @@ pub async fn slots(
     #[max = 10]
     bet: i32,
 ) -> Result<(), Error> {
+    ctx.defer_response(false).await?;
+
     let data = ctx.data();
 
     update_activity(data, ctx.author().id, ctx.channel_id()).await?;
