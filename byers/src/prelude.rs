@@ -13,8 +13,7 @@ use judeharley::communication::{ByersUnixStream, LiquidsoapCommunication};
 
 lazy_static! {
     pub static ref INTENTS: GatewayIntents = GatewayIntents::non_privileged()
-        | GatewayIntents::MESSAGE_CONTENT
-        | GatewayIntents::GUILD_MEMBERS;
+        | GatewayIntents::MESSAGE_CONTENT;
 }
 
 pub type Context<'a> = poise::Context<'a, Data<ByersUnixStream>, Error>;
