@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.3.5] - 2024-07-05
+
+### Changed
+
+- Changed the required intents for the bot
+  - Removed the intent for server members
+
+### Fixed
+
+- Hopefully fixed the "Missing interaction" error popping up when playing the slot machine
+
 ## [1.3.4] - 2024-06-22
 
 ### Fixed
@@ -373,3 +384,4 @@ and this project adheres to [Semantic Versioning].
 [1.3.2]: https://github.com/LumiRadio/lumiRadio/compare/v1.3.1..v1.3.2
 [1.3.3]: https://github.com/LumiRadio/lumiRadio/compare/v1.3.2..v1.3.3
 [1.3.4]: https://github.com/LumiRadio/lumiRadio/compare/v1.3.3..v1.3.4
+[1.3.5]: https://github.com/LumiRadio/lumiRadio/compare/v1.3.4..v1.3.5
