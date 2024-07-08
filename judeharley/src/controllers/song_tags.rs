@@ -16,6 +16,10 @@ impl Model {
             .exec(db)
             .await?;
 
+        if tags.is_empty() {
+            return Ok(());
+        }
+
         Entity::insert_many(
             tags.iter()
                 .map(|t| ActiveModel {
@@ -23,8 +27,7 @@ impl Model {
                     tag: Set(t.0.clone()),
                     value: Set(t.1.clone()),
                     ..Default::default()
-                })
-                .collect::<Vec<_>>(),
+                }),
         )
         .exec(db)
         .await?;
