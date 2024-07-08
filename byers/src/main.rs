@@ -45,6 +45,7 @@ async fn main() {
                 sentry::types::Dsn::from_str(sentry_dsn)
                     .expect_or_log("failed to parse Sentry DSN"),
             ),
+            release: sentry::release_name!(),
             ..Default::default()
         });
 

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.3.6] - 2024-07-08
+
+### Changed
+
+- Moved the hydration reminders to a proper scheduler to ensure it runs every 15 minutes and only once
+- Added a release name to Sentry error tracking
+
+### Fixed
+
+- Fixed empty messages being sent when trying to remove the buttons
+
 ## [1.3.5] - 2024-07-05
 
 ### Changed
