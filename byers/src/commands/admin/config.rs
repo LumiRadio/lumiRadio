@@ -173,7 +173,7 @@ pub async fn manage_channel(
 ) -> Result<(), Error> {
     let data = ctx.data;
 
-    let channel_config = ServerChannelConfig::get_or_insert(channel.id().get(), &data.db).await?;
+    let channel_config = ServerChannelConfig::get_or_insert(channel.id().get(), ctx.guild_id().unwrap().get(), &data.db).await?;
     
 
     channel_config.update(judeharley::entities::server_channel_config::ActiveModel {

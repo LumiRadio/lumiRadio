@@ -11,6 +11,7 @@ pub struct Model {
     pub allow_watch_time_accumulation: bool,
     pub allow_point_accumulation: bool,
     pub hydration_reminder: bool,
+    pub last_message_sent: Option<DateTime>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -11,13 +11,14 @@ impl Model {
             .map_err(Into::into)
     }
 
-    pub async fn get_or_insert(id: u64, db: &DatabaseConnection) -> Result<Self, JudeHarleyError> {
+    pub async fn get_or_insert(id: u64, server_id: u64, db: &DatabaseConnection) -> Result<Self, JudeHarleyError> {
         if let Some(server_channel_config) = Self::get(id, db).await? {
             return Ok(server_channel_config);
         }
 
         ActiveModel {
             id: Set(id as i64),
+            server_id: Set(server_id as i64),
             ..Default::default()
         }
         .insert(db)

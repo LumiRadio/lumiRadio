@@ -39,3 +39,4 @@ serde_json = "1.0.107"
 judeharley = { path = "../judeharley" }
 sentry = { version = "0.34" }
 sentry-anyhow = { version = "0.34", features = ["backtrace"] }
+clokwerk = "0.4.0"

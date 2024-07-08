@@ -147,7 +147,19 @@ pub async fn message_handler(message: &Message, data: &Data<ByersUnixStream>) ->
         return Ok(());
     }
 
-    update_activity(data, message.author.id, message.channel_id).await?;
+    let channel = message.channel_id.get();
+    if let Ok(Some(channel_config)) = ServerChannelConfig::get(channel, &data.db).await {
+        if let Err(e) = channel_config.update(judeharley::entities::server_channel_config::ActiveModel {
+            last_message_sent: Set(Some(chrono::Utc::now().naive_utc())),
+            ..Default::default()
+        }, &data.db).await {
+            tracing::error!("Failed to update channel config: {}", e);
+        }
+    }
+
+    if let Err(e) = update_activity(data, message.author.id, message.channel_id).await {
+        tracing::error!("Failed to update activity: {}", e);
+    }
 
     Ok(())
 }

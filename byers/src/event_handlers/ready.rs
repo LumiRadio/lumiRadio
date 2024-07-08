@@ -1,12 +1,16 @@
+use std::sync::Arc;
+
+use clokwerk::AsyncScheduler;
 use fred::{prelude::PubsubInterface, types::RedisValue};
 use poise::serenity_prelude::*;
 use tracing::{debug, info};
 use tracing_unwrap::ResultExt;
+use clokwerk::TimeUnits;
 
 use crate::prelude::*;
 use judeharley::{
     communication::ByersUnixStream,
-    prelude::{ServerChannelConfig, Songs},
+    prelude::{ServerChannelConfig, Songs}, sea_orm::{ActiveValue, DatabaseConnection},
 };
 
 async fn spawn_subscriber_handler(
@@ -38,6 +42,43 @@ async fn spawn_subscriber_handler(
     Ok(())
 }
 
+async fn remind_users_to_hydrate(http: Arc<Http>, db: DatabaseConnection) {
+    info!("Sending hydration reminder");
+
+    let hydration_channels = ServerChannelConfig::get_all_hydration_channels(&db)
+        .await
+        .expect_or_log("Failed to fetch hydration channels");
+
+    for channel in hydration_channels {
+        if let Some(last_message_sent) = channel.last_message_sent.as_ref() {
+            // if the last message was sent more than 15 minutes ago, don't remind
+            if last_message_sent < &(chrono::Utc::now().naive_utc() - chrono::Duration::minutes(15)) {
+                continue;
+            }
+        }
+
+        channel.update(judeharley::entities::server_channel_config::ActiveModel {
+            id: ActiveValue::set(channel.id),
+            last_message_sent: ActiveValue::set(Some(chrono::Utc::now().naive_utc())),
+            ..Default::default()
+        }, &db).await.expect_or_log("Failed to update hydration channel");
+
+        let discord_channel_id = ChannelId::new(channel.id as u64);
+
+        discord_channel_id
+            .send_message(
+                &http,
+                CreateMessage::new().embed(
+                    CreateEmbed::new()
+                        .title("Hydration reminder")
+                        .description("Remember to drink some water 🥤!"),
+                ),
+            )
+            .await
+            .expect_or_log("Failed to send hydration reminder");
+    }
+}
+
 pub async fn on_ready(
     ctx: &poise::serenity_prelude::Context,
     data_about_bot: &poise::serenity_prelude::Ready,
@@ -47,7 +88,19 @@ pub async fn on_ready(
 
     spawn_subscriber_handler(data, ctx).await?;
 
-    spawn_hydration_reminder(data, ctx).await?;
+    let mut scheduler = AsyncScheduler::new();
+
+    let http_clone = ctx.http.clone();
+    let db_clone = data.db.clone();
+    scheduler.every(15.minutes())
+        .run(move || remind_users_to_hydrate(http_clone.to_owned(), db_clone.to_owned()));
+
+    tokio::spawn(async move {
+        loop {
+            scheduler.run_pending().await;
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        }
+    });
 
     let current_song = Songs::last_played(&data.db).await;
     if let Ok(Some(current_song)) = current_song {
@@ -56,46 +109,6 @@ pub async fn on_ready(
             current_song.album, current_song.title
         ))));
     }
-
-    Ok(())
-}
-
-async fn spawn_hydration_reminder(
-    data: &Data<ByersUnixStream>,
-    ctx: &poise::serenity_prelude::Context,
-) -> Result<(), crate::prelude::Error> {
-    let db = data.db.clone();
-    let inner_ctx = ctx.clone();
-
-    tokio::spawn(async move {
-        let db = db;
-        let ctx = inner_ctx;
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(15 * 60));
-        loop {
-            interval.tick().await;
-
-            info!("Sending hydration reminder");
-
-            let hydration_channels = ServerChannelConfig::get_all_hydration_channels(&db)
-                .await
-                .expect_or_log("Failed to fetch hydration channels");
-
-            for channel in hydration_channels {
-                let discord_channel_id = ChannelId::new(channel.id as u64);
-                discord_channel_id
-                    .send_message(
-                        &ctx.http,
-                        CreateMessage::new().embed(
-                            CreateEmbed::new()
-                                .title("Hydration reminder")
-                                .description("Remember to drink some water 🥤!"),
-                        ),
-                    )
-                    .await
-                    .expect_or_log("Failed to send hydration reminder");
-            }
-        }
-    });
 
     Ok(())
 }

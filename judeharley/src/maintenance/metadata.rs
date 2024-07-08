@@ -30,6 +30,7 @@ impl MusicMetadata {
         };
 
         let tags = format_ctx.metadata().to_tags();
+        tracing::debug!("Tags: {:?}", tags);
 
         Ok(Self {
             duration,

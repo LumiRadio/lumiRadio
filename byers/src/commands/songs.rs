@@ -279,13 +279,14 @@ pub async fn search(
     } else {
         description.push_str("\n\nYou may request one of them now by selecting them below within 2 minutes. Songs that are currently on cooldown will not be selectable.");
     }
-    let reply = CreateReply::default().embed(
+    let mut reply = CreateReply::default().embed(
         CreateEmbed::new()
             .title("Song Search")
             .description(description),
     );
-    let reply = if has_cooldown.is_none() {
-        reply.components(vec![CreateActionRow::SelectMenu(
+
+    if has_cooldown.is_none() {
+        reply = reply.components(vec![CreateActionRow::SelectMenu(
             CreateSelectMenu::new(
                 "song_request",
                 CreateSelectMenuKind::String {
@@ -295,74 +296,72 @@ pub async fn search(
             .placeholder("Select a song")
             .min_values(1)
             .max_values(1),
-        )])
+        )]);
+
+        let handle = ctx.send(reply.clone()).await?;
+        let message = handle.message().await?;
+        let Some(mci) = message
+            .await_component_interaction(ctx.serenity_context())
+            .author_id(ctx.author().id)
+            .timeout(Duration::from_secs(120))
+            .await
+        else {
+            handle
+                .edit(poise::Context::Application(ctx), reply.components(vec![]))
+                .await?;
+
+            return Ok(());
+        };
+
+        let song = suggestions
+            .into_iter()
+            .find(|song| {
+                let ComponentInteractionDataKind::StringSelect { values } = &mci.data.kind else {
+                    return false;
+                };
+
+                song.file_hash == values[0]
+            })
+            .ok_or(anyhow::anyhow!("Failed to find song"))?;
+
+        let _ = {
+            let mut comms = data.comms.lock().await;
+            comms.request_song(&song.file_path).await?
+        };
+
+        song.request(&user, &data.db).await?;
+
+        let cooldown_time = chrono::Duration::seconds(5400);
+        let over = chrono::Utc::now() + cooldown_time;
+        let discord_relative = over.relative_time();
+
+        // r.kind(InteractionResponseType::UpdateMessage)
+        //         .interaction_response_data(|b| {
+        //             b.embed(|e| {
+        //                 e.title("Song Requests")
+        //                 .description(format!(r#""{} - {}" requested! You can request again in 1 and 1/2 hours ({discord_relative})."#, &song.album, &song.title))
+        //             })
+        //             .components(|c| c)
+        //         })
+        mci.create_response(
+            ctx.serenity_context(),
+            CreateInteractionResponse::UpdateMessage(
+                CreateInteractionResponseMessage::new()
+                    .embed(
+                        CreateEmbed::new()
+                            .title("Song Requests")
+                            .description(format!(
+                                "{} - {} requested! You can request again in 1 and 1/2 hours ({})",
+                                &song.album, &song.title, discord_relative
+                            )),
+                    )
+                    .components(vec![]),
+            ),
+        )
+        .await?;
     } else {
-        reply
-    };
-    let handle = ctx.send(reply).await?;
-    let message = handle.message().await?;
-    let Some(mci) = message
-        .await_component_interaction(ctx.serenity_context())
-        .author_id(ctx.author().id)
-        .timeout(Duration::from_secs(120))
-        .await
-    else {
-        handle
-            .edit(
-                poise::Context::Application(ctx),
-                CreateReply::default().components(vec![]),
-            )
-            .await?;
-
-        return Ok(());
-    };
-
-    let song = suggestions
-        .into_iter()
-        .find(|song| {
-            let ComponentInteractionDataKind::StringSelect { values } = &mci.data.kind else {
-                return false;
-            };
-
-            song.file_hash == values[0]
-        })
-        .ok_or(anyhow::anyhow!("Failed to find song"))?;
-
-    let _ = {
-        let mut comms = data.comms.lock().await;
-        comms.request_song(&song.file_path).await?
-    };
-
-    song.request(&user, &data.db).await?;
-
-    let cooldown_time = chrono::Duration::seconds(5400);
-    let over = chrono::Utc::now() + cooldown_time;
-    let discord_relative = over.relative_time();
-
-    // r.kind(InteractionResponseType::UpdateMessage)
-    //         .interaction_response_data(|b| {
-    //             b.embed(|e| {
-    //                 e.title("Song Requests")
-    //                 .description(format!(r#""{} - {}" requested! You can request again in 1 and 1/2 hours ({discord_relative})."#, &song.album, &song.title))
-    //             })
-    //             .components(|c| c)
-    //         })
-    mci.create_response(
-        ctx.serenity_context(),
-        CreateInteractionResponse::UpdateMessage(
-            CreateInteractionResponseMessage::new()
-                .embed(
-                    CreateEmbed::new()
-                        .title("Song Requests")
-                        .description(format!(
-                            "{} - {} requested! You can request again in 1 and 1/2 hours ({})",
-                            &song.album, &song.title, discord_relative
-                        )),
-                )
-                .components(vec![]),
-        ),
-    )
-    .await?;
+        ctx.send(reply).await?;
+    }
 
     set_cooldown(&data.redis_pool, user_cooldown, 90 * 60).await?;
 
@@ -370,6 +369,8 @@ pub async fn search(
 }
 
 async fn request_song(ctx: ApplicationContext<'_>, song: String) -> Result<(), Error> {
+    ctx.defer().await?;
+
     let data = ctx.data();
 
     update_activity(data, ctx.author().id, ctx.channel_id()).await?;
@@ -465,34 +466,31 @@ async fn request_song(ctx: ApplicationContext<'_>, song: String) -> Result<(), E
     let cooldown_time = chrono::Duration::seconds(5400);
     let over = chrono::Utc::now() + cooldown_time;
     let discord_relative = over.relative_time();
-
-    let handle = ctx.send(
-        CreateReply::default()
-            .embed(
-                CreateEmbed::new()
-                    .title("Song Requests")
-                    .description(format!(
-                        r#""{} - {}" requested! You can request again in 1 and 1/2 hours ({discord_relative})."#,
-                        &song.album, &song.title
-                    )),
-            )
-            .components(vec![
-                CreateActionRow::Buttons(vec![
-                    CreateButton::new("song_request_favourite")
-                        .label("Mark as favourite")
-                        .style(ButtonStyle::Primary)
-                        .emoji('⭐'),
-                    CreateButton::new("song_request_unfavourite")
-                        .label("Unmark as favourite")
-                        .style(ButtonStyle::Danger),
-                ])
-            ])
+    let reply = CreateReply::default()
+    .embed(
+        CreateEmbed::new()
+            .title("Song Requests")
+            .description(format!(
+                r#""{} - {}" requested! You can request again in 1 and 1/2 hours ({discord_relative})."#,
+                &song.album, &song.title
+            )),
     )
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to send message: {}", e);
-            e
-        })?;
+    .components(vec![
+        CreateActionRow::Buttons(vec![
+            CreateButton::new("song_request_favourite")
+                .label("Mark as favourite")
+                .style(ButtonStyle::Primary)
+                .emoji('⭐'),
+            CreateButton::new("song_request_unfavourite")
+                .label("Unmark as favourite")
+                .style(ButtonStyle::Danger),
+        ])
+    ]);
+
+    let handle = ctx.send(reply.clone()).await.map_err(|e| {
+        tracing::error!("Failed to send message: {}", e);
+        e
+    })?;
 
     set_cooldown(&data.redis_pool, user_cooldown, 90 * 60).await?;
 
@@ -534,6 +532,10 @@ async fn request_song(ctx: ApplicationContext<'_>, song: String) -> Result<(), E
             _ => unreachable!(),
         }
     }
+
+    handle
+        .edit(poise::Context::Application(ctx), reply.components(vec![]))
+        .await?;
 
     Ok(())
 }

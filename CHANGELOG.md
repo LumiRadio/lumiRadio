@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.3.6] - 2024-07-08
+
+### Changed
+
+- Moved the hydration reminders to a proper scheduler to ensure it runs every 15 minutes and only once
+- Added a release name to Sentry error tracking
+
+### Fixed
+
+- Fixed empty messages being sent when trying to remove the buttons
+
+## [1.3.5] - 2024-07-05
+
+### Changed
+
+- Changed the required intents for the bot
+  - Removed the intent for server members
+
+### Fixed
+
+- Hopefully fixed the "Missing interaction" error popping up when playing the slot machine
+
 ## [1.3.4] - 2024-06-22
 
 ### Fixed
@@ -373,3 +395,4 @@ and this project adheres to [Semantic Versioning].
 [1.3.2]: https://github.com/LumiRadio/lumiRadio/compare/v1.3.1..v1.3.2
 [1.3.3]: https://github.com/LumiRadio/lumiRadio/compare/v1.3.2..v1.3.3
 [1.3.4]: https://github.com/LumiRadio/lumiRadio/compare/v1.3.3..v1.3.4
+[1.3.5]: https://github.com/LumiRadio/lumiRadio/compare/v1.3.4..v1.3.5
