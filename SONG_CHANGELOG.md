@@ -4,6 +4,13 @@ All changes to the song list will be documented here!
 
 The format is based on [Keep a Changelog] and doesn't follow versioning, just regular dates.
 
+## 2024-09-29
+
+### Added
+
+- [Savior of the Dreaming Dead (Cascade Cut)] by Malcolm Brown
+- [There's No Place Like Home : A Homestuck Prog Rock Medley] by Tee-vee
+
 ## 2024-05-05
 
 ### Removed duplicates
@@ -50,3 +57,5 @@ The format is based on [Keep a Changelog] and doesn't follow versioning, just re
 [Vast Error Vol. 5: Side 1]: https://vasterror.bandcamp.com/album/vast-error-vol-5-side-1
 [Vast Error Vol. 5: Side 2]: https://vasterror.bandcamp.com/album/vast-error-vol-5-side-2
 [Beforus]: https://unofficialmspafans.bandcamp.com/album/beforus
+[Savior of the Dreaming Dead (Cascade Cut)]: https://www.youtube.com/watch?v=h9dF20s8SYo
+[There's No Place Like Home : A Homestuck Prog Rock Medley]: https://teeveemusic.bandcamp.com/album/theres-no-place-like-home-a-homestuck-prog-rock-medley
