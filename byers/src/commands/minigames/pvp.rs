@@ -7,7 +7,8 @@ use poise::serenity_prelude::{
     CreateInteractionResponseMessage, Mentionable, User,
 };
 use poise::CreateReply;
-use rand::{distributions::Standard, prelude::Distribution};
+use rand::distr::StandardUniform;
+use rand::prelude::Distribution;
 
 use crate::prelude::*;
 use crate::{commands::minigames::Minigame, event_handlers::message::update_activity};
@@ -23,9 +24,9 @@ pub enum PvPResult {
     Player2,
 }
 
-impl Distribution<PvPResult> for Standard {
+impl Distribution<PvPResult> for StandardUniform {
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> PvPResult {
-        match rng.gen_range(0..=1) {
+        match rng.random_range(0..=1) {
             0 => PvPResult::Player1,
             1 => PvPResult::Player2,
             _ => unreachable!(),

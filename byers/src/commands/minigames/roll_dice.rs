@@ -20,13 +20,15 @@ pub struct DiceRoll {
 
 impl DiceRoll {
     pub fn new(server_roll: i32) -> Self {
+        let mut rng = rand::rng();
+
         Self {
             server_roll,
             player_roll: [
-                rand::thread_rng().gen_range(1..=6),
-                rand::thread_rng().gen_range(1..=6),
-                rand::thread_rng().gen_range(1..=6),
-                rand::thread_rng().gen_range(1..=6),
+                rng.random_range(1..=6),
+                rng.random_range(1..=6),
+                rng.random_range(1..=6),
+                rng.random_range(1..=6),
             ],
         }
     }

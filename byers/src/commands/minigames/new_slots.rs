@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use judeharley::sea_orm::Set;
 use poise::serenity_prelude::CreateEmbed;
 use poise::CreateReply;
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::prelude::*;
@@ -126,7 +126,7 @@ impl Reel {
     }
 
     pub fn spin(&self) -> ReelSymbol {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         *self.symbols.choose(&mut rng).unwrap()
     }
 }

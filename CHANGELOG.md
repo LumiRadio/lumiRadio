@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning].
     - 22: 25 Boondollars
     - 23: 35 Boondollars
     - 24: 75 Boondollars
+- Updated project dependencies
 
 ### Fixed
 
