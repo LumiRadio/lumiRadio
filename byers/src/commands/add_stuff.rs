@@ -50,7 +50,7 @@ async fn addcan_action(ctx: Context<'_>) -> Result<(), Error> {
     }
     ctx.data()
         .redis_pool
-        .set("can", "true", Some(Expiration::EX(35)), None, false)
+        .set::<(), _, _>("can", "true", Some(Expiration::EX(35)), None, false)
         .await?;
 
     add_can(&ctx.data().db, ctx.author().id.get()).await?;
@@ -100,7 +100,7 @@ async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
     }
     ctx.data()
         .redis_pool
-        .set("can", "true", Some(Expiration::EX(35)), None, false)
+        .set::<(), _, _>("can", "true", Some(Expiration::EX(35)), None, false)
         .await?;
 
     add_can(&ctx.data().db, ctx.author().id.get()).await?;

@@ -6,7 +6,7 @@ use serenity::GatewayIntents;
 use std::sync::Arc;
 
 use lazy_static::lazy_static;
-use tokio::sync::Mutex;
+use tokio::{sync::Mutex, task::JoinHandle};
 
 use crate::app_config::EmojiConfig;
 use judeharley::communication::{ByersUnixStream, LiquidsoapCommunication};
@@ -27,8 +27,8 @@ where
     pub db: judeharley::sea_orm::DatabaseConnection,
     pub comms: Arc<Mutex<C>>,
     pub redis_pool: fred::pool::RedisPool,
-    pub redis_subscriber: fred::clients::SubscriberClient,
     pub emoji: EmojiConfig,
+    pub scheduler_handle: Arc<Mutex<Option<JoinHandle<()>>>>,
 }
 
 pub struct BreadcrumbableContext<'a>(pub Context<'a>);

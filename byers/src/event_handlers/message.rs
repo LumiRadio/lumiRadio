@@ -91,7 +91,7 @@ impl UserMessageHandlerExt for Users {
         }
 
         redis_client
-            .set(
+            .set::<(), _, _>(
                 &cooldown_key,
                 (chrono::Utc::now() + chrono::Duration::minutes(5))
                     .naive_utc()

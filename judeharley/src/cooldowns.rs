@@ -85,7 +85,7 @@ where
 {
     let key = key.to_string();
 
-    pool.set(
+    pool.set::<(), _, _>(
         &key,
         (chrono::Utc::now() + chrono::Duration::seconds(expires_in))
             .timestamp()

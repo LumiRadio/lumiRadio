@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modular Dice Game Distribution Tester</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .container {
+      display: flex;
+      gap: 30px;
+    }
+    
+    .form-section {
+      flex: 1;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      max-height: 90vh;
+    }
+    
+    .results-section {
+      flex: 2;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      max-height: 90vh;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+    
+    .submit-btn {
+      width: 100%;
+      margin-top: 20px;
+      background-color: #27ae60;
+    }
+    
+    .submit-btn:hover {
+      background-color: #219955;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    
+    th {
+      background-color: #f2f2f2;
+    }
+    
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    
+    .reward-inputs {
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+    
+    .reward-range {
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    
+    .reward-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .reward-row label {
+      margin-bottom: 0;
+      min-width: 80px;
+    }
+    
+    .reward-row input {
+      width: 80px;
+    }
+    
+    .reward-row span {
+      margin: 0 5px;
+    }
+    
+    .remove-range-btn {
+      background-color: #e74c3c;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 14px;
+    }
+    
+    .remove-range-btn:hover {
+      background-color: #c0392b;
+    }
+    
+    .hint {
+      font-size: 14px;
+      color: #7f8c8d;
+      margin-top: 5px;
+    }
+    
+    .ranges-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Modular Dice Game Distribution Tester</h1>
+  
+  <div class="container">
+    <div class="form-section">
+      <form id="simulation-form">
+        <div class="form-group">
+          <label for="dice-count">Number of Dice:</label>
+          <input type="number" id="dice-count" name="dice-count" value="4" min="1" max="10">
+          <p class="hint" id="sum-range-hint">Possible sum range for 4 dice: 4 to 24</p>
+        </div>
+        
+        <div class="form-group">
+          <label for="trials">Number of Trials:</label>
+          <input type="number" id="trials" name="trials" value="10000" min="1000" max="1000000">
+          <p class="hint">More trials = more accurate results, but slower simulation</p>
+        </div>
+        
+        <div class="form-group">
+          <div class="ranges-header">
+            <h3>Reward Ranges</h3>
+            <button type="button" id="add-range-btn">Add Range</button>
+          </div>
+          <p class="hint">Define ranges of dice sums and their corresponding rewards.</p>
+          <p class="hint">All possible sums must be covered by a range.</p>
+          
+          <div id="reward-ranges">
+            <!-- Reward ranges will be added here dynamically -->
+          </div>
+        </div>
+        
+        <button type="submit" class="submit-btn">Run Simulation</button>
+      </form>
+    </div>
+    
+    <div class="results-section">
+      <div id="results">
+        <p style="color: #777; text-align: center; margin-top: 100px;">
+          Configure your simulation parameters and click "Run Simulation" to see results.
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <script src="modular_dice_distribution.js"></script>
+</body>
+</html>

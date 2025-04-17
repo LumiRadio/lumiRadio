@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use fred::prelude::{ClientLike, PubsubInterface};
+use fred::prelude::ClientLike;
 use poise::serenity_prelude as serenity;
 use poise::PrefixFrameworkOptions;
 use tracing::{debug, info};
@@ -90,10 +90,6 @@ async fn main() {
     info!("Connecting to Redis...");
     let redis_pool =
         judeharley::redis_pool(&config.redis_url).expect_or_log("failed to create Redis pool");
-    let subscriber_client = judeharley::subscriber_client(&config.redis_url);
-
-    let mut subscriber_error_rx = subscriber_client.on_error();
-    let mut subscriber_reconnect_rx = subscriber_client.on_reconnect();
 
     let mut redis_error_rx = redis_pool.on_error();
     let mut redis_reconnect_rx = redis_pool.on_reconnect();
@@ -108,16 +104,6 @@ async fn main() {
             tracing::info!("Redis reconnected");
         }
     });
-    tokio::spawn(async move {
-        while let Ok(error) = subscriber_error_rx.recv().await {
-            tracing::error!("Redis subscriber error: {:?}", error);
-        }
-    });
-    tokio::spawn(async move {
-        while subscriber_reconnect_rx.recv().await.is_ok() {
-            tracing::info!("Redis subscriber reconnected");
-        }
-    });
 
     let _ = redis_pool.connect();
     redis_pool
@@ -125,26 +111,14 @@ async fn main() {
         .await
         .expect_or_log("failed to connect to Redis");
 
-    let subscriber_task = subscriber_client.connect();
-    subscriber_client
-        .wait_for_connect()
-        .await
-        .expect_or_log("failed to connect to Redis subscriber");
-
-    let manage_handle = subscriber_client.manage_subscriptions();
-    subscriber_client
-        .subscribe::<(), _>("byers:status")
-        .await
-        .expect_or_log("failed to subscribe");
-
     let context = Data {
         db: db.clone(),
         comms: std::sync::Arc::new(tokio::sync::Mutex::new(
             ByersUnixStream::new().await.unwrap(),
         )),
         redis_pool: redis_pool.clone(),
-        redis_subscriber: subscriber_client.clone(),
         emoji: config.discord.emoji.clone(),
+        scheduler_handle: std::sync::Arc::new(tokio::sync::Mutex::new(None)),
     };
 
     let framework = poise::Framework::builder()
@@ -221,11 +195,4 @@ async fn main() {
     client.start().await.expect_or_log("failed to start client");
 
     redis_pool.quit_pool().await;
-    subscriber_client
-        .quit()
-        .await
-        .expect_or_log("failed to quit Redis subscriber client");
-
-    let _ = manage_handle.await;
-    let _ = subscriber_task.await;
 }

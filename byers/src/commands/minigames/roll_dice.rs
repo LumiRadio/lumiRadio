@@ -15,7 +15,7 @@ use judeharley::{
 
 pub struct DiceRoll {
     server_roll: i32,
-    player_roll: [u8; 3],
+    player_roll: [u8; 4],  // Using 4 dice, but might only use 3
 }
 
 impl DiceRoll {
@@ -26,11 +26,29 @@ impl DiceRoll {
                 rand::thread_rng().gen_range(1..=6),
                 rand::thread_rng().gen_range(1..=6),
                 rand::thread_rng().gen_range(1..=6),
+                rand::thread_rng().gen_range(1..=6),
             ],
         }
     }
 
     pub fn player_roll(&self) -> i32 {
+        // Check if we're using 3 or 4 dice
+        if self.server_roll < 1000 {
+            // 3-dice mode
+            self.player_roll[0] as i32 * 100
+                + self.player_roll[1] as i32 * 10
+                + self.player_roll[2] as i32
+        } else {
+            // 4-dice mode
+            self.player_roll[0] as i32 * 1000
+                + self.player_roll[1] as i32 * 100
+                + self.player_roll[2] as i32 * 10
+                + self.player_roll[3] as i32
+        }
+    }
+
+    // Get the first three dice only (for 3-dice mode)
+    pub fn player_roll_three_dice(&self) -> i32 {
         self.player_roll[0] as i32 * 100
             + self.player_roll[1] as i32 * 10
             + self.player_roll[2] as i32
@@ -49,29 +67,55 @@ impl Minigame for DiceRoll {
     type MinigameResult = DiceRollResult;
 
     async fn play(&self) -> Result<DiceRollResult, Error> {
-        // stitch them together as one i32
-        let roll = self.player_roll[0] as i32 * 100
-            + self.player_roll[1] as i32 * 10
-            + self.player_roll[2] as i32;
-        let sum = self.player_roll.iter().sum::<u8>();
-        let winnings = match sum {
-            0..=10 => 0,
-            11..=14 => 2,
-            15 => 3,
-            16 => 4,
-            17 => 5,
-            18 => 10,
-            _ => unreachable!(),
-        } * 5;
-        let mut total_winnings = winnings;
+        // Check if we're using 3 or 4 dice mode
+        if self.server_roll < 1000 {
+            // 3-dice mode
+            // stitch together the first three dice as one i32
+            let roll = self.player_roll_three_dice();
+            let sum = self.player_roll[0] + self.player_roll[1] + self.player_roll[2];
+            let winnings = match sum {
+                0..=10 => 0,
+                11..=14 => 2,
+                15 => 3,
+                16 => 4,
+                17 => 5,
+                18 => 10,
+                _ => unreachable!(),
+            } * 5;
+            let mut total_winnings = winnings;
 
-        if roll == self.server_roll {
-            total_winnings += 75;
-            return Ok(DiceRollResult::WinSecret(total_winnings));
-        } else if total_winnings > 0 {
-            return Ok(DiceRollResult::Win(total_winnings));
+            if roll == self.server_roll {
+                total_winnings += 75;
+                return Ok(DiceRollResult::WinSecret(total_winnings));
+            } else if total_winnings > 0 {
+                return Ok(DiceRollResult::Win(total_winnings));
+            } else {
+                return Ok(DiceRollResult::Lose);
+            }
         } else {
-            return Ok(DiceRollResult::Lose);
+            // 4-dice mode
+            // stitch all four dice together as one i32
+            let roll = self.player_roll();
+            let sum = self.player_roll.iter().sum::<u8>();
+            let winnings = match sum {
+                0..=13 => 0,
+                14..=18 => 2,
+                19..=21 => 3,
+                22 => 5,
+                23 => 7,
+                24 => 15,
+                _ => unreachable!(),
+            } * 5;
+            let mut total_winnings = winnings;
+
+            if roll == self.server_roll {
+                total_winnings += 100;
+                return Ok(DiceRollResult::WinSecret(total_winnings));
+            } else if total_winnings > 0 {
+                return Ok(DiceRollResult::Win(total_winnings));
+            } else {
+                return Ok(DiceRollResult::Lose);
+            }
         }
     }
 
@@ -81,58 +125,130 @@ impl Minigame for DiceRoll {
 }
 
 fn roll_over(mut roll: i32) -> i32 {
+    // Special case: transition from 3-dice to 4-dice system
     if roll == 666 {
-        return 111;
+        return 1111;
     }
 
-    let hundreds = roll / 100;
-    let tens = (roll % 100) / 10;
-    let ones = roll % 10;
+    if roll < 1000 {
+        // 3-dice system
+        let hundreds = roll / 100;
+        let tens = (roll % 100) / 10;
+        let ones = roll % 10;
 
-    if ones == 6 {
-        if tens == 6 {
-            roll = (hundreds + 1) * 100 + 11;
+        if ones == 6 {
+            if tens == 6 {
+                roll = (hundreds + 1) * 100 + 11;
+            } else {
+                roll = hundreds * 100 + (tens + 1) * 10 + 1;
+            }
         } else {
-            roll = hundreds * 100 + (tens + 1) * 10 + 1;
+            roll += 1;
         }
     } else {
-        roll += 1;
+        // 4-dice system
+        // Reset if we reach 6666
+        if roll == 6666 {
+            return 1111;
+        }
+
+        let thousands = roll / 1000;
+        let hundreds = (roll % 1000) / 100;
+        let tens = (roll % 100) / 10;
+        let ones = roll % 10;
+
+        if ones == 6 {
+            if tens == 6 {
+                if hundreds == 6 {
+                    roll = (thousands + 1) * 1000 + 111;
+                } else {
+                    roll = thousands * 1000 + (hundreds + 1) * 100 + 11;
+                }
+            } else {
+                roll = thousands * 1000 + hundreds * 100 + (tens + 1) * 10 + 1;
+            }
+        } else {
+            roll += 1;
+        }
     }
 
     roll
 }
 
 fn roll_to_emoji(roll: i32, emoji: &EmojiConfig) -> String {
-    // transform each digit into the dice emoji
-    let hundreds = match roll / 100 {
-        1 => &emoji.d6_1,
-        2 => &emoji.d6_2,
-        3 => &emoji.d6_3,
-        4 => &emoji.d6_4,
-        5 => &emoji.d6_5,
-        6 => &emoji.d6_6,
-        _ => unreachable!(),
-    };
-    let tens = match (roll % 100) / 10 {
-        1 => &emoji.d6_1,
-        2 => &emoji.d6_2,
-        3 => &emoji.d6_3,
-        4 => &emoji.d6_4,
-        5 => &emoji.d6_5,
-        6 => &emoji.d6_6,
-        _ => unreachable!(),
-    };
-    let ones = match roll % 10 {
-        1 => &emoji.d6_1,
-        2 => &emoji.d6_2,
-        3 => &emoji.d6_3,
-        4 => &emoji.d6_4,
-        5 => &emoji.d6_5,
-        6 => &emoji.d6_6,
-        _ => unreachable!(),
-    };
+    if roll < 1000 {
+        // 3-dice display
+        // transform each digit into the dice emoji
+        let hundreds = match roll / 100 {
+            1 => &emoji.d6_1,
+            2 => &emoji.d6_2,
+            3 => &emoji.d6_3,
+            4 => &emoji.d6_4,
+            5 => &emoji.d6_5,
+            6 => &emoji.d6_6,
+            _ => unreachable!(),
+        };
+        let tens = match (roll % 100) / 10 {
+            1 => &emoji.d6_1,
+            2 => &emoji.d6_2,
+            3 => &emoji.d6_3,
+            4 => &emoji.d6_4,
+            5 => &emoji.d6_5,
+            6 => &emoji.d6_6,
+            _ => unreachable!(),
+        };
+        let ones = match roll % 10 {
+            1 => &emoji.d6_1,
+            2 => &emoji.d6_2,
+            3 => &emoji.d6_3,
+            4 => &emoji.d6_4,
+            5 => &emoji.d6_5,
+            6 => &emoji.d6_6,
+            _ => unreachable!(),
+        };
 
-    format!("{}{}{}", hundreds, tens, ones)
+        format!("{}{}{}", hundreds, tens, ones)
+    } else {
+        // 4-dice display
+        let thousands = match roll / 1000 {
+            1 => &emoji.d6_1,
+            2 => &emoji.d6_2,
+            3 => &emoji.d6_3,
+            4 => &emoji.d6_4,
+            5 => &emoji.d6_5,
+            6 => &emoji.d6_6,
+            _ => unreachable!(),
+        };
+        let hundreds = match (roll % 1000) / 100 {
+            1 => &emoji.d6_1,
+            2 => &emoji.d6_2,
+            3 => &emoji.d6_3,
+            4 => &emoji.d6_4,
+            5 => &emoji.d6_5,
+            6 => &emoji.d6_6,
+            _ => unreachable!(),
+        };
+        let tens = match (roll % 100) / 10 {
+            1 => &emoji.d6_1,
+            2 => &emoji.d6_2,
+            3 => &emoji.d6_3,
+            4 => &emoji.d6_4,
+            5 => &emoji.d6_5,
+            6 => &emoji.d6_6,
+            _ => unreachable!(),
+        };
+        let ones = match roll % 10 {
+            1 => &emoji.d6_1,
+            2 => &emoji.d6_2,
+            3 => &emoji.d6_3,
+            4 => &emoji.d6_4,
+            5 => &emoji.d6_5,
+            6 => &emoji.d6_6,
+            _ => unreachable!(),
+        };
+
+        format!("{}{}{}{}", thousands, hundreds, tens, ones)
+    }
 }
 
 /// Roll a dice and win boonbucks
@@ -208,12 +324,19 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             )
             .await?;
 
+            // Player roll display depends on the mode
+            let player_roll_display = if old_roll < 1000 {
+                game.player_roll_three_dice()
+            } else {
+                game.player_roll()
+            };
+
             ctx.send(
                 CreateReply::default().embed(DiceRoll::prepare_embed().description(format!(
                     r#"You rolled {} and won {total_winnings} Boondollars!
 
                             Additionally, you rolled the quest roll of {}! The next number is {}"#,
-                    roll_to_emoji(game.player_roll(), emoji_config),
+                    roll_to_emoji(player_roll_display, emoji_config),
                     roll_to_emoji(old_roll, emoji_config),
                     roll_to_emoji(guild_config.dice_roll, emoji_config)
                 ))),
@@ -231,24 +354,48 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             )
             .await?;
 
+            // Player roll display depends on the mode
+            let player_roll_display = if guild_config.dice_roll < 1000 {
+                game.player_roll_three_dice()
+            } else {
+                game.player_roll()
+            };
+
             ctx.send(
                 CreateReply::default().embed(DiceRoll::prepare_embed().description(format!(
                     r#"You rolled {} and won {total_winnings} Boondollars!
 
                             The quest roll is {}"#,
-                    roll_to_emoji(game.player_roll(), emoji_config),
+                    roll_to_emoji(player_roll_display, emoji_config),
                     roll_to_emoji(guild_config.dice_roll, emoji_config)
                 ))),
             )
             .await?;
         }
         DiceRollResult::Lose => {
+            let boonbucks = user.boonbucks - 5;
+            user.update(
+                judeharley::entities::users::ActiveModel {
+                    boonbucks: Set(boonbucks),
+                    ..Default::default()
+                },
+                &data.db,
+            )
+            .await?;
+            
+            // Player roll display depends on the mode
+            let player_roll_display = if guild_config.dice_roll < 1000 {
+                game.player_roll_three_dice()
+            } else {
+                game.player_roll()
+            };
+
             ctx.send(
                 CreateReply::default().embed(DiceRoll::prepare_embed().description(format!(
                     r#"You rolled {} and lost 5 Boondollars!
 
                     The quest roll is {}"#,
-                    roll_to_emoji(game.player_roll(), emoji_config),
+                    roll_to_emoji(player_roll_display, emoji_config),
                     roll_to_emoji(guild_config.dice_roll, emoji_config)
                 ))),
             )
@@ -265,13 +412,26 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 mod tests {
     #[test]
     fn test_dice_rollover() {
+        // Test 3-dice system
         assert_eq!(super::roll_over(111), 112);
-        assert_eq!(super::roll_over(666), 111);
+        assert_eq!(super::roll_over(666), 1111); // Special case transition
         assert_eq!(super::roll_over(116), 121);
         assert_eq!(super::roll_over(126), 131);
         assert_eq!(super::roll_over(136), 141);
         assert_eq!(super::roll_over(146), 151);
         assert_eq!(super::roll_over(156), 161);
         assert_eq!(super::roll_over(166), 211);
+        
+        // Test 4-dice system
+        assert_eq!(super::roll_over(1111), 1112);
+        assert_eq!(super::roll_over(6666), 1111);
+        assert_eq!(super::roll_over(1116), 1121);
+        assert_eq!(super::roll_over(1126), 1131);
+        assert_eq!(super::roll_over(1136), 1141);
+        assert_eq!(super::roll_over(1146), 1151);
+        assert_eq!(super::roll_over(1156), 1161);
+        assert_eq!(super::roll_over(1166), 1211);
+        assert_eq!(super::roll_over(1266), 1311);
+        assert_eq!(super::roll_over(1666), 2111);
     }
 }

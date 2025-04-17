@@ -16,8 +16,6 @@ pub struct AppConfig {
     pub sentry_dsn: Option<String>,
     #[serde(default = "default_environment")]
     pub environment: String,
-    #[serde(default = "Default::default")]
-    pub sentry_debug: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]

@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [1.3.7] - 2025-03-23
+
+### Changed
+
+- The dice roll minigame has gained another dice once the quest roll has passed 666
+  - The rewards for winning are as follows for the 4 dice variant (excluding the price of 5 Boondollars):
+    - 1 - 13: 0 Boondollars
+    - 14 - 18: 10 Boondollars
+    - 19 - 21: 15 Boondollars
+    - 22: 25 Boondollars
+    - 23: 35 Boondollars
+    - 24: 75 Boondollars
+
+### Fixed
+
+- Fixed the song status going out of sync with the actual played song
+
 ## [1.3.6] - 2024-07-08
 
 ### Changed
