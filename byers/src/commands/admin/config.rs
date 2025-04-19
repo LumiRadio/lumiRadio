@@ -5,7 +5,7 @@ use poise::{
 
 use crate::prelude::*;
 use judeharley::{
-    sea_orm::Set, Cans, ServerChannelConfig, ServerConfig, ServerRoleConfig, Users
+    sea_orm::Set, prelude::{Cans, ServerChannelConfig, ServerConfig, ServerRoleConfig, Users},
 };
 
 /// Configuration-related commands

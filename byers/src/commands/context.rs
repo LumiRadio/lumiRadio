@@ -1,4 +1,4 @@
-use judeharley::PlayedSongs;
+use judeharley::prelude::PlayedSongs;
 use poise::{serenity_prelude::CreateEmbed, CreateReply};
 
 use crate::prelude::{ApplicationContext, Error};

@@ -5,7 +5,7 @@ use poise::{
 use tracing_unwrap::ResultExt;
 
 use crate::prelude::*;
-use judeharley::{sea_orm::Set, SlcbCurrency, Users};
+use judeharley::{sea_orm::Set, prelude::{SlcbCurrency, Users}};
 
 pub async fn autocomplete_channels(
     ctx: ApplicationContext<'_>,

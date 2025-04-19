@@ -11,7 +11,6 @@ pub struct AppConfig {
     pub redis_url: String,
 
     pub discord: DiscordConfig,
-    pub secret: String,
 
     pub sentry_dsn: Option<String>,
     #[serde(default = "default_environment")]
@@ -20,9 +19,6 @@ pub struct AppConfig {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct DiscordConfig {
-    pub client_id: String,
-    pub client_secret: String,
-
     pub emoji: EmojiConfig,
 }
 

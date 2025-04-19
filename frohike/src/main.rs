@@ -5,7 +5,7 @@ use std::{
 };
 
 use clap::{Parser, Subcommand};
-use judeharley::{sea_orm::DatabaseConnection, SUPPORTED_AUDIO_FORMATS};
+use judeharley::{sea_orm::DatabaseConnection, prelude::SUPPORTED_AUDIO_FORMATS};
 use notify::Watcher;
 use tokio::sync::{mpsc::Receiver, Mutex};
 use tracing::{debug, error, info, warn};

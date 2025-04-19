@@ -1,13 +1,12 @@
-use fred::{
-    clients::SubscriberClient,
-    pool::RedisPool,
-    types::{PerformanceConfig, ReconnectPolicy, RedisConfig},
-};
+use std::time::Duration;
+
+use fred::clients::SubscriberClient;
+use fred::prelude::*;
 use migration::MigratorTrait;
 
-pub use crate::prelude::*;
 pub use sea_orm;
 pub use sea_orm::entity::prelude::Decimal;
+pub(crate) use crate::prelude::*;
 
 pub mod communication;
 pub mod controllers;
@@ -29,19 +28,32 @@ pub async fn connect_database(url: &str) -> Result<sea_orm::DatabaseConnection> 
     sea_orm::Database::connect(url).await.map_err(Into::into)
 }
 
-pub fn redis_pool(redis_url: &str) -> Result<RedisPool> {
-    let redis_config = RedisConfig::from_url(redis_url)?;
-    let policy = ReconnectPolicy::new_exponential(0, 100, 30_000, 2);
-    let perf = PerformanceConfig::default();
-    let redis_pool = RedisPool::new(redis_config, Some(perf), Some(policy), 5)?;
+pub fn redis_pool(redis_url: &str) -> Result<Pool> {
+    let redis_config = Config::from_url(redis_url)?;
+    let client = Builder::from_config(redis_config)
+        .with_connection_config(|config| {
+            config.connection_timeout = Duration::from_secs(5);
+            config.tcp = TcpConfig {
+                nodelay: Some(true),
+                ..Default::default()
+            };
+        })
+        .build_pool(5)?;
 
-    Ok(redis_pool)
+    Ok(client)
 }
 
-pub fn subscriber_client(redis_url: &str) -> SubscriberClient {
-    let redis_config = RedisConfig::from_url(redis_url).expect("invalid Redis URL");
-    let policy = ReconnectPolicy::new_exponential(0, 100, 30_000, 2);
-    let perf = PerformanceConfig::default();
+pub fn subscriber_client(redis_url: &str) -> Result<SubscriberClient> {
+    let redis_config = Config::from_url(redis_url).expect("invalid Redis URL");
+    let client = Builder::from_config(redis_config)
+        .with_connection_config(|config| {
+            config.connection_timeout = Duration::from_secs(5);
+            config.tcp = TcpConfig {
+                nodelay: Some(true),
+                ..Default::default()
+            };
+        })
+        .build_subscriber_client()?;
 
-    SubscriberClient::new(redis_config, Some(perf), Some(policy))
+    Ok(client)
 }

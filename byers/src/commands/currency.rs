@@ -5,7 +5,7 @@ use poise::{
 
 use judeharley::{
     sea_orm::{ActiveModelTrait, DbErr, IntoActiveModel, TransactionTrait},
-    SlcbRank, Users,
+    prelude::{SlcbRank, Users},
 };
 
 use crate::{event_handlers::message::update_activity, prelude::*};

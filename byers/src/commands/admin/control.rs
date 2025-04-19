@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::commands::autocomplete_songs;
 use crate::prelude::*;
-use judeharley::{communication::LiquidsoapCommunication, Songs, Users};
+use judeharley::{communication::LiquidsoapCommunication, prelude::{Songs, Users}};
 use poise::{serenity_prelude::CreateEmbed, CreateReply};
 
 /// Reconnects the Liquidsoap command socket

@@ -1,7 +1,7 @@
 use crate::event_handlers::message::update_activity;
 use crate::prelude::*;
 use fred::prelude::{Expiration, KeysInterface};
-use judeharley::{sea_orm::DatabaseConnection, Cans, DiscordTimestamp, Users};
+use judeharley::{sea_orm::DatabaseConnection, prelude::{Cans, DiscordTimestamp, Users}};
 use poise::{serenity_prelude::CreateEmbed, CreateReply};
 
 /// Adds... things

@@ -1,11 +1,11 @@
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::Json;
-use fred::pool::RedisPool;
-use fred::prelude::PubsubInterface;
-use fred::types::{PerformanceConfig, ReconnectPolicy, RedisConfig};
+use fred::clients::Pool;
+use fred::prelude::{ClientLike, PubsubInterface};
 
 use judeharley::sea_orm::DatabaseConnection;
+use judeharley::prelude::*;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
 
@@ -33,17 +33,17 @@ async fn played(
         );
     }
 
-    let db_song = judeharley::Songs::get(&song.filename, &app_state.db)
+    let db_song = Songs::get(&song.filename, &app_state.db)
         .await
         .expect("Failed to query database")
         .expect("Song not found");
 
-    judeharley::PlayedSongs::insert(&db_song, &app_state.db)
+    PlayedSongs::insert(&db_song, &app_state.db)
         .await
         .expect("Failed to insert played song");
 
-    let _ = app_state
-        .redis_pool
+    let client = app_state.redis_pool.next();
+    let _ = client
         .publish::<i32, _, _>(
             "byers:status",
             format!("{} - {} - {}", song.album, song.artist, song.title),
@@ -57,7 +57,7 @@ async fn played(
 
 #[derive(Clone)]
 struct AppState {
-    redis_pool: RedisPool,
+    redis_pool: Pool,
     db: DatabaseConnection,
 }
 
@@ -67,27 +67,26 @@ async fn main() {
 
     let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
 
-    let config = RedisConfig::from_url(&redis_url).expect("Failed to parse redis url");
-    let perf = PerformanceConfig::default();
-    let policy = ReconnectPolicy::new_exponential(0, 100, 30_000, 2);
-    let redis_pool =
-        RedisPool::new(config, Some(perf), Some(policy), 1).expect("Failed to create redis pool");
-    redis_pool.connect();
+    let client = judeharley::redis_pool(&redis_url).expect("Failed to create redis pool");
+    let handle = client.init().await.expect("Failed to initialize redis");
 
     let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let db = judeharley::connect_database(&db_url)
         .await
         .expect("Failed to connect to database");
 
-    let app_state = AppState { redis_pool, db };
+    let app_state = AppState { redis_pool: client.clone(), db };
 
     let app = axum::Router::new()
         .route("/played", axum::routing::post(played))
         .with_state(app_state);
 
     info!("Listening on 0.0.0.0:8000");
-    axum::Server::bind(&"0.0.0.0:8000".parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.expect("Failed to bind to 0.0.0.0:8000");
+    axum::serve(listener, app.into_make_service()).await.unwrap();
+
+    client.quit().await.expect("Failed to quit Redis");
+    handle.await
+        .expect("Failed to await join handle")
+        .expect("Failed to await Redis quit");
 }

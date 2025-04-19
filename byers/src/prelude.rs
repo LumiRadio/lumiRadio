@@ -26,7 +26,7 @@ where
 {
     pub db: judeharley::sea_orm::DatabaseConnection,
     pub comms: Arc<Mutex<C>>,
-    pub redis_pool: fred::pool::RedisPool,
+    pub redis_pool: fred::clients::Pool,
     pub emoji: EmojiConfig,
     pub scheduler_handle: Arc<Mutex<Option<JoinHandle<()>>>>,
 }

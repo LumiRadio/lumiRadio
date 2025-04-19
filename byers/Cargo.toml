@@ -14,7 +14,7 @@ tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 tracing-unwrap = { version = "1.0", features = ["log-location"] }
 lazy_static = "1.4.0"
-fred = { version = "6.3.0", features = ["subscriber-client"] }
+fred = { version = "10.1", features = ["subscriber-client"] }
 async-trait = "0.1.71"
 num-traits = "0.2.15"
 strum = { version = "0.27", features = ["derive"] }
@@ -23,11 +23,9 @@ anyhow = { version = "1.0.72", features = ["backtrace"] }
 thiserror = "2.0"
 tokio-stream = "0.1.14"
 once_cell = "1.18.0"
-axum = { version = "0.6.20", features = ["macros"] }
 async-fred-session = "0.1.5"
-axum-sessions = "0.5.0"
-oauth2 = "4.4.2"
-reqwest = { version = "0.11.20", default-features = false, features = [
+oauth2 = "5.0"
+reqwest = { version = "0.12", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
@@ -37,6 +35,6 @@ ellipse = "0.2.0"
 situwaition = { version = "0.3.2", features = ["tokio"] }
 serde_json = "1.0.107"
 judeharley = { path = "../judeharley" }
-sentry = { version = "0.34" }
-sentry-anyhow = { version = "0.34", features = ["backtrace"] }
+sentry = { version = "0.37" }
+sentry-anyhow = { version = "0.37", features = ["backtrace"] }
 clokwerk = "0.4.0"

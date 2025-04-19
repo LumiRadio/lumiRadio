@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use fred::{
-    prelude::{KeysInterface, RedisClient},
+    prelude::KeysInterface,
     types::Expiration,
 };
 use poise::serenity_prelude::{ChannelId, Message, UserId};
@@ -9,18 +9,17 @@ use tracing::info;
 use crate::prelude::*;
 use judeharley::{
     communication::ByersUnixStream,
-    prelude::Users,
-    sea_orm::{ActiveValue, DatabaseConnection, Set},
-    ServerChannelConfig,
+    prelude::{Users, ServerChannelConfig},
+    sea_orm::{ActiveValue, DatabaseConnection, Set}
 };
 
 #[async_trait::async_trait]
 trait UserMessageHandlerExt: Sized {
     fn redis_message_cooldown_key(&self) -> String;
     async fn update_watched_time(self, db: &DatabaseConnection) -> Result<Self, Error>;
-    async fn update_boondollars(
+    async fn update_boondollars<R: KeysInterface>(
         self,
-        redis_client: &RedisClient,
+        redis_client: &R,
         db: &DatabaseConnection,
     ) -> Result<Self, Error>;
 }
@@ -76,9 +75,9 @@ impl UserMessageHandlerExt for Users {
         Ok(user)
     }
 
-    async fn update_boondollars(
+    async fn update_boondollars<R: KeysInterface>(
         self,
-        redis_client: &RedisClient,
+        redis_client: &R,
         db: &DatabaseConnection,
     ) -> Result<Self, Error> {
         let cooldown_key = self.redis_message_cooldown_key();

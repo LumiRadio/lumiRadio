@@ -15,8 +15,7 @@ use crate::{commands::minigames::Minigame, event_handlers::message::update_activ
 use judeharley::{
     communication::ByersUnixStream,
     cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
-    prelude::DiscordTimestamp,
-    ServerConfig, Users,
+    prelude::{DiscordTimestamp, ServerConfig, Users},
 };
 
 pub enum PvPResult {
