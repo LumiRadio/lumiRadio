@@ -14,7 +14,7 @@ pub use crate::entities::{
     server_channel_config::Model as ServerChannelConfig, server_config::Model as ServerConfig,
     server_role_config::Model as ServerRoleConfig, slcb_currency::Model as SlcbCurrency,
     slcb_rank::Model as SlcbRank, song_requests::Model as SongRequests, song_tags::Model as Tags,
-    users::Model as Users,
+    token_storage::Model as TokenStorage, users::Model as Users,
 };
 
 pub static SUPPORTED_AUDIO_FORMATS: [&str; 4] = ["mp3", "flac", "ogg", "wav"];

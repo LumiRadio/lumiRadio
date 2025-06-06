@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+## [2.0.0] - Unreleased
+
+This update adds an API server for accessing the radio's functionality from outside Discord.
+This means you will be able to enjoy features like song requests or adding cans from anywhere,
+provided you do have a Discord account.
+
+This will also phase-out account linking from the bot and move it to the API server and frontend.
+
 ## [1.3.7] - 2025-03-23
 
 ### Changed

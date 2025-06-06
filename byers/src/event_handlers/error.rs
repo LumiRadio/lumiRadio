@@ -1,5 +1,5 @@
 use chrono::Utc;
-use poise::{serenity_prelude::CreateEmbed, CreateReply};
+use poise::{CreateReply, serenity_prelude::CreateEmbed};
 use tracing::error;
 
 use crate::prelude::*;
@@ -45,8 +45,12 @@ pub async fn on_error(error: FrameworkError<'_>) -> Result<(), Error> {
             sentry::add_breadcrumb(BreadcrumbableContext(ctx).as_breadcrumbs().await);
             sentry_anyhow::capture_anyhow(&error);
             ctx.say(err_str).await?;
-        },
-        FrameworkError::CommandPanic { ref payload, ref ctx, .. } => {
+        }
+        FrameworkError::CommandPanic {
+            ref payload,
+            ref ctx,
+            ..
+        } => {
             let payload_clone = payload.clone();
             sentry::add_breadcrumb(BreadcrumbableContext(*ctx).as_breadcrumbs().await);
             if let Some(payload) = payload_clone {
@@ -54,7 +58,7 @@ pub async fn on_error(error: FrameworkError<'_>) -> Result<(), Error> {
             } else {
                 sentry_anyhow::capture_anyhow(&anyhow::anyhow!("Panic in command"));
             }
-            
+
             let embed = poise::serenity_prelude::CreateEmbed::default()
                 .title("Internal error")
                 .color((255, 0, 0))

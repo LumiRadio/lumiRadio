@@ -1,16 +1,13 @@
 use chrono::NaiveDateTime;
-use fred::{
-    prelude::KeysInterface,
-    types::Expiration,
-};
+use fred::{prelude::KeysInterface, types::Expiration};
 use poise::serenity_prelude::{ChannelId, Message, UserId};
 use tracing::info;
 
 use crate::prelude::*;
 use judeharley::{
     communication::ByersUnixStream,
-    prelude::{Users, ServerChannelConfig},
-    sea_orm::{ActiveValue, DatabaseConnection, Set}
+    prelude::{ServerChannelConfig, Users},
+    sea_orm::{ActiveValue, DatabaseConnection, Set},
 };
 
 #[async_trait::async_trait]
@@ -37,7 +34,8 @@ impl UserMessageHandlerExt for Users {
             let last_message_sent = Some(chrono::Utc::now().naive_utc());
             self.update(
                 judeharley::entities::users::ActiveModel {
-                    last_message_sent: last_message_sent.map_or(ActiveValue::not_set(), |t| Set(Some(t))),
+                    last_message_sent: last_message_sent
+                        .map_or(ActiveValue::not_set(), |t| Set(Some(t))),
                     ..Default::default()
                 },
                 db,
@@ -57,13 +55,17 @@ impl UserMessageHandlerExt for Users {
 
                 self.watched_time + time_diff.num_seconds()
             } else {
-                info!("User {} sent a message more than 15 minutes ago, only adding 15 minutes to their watched time", self.id);
+                info!(
+                    "User {} sent a message more than 15 minutes ago, only adding 15 minutes to their watched time",
+                    self.id
+                );
                 self.watched_time + 15 * 60
             };
 
             self.update(
                 judeharley::entities::users::ActiveModel {
-                    last_message_sent: last_message_sent.map_or(ActiveValue::not_set(), |t| Set(Some(t))),
+                    last_message_sent: last_message_sent
+                        .map_or(ActiveValue::not_set(), |t| Set(Some(t))),
                     watched_time: Set(watched_time),
                     ..Default::default()
                 },
@@ -148,10 +150,16 @@ pub async fn message_handler(message: &Message, data: &Data<ByersUnixStream>) ->
 
     let channel = message.channel_id.get();
     if let Ok(Some(channel_config)) = ServerChannelConfig::get(channel, &data.db).await {
-        if let Err(e) = channel_config.update(judeharley::entities::server_channel_config::ActiveModel {
-            last_message_sent: Set(Some(chrono::Utc::now().naive_utc())),
-            ..Default::default()
-        }, &data.db).await {
+        if let Err(e) = channel_config
+            .update(
+                judeharley::entities::server_channel_config::ActiveModel {
+                    last_message_sent: Set(Some(chrono::Utc::now().naive_utc())),
+                    ..Default::default()
+                },
+                &data.db,
+            )
+            .await
+        {
             tracing::error!("Failed to update channel config: {}", e);
         }
     }

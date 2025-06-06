@@ -10,3 +10,4 @@ metadata/
 slcb_data/
 docker/icecast
 docker/liquidsoap
+calliope/

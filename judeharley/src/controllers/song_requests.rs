@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use sea_orm::{prelude::*, FromQueryResult, QueryOrder, QuerySelect, Set};
+use sea_orm::{FromQueryResult, QueryOrder, QuerySelect, Set, prelude::*};
 
 use crate::controllers::CountQuery;
 use crate::custom_entities::songs::Model as SongModel;

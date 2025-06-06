@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
 use fred::prelude::ClientLike;
-use poise::serenity_prelude as serenity;
 use poise::PrefixFrameworkOptions;
+use poise::serenity_prelude as serenity;
 use tracing::{debug, info};
 use tracing_unwrap::ResultExt;
 
@@ -88,7 +88,10 @@ async fn main() {
     info!("Connecting to Redis...");
     let redis_pool =
         judeharley::redis_pool(&config.redis_url).expect_or_log("failed to create Redis pool");
-    let handle = redis_pool.init().await.expect_or_log("failed to connect to Redis");
+    let handle = redis_pool
+        .init()
+        .await
+        .expect_or_log("failed to connect to Redis");
 
     let context = Data {
         db: db.clone(),
@@ -160,10 +163,15 @@ async fn main() {
         shard_handler.shutdown_all().await;
     });
 
+    info!("Starting client...");
     client.start().await.expect_or_log("failed to start client");
 
-    redis_pool.quit().await.expect_or_log("failed to quit Redis");
-    handle.await
+    redis_pool
+        .quit()
+        .await
+        .expect_or_log("failed to quit Redis");
+    handle
+        .await
         .expect_or_log("failed to await join handle")
         .expect_or_log("failed to await Redis quit");
 }

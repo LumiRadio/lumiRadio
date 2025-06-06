@@ -1,12 +1,10 @@
 use std::time::Duration;
 
-use fred::clients::SubscriberClient;
-use fred::prelude::*;
 use migration::MigratorTrait;
 
+pub use crate::prelude::*;
 pub use sea_orm;
 pub use sea_orm::entity::prelude::Decimal;
-pub(crate) use crate::prelude::*;
 
 pub mod communication;
 pub mod controllers;
@@ -28,7 +26,9 @@ pub async fn connect_database(url: &str) -> Result<sea_orm::DatabaseConnection> 
     sea_orm::Database::connect(url).await.map_err(Into::into)
 }
 
-pub fn redis_pool(redis_url: &str) -> Result<Pool> {
+pub fn redis_pool(redis_url: &str) -> Result<fred::prelude::Pool> {
+    use fred::prelude::*;
+
     let redis_config = Config::from_url(redis_url)?;
     let client = Builder::from_config(redis_config)
         .with_connection_config(|config| {
@@ -43,7 +43,9 @@ pub fn redis_pool(redis_url: &str) -> Result<Pool> {
     Ok(client)
 }
 
-pub fn subscriber_client(redis_url: &str) -> Result<SubscriberClient> {
+pub fn subscriber_client(redis_url: &str) -> Result<fred::clients::SubscriberClient> {
+    use fred::prelude::*;
+
     let redis_config = Config::from_url(redis_url).expect("invalid Redis URL");
     let client = Builder::from_config(redis_config)
         .with_connection_config(|config| {

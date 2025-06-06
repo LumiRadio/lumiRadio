@@ -1,16 +1,19 @@
 use std::time::Duration;
 
 use poise::{
-    serenity_prelude::{CreateActionRow, CreateButton, CreateEmbed},
     CreateReply,
+    serenity_prelude::{CreateActionRow, CreateButton, CreateEmbed},
 };
 use situwaition::{
-    runtime::AsyncWaiter, SituwaitionError, SituwaitionOptsBuilder, TokioAsyncSituwaition,
+    SituwaitionError, SituwaitionOptsBuilder, TokioAsyncSituwaition, runtime::AsyncWaiter,
 };
 use tracing::error;
 
 use crate::{event_handlers::message::update_activity, prelude::*};
-use judeharley::{sea_orm::Set, prelude::{SlcbCurrency, Users}};
+use judeharley::{
+    prelude::{SlcbCurrency, Users},
+    sea_orm::Set,
+};
 
 /// Commands related to importing data from YouTube
 #[poise::command(slash_command, subcommands("link"))]

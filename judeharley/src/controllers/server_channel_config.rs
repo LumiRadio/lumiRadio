@@ -1,4 +1,4 @@
-use sea_orm::{prelude::*, ActiveValue, Set};
+use sea_orm::{ActiveValue, Set, prelude::*};
 
 use crate::entities::server_channel_config::*;
 use crate::prelude::JudeHarleyError;
@@ -11,7 +11,11 @@ impl Model {
             .map_err(Into::into)
     }
 
-    pub async fn get_or_insert(id: u64, server_id: u64, db: &DatabaseConnection) -> Result<Self, JudeHarleyError> {
+    pub async fn get_or_insert(
+        id: u64,
+        server_id: u64,
+        db: &DatabaseConnection,
+    ) -> Result<Self, JudeHarleyError> {
         if let Some(server_channel_config) = Self::get(id, db).await? {
             return Ok(server_channel_config);
         }

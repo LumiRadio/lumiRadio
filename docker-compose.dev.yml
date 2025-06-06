@@ -1,0 +1,93 @@
+services:
+  redis:
+    image: redis:7.0.11-alpine
+  icecast:
+    image: pltnk/icecast2
+    ports:
+      - 8000:8000
+    volumes:
+      - ./docker/icecast/icecast.xml:/etc/icecast2/icecast.xml
+  liquidsoap:
+    image: lumiRadio/liquidsoap
+    build:
+      context: ./docker/liquidsoap
+      dockerfile: Dockerfile
+    command: ["/usr/share/liquidsoap/script.liq"]
+    volumes:
+      - ./docker/liquidsoap/script.liq:/usr/share/liquidsoap/script.liq
+      - ${RADIO_MUSIC:?RADIO_MUSIC is unset}:/music
+      - ls_socket:/usr/share/liquidsoap
+    environment:
+      ICECAST_HOST: icecast
+      ICECAST_PORT: 8000
+      ICECAST_USER: source
+      ICECAST_PASSWORD: hackme
+      ICECAST_MOUNT: lumiradio
+      LANGLEY_URL: http://langley:8000/played
+  db:
+    image: postgres:12
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: abcd1234
+      POSTGRES_DB: postgres
+  byers:
+    image: lumiRadio/radio
+    command: "./byers/byers"
+    depends_on:
+      - liquidsoap
+    environment:
+      DISCORD_TOKEN: ${BYERS_DISCORD_TOKEN}
+      DATABASE_URL: postgres://postgres:abcd1234@db/postgres
+      REDIS_URL: redis://redis/
+      RUST_LOG: info
+      DISCORD__EMOJI__D6_1: ${DICE_ONE_EMOJI:-<:d6_1:1193962716038172732>}
+      DISCORD__EMOJI__D6_2: ${DICE_TWO_EMOJI:-<:d6_2:1193962772455751820>}
+      DISCORD__EMOJI__D6_3: ${DICE_THREE_EMOJI:-<:d6_3:1193962770308288543>}
+      DISCORD__EMOJI__D6_4: ${DICE_FOUR_EMOJI:-<:d6_4:1193962769217761330>}
+      DISCORD__EMOJI__D6_5: ${DICE_FIVE_EMOJI:-<:d6_5:1193962768097869834>}
+      DISCORD__EMOJI__D6_6: ${DICE_SIX_EMOJI:-<:d6_6:1193962765937823805>}
+      # If you want to enable Sentry, uncomment the following 2 lines and set SENTRY_DSN
+      # SENTRY_DSN: ${SENTRY_DSN}
+      # RUST_BACKTRACE: 1
+    volumes:
+      - ls_socket:/usr/src/app/ls
+      - ${RADIO_MUSIC:?RADIO_MUSIC is unset}:/music
+  caliborn:
+    image: lumiRadio/radio
+    command: "./caliborn/caliborn"
+    ports:
+      - 8182:8000
+    environment:
+      CALIBORN__DATABASE_URL: postgres://postgres:abcd1234@db/postgres
+      CALIBORN__DISCORD__CLIENT_ID: ${CALIBORN_DISCORD_CLIENT_ID}
+      CALIBORN__DISCORD__CLIENT_SECRET: ${CALIBORN_DISCORD_CLIENT_SECRET}
+      CALIBORN__DISCORD__REDIRECT_URI: http://localhost:8183/auth/discord/callback
+      CALIBORN__BOT_AUTH__SECRET_KEY: not-so-secret
+      CALIBORN__JWT__SECRET: not-so-secret
+  calliope:
+    image: lumiRadio/calliope
+    ports:
+      - 8183:3000
+    environment:
+      CALLIOPE_DISCORD_CLIENT_ID: ${CALIBORN_DISCORD_CLIENT_ID}
+      CALLIOPE_CALIBORN_URL: http://caliborn:8000
+      ORIGIN: http://localhost:8183
+  langley:
+    image: lumiRadio/radio
+    command: "./langley/langley"
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgres://postgres:abcd1234@db/postgres
+      REDIS_URL: redis://redis/
+      RUST_LOG: info
+  jaeger:
+    image: jaegertracing/jaeger:2.5.0
+    ports:
+      - 16686:16686
+
+volumes:
+  ls_socket:

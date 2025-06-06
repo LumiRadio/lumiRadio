@@ -1,8 +1,11 @@
 use crate::event_handlers::message::update_activity;
 use crate::prelude::*;
 use fred::prelude::{Expiration, KeysInterface};
-use judeharley::{sea_orm::DatabaseConnection, prelude::{Cans, DiscordTimestamp, Users}};
-use poise::{serenity_prelude::CreateEmbed, CreateReply};
+use judeharley::{
+    prelude::{Cans, DiscordTimestamp, Users},
+    sea_orm::DatabaseConnection,
+};
+use poise::{CreateReply, serenity_prelude::CreateEmbed};
 
 /// Adds... things
 #[poise::command(slash_command, subcommands("can", "bear", "john"), subcommand_required)]

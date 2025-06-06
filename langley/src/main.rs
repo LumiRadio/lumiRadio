@@ -1,11 +1,11 @@
+use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::Json;
 use fred::clients::Pool;
 use fred::prelude::{ClientLike, PubsubInterface};
 
-use judeharley::sea_orm::DatabaseConnection;
 use judeharley::prelude::*;
+use judeharley::sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
 
@@ -75,18 +75,26 @@ async fn main() {
         .await
         .expect("Failed to connect to database");
 
-    let app_state = AppState { redis_pool: client.clone(), db };
+    let app_state = AppState {
+        redis_pool: client.clone(),
+        db,
+    };
 
     let app = axum::Router::new()
         .route("/played", axum::routing::post(played))
         .with_state(app_state);
 
     info!("Listening on 0.0.0.0:8000");
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.expect("Failed to bind to 0.0.0.0:8000");
-    axum::serve(listener, app.into_make_service()).await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000")
+        .await
+        .expect("Failed to bind to 0.0.0.0:8000");
+    axum::serve(listener, app.into_make_service())
+        .await
+        .unwrap();
 
     client.quit().await.expect("Failed to quit Redis");
-    handle.await
+    handle
+        .await
         .expect("Failed to await join handle")
         .expect("Failed to await Redis quit");
 }

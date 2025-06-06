@@ -8,6 +8,7 @@ COPY byers/ byers/
 COPY frohike/ frohike/
 COPY langley/ langley/
 COPY judeharley/ judeharley/
+COPY caliborn/ caliborn/
 COPY migration/ migration/
 RUN cargo chef prepare --recipe-path recipe.json
 
@@ -26,6 +27,7 @@ COPY byers/ byers/
 COPY frohike/ frohike/
 COPY langley/ langley/
 COPY judeharley/ judeharley/
+COPY caliborn/ caliborn/
 COPY migration/ migration/
 RUN cargo build --release
 
@@ -42,12 +44,15 @@ RUN groupadd -r lumiradio && useradd -g lumiradio lumiradio
 RUN mkdir -p /opt/lumiradio/byers
 RUN mkdir -p /opt/lumiradio/frohike
 RUN mkdir -p /opt/lumiradio/langley
+RUN mkdir -p /opt/lumiradio/caliborn
 RUN chown -R lumiradio:lumiradio /opt/lumiradio/byers
 RUN chown -R lumiradio:lumiradio /opt/lumiradio/frohike
 RUN chown -R lumiradio:lumiradio /opt/lumiradio/langley
+RUN chown -R lumiradio:lumiradio /opt/lumiradio/caliborn
 COPY --from=builder --chown=lumiradio:lumiradio /app/target/release/byers /opt/lumiradio/byers/byers
 COPY --from=builder --chown=lumiradio:lumiradio /app/target/release/frohike /opt/lumiradio/frohike/frohike
 COPY --from=builder --chown=lumiradio:lumiradio /app/target/release/langley /opt/lumiradio/langley/langley
+COPY --from=builder --chown=lumiradio:lumiradio /app/target/release/caliborn /opt/lumiradio/caliborn/caliborn
 
 USER lumiradio
 WORKDIR /opt/lumiradio

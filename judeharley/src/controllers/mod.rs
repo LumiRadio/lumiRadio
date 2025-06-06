@@ -1,5 +1,6 @@
 use sea_orm::FromQueryResult;
 
+pub mod api_keys;
 pub mod cans;
 pub mod connected_youtube_accounts;
 pub mod favourite_songs;
@@ -12,6 +13,7 @@ pub mod slcb_rank;
 pub mod song_requests;
 pub mod song_tags;
 pub mod songs;
+pub mod token_storage;
 pub mod users;
 
 #[derive(FromQueryResult)]

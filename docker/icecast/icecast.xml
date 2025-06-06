@@ -1,0 +1,53 @@
+<icecast>
+    <location>The Matrix</location>
+    <admin>lumiradio@lumirad.io</admin>
+    <hostname>icecast</hostname>
+    <limits>
+        <clients>100</clients>
+        <sources>2</sources>
+        <queue-size>524288</queue-size>
+        <client-timeout>30</client-timeout>
+        <header-timeout>30</header-timeout>
+        <source-timeout>10</source-timeout>
+        <burst-size>65535</burst-size>
+    </limits>
+
+    <authentication>
+        <source-password>hackme</source-password>
+        <relay-password>hackme</relay-password>
+        <admin-user>admin</admin-user>
+        <admin-password>hackme</admin-password>
+    </authentication>
+
+    <listen-socket>
+        <port>8000</port>
+        <bind-address>0.0.0.0</bind-address>
+    </listen-socket>
+
+    <paths>
+        <basedir>/usr/share/icecast2</basedir>
+        <logdir>/var/log/icecast2</logdir>
+        <webroot>/usr/share/icecast2/web</webroot>
+        <adminroot>/usr/share/icecast2/web/admin</adminroot>
+
+        <alias source="/" dest="/status.xsl"/>
+    </paths>
+
+    <shoutcast-mount>/live.nsv</shoutcast-mount>
+
+    <http-headers>
+        <header type="cors" name="Access-Control-Allow-Origin" />
+        <header type="cors" name="Access-Control-Allow-Headers" />
+        <header type="cors" name="Access-Control-Expose-Headers" />
+    </http-headers>
+
+    <mount type="normal">
+        <mount-name>/lumiradio</mount-name>
+        <public>1</public>
+        <username>source</username>
+        <password>hackme</password>
+        <stream-name>lumiRadio - 24/7 Unofficial Homestuck Radio</stream-name>
+        <stream-description>24/7 Unofficial Homestuck Radio</stream-description>
+        <stream-url>http://lumiradio:8000/lumiradio</stream-url>
+    </mount>
+</icecast>

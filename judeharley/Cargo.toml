@@ -44,3 +44,4 @@ sea-orm = { version = "1.1", features = [
     "with-rust_decimal",
 ] }
 migration = { path = "../migration" }
+sea-query = "0.32.4"
