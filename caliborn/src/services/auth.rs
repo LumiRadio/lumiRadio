@@ -1,8 +1,8 @@
 use std::usize;
 
 use axum::{
-    body::{Body, Bytes},
-    extract::{FromRequest, FromRequestParts, Request, State},
+    body::Body,
+    extract::{FromRequestParts, Request, State},
     middleware::Next,
     response::Response,
 };
@@ -11,16 +11,14 @@ use hmac::{Hmac, Mac};
 use jwt::{SignWithKey, VerifyWithKey};
 use oauth2::{AuthorizationCode, TokenResponse};
 use prefixed_api_key::{PakControllerOsSha256, PrefixedApiKey, PrefixedApiKeyController};
-use rand::Rng;
 use reqwest::StatusCode;
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use subtle::ConstantTimeEq;
 
 use crate::{
     AppState, DiscordOAuthClient,
     dtos::{
-        Json,
         auth::{ApiKeyDto, UserToken},
         error::{ApiError, PublicError, ToPublicError},
     },

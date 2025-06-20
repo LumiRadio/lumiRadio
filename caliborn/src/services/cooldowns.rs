@@ -195,7 +195,7 @@ pub trait UserCooldown: Display {
 pub mod user {
     use std::fmt::Display;
 
-    use super::{CooldownService, UserCooldown};
+    use super::UserCooldown;
 
     macro_rules! impl_user_cooldown {
         ($self_:ident, $cooldown:ty = $key:expr, $duration:expr) => {
@@ -255,7 +255,7 @@ pub mod user {
 pub mod global {
     use std::fmt::Display;
 
-    use super::{CooldownService, GlobalCooldown};
+    use super::GlobalCooldown;
 
     macro_rules! impl_global_cooldown {
         ($self_:ident, $cooldown:ty = $key:expr, $duration:expr) => {

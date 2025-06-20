@@ -1,5 +1,5 @@
 use cooldowns::{CooldownRepository, SeaOrmCooldownRepository};
-use sea_orm::{DatabaseConnection, DbErr, TransactionError};
+use sea_orm::DatabaseConnection;
 
 use crate::repositories::{
     cans::{CanRepository, SeaOrmCanRepository},

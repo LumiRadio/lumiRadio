@@ -1,10 +1,9 @@
-use axum::{Router, extract::State, response::Response, routing::get};
+use axum::{Router, extract::State, routing::get};
 
 use crate::{
-    AppState, ServiceRegistry,
+    AppState,
     dtos::{
         error::{CalibornResult, ErrorResponse},
-        json,
         users::UserDto,
     },
     services::auth::{AuthenticatedUser, authenticate},

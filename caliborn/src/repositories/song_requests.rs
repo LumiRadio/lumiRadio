@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use sea_orm::{ActiveValue, FromQueryResult, QueryOrder, QuerySelect, prelude::*};
+use sea_orm::{ActiveValue, QueryOrder, QuerySelect, prelude::*};
 
 use crate::{entities, repositories::RepositoryError};
 

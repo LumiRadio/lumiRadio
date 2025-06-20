@@ -1,6 +1,4 @@
-use axum::{Router, extract::State, http::HeaderMap, response::Response, routing::post};
-use chrono::{NaiveDateTime, Utc};
-use oauth2::{AuthorizationCode, TokenResponse};
+use axum::{Router, extract::State, routing::post};
 
 use crate::{
     AppState,
@@ -8,7 +6,6 @@ use crate::{
         Json,
         auth::{DiscordLoginRequest, UserToken},
         error::{CalibornResult, ErrorResponse},
-        json,
     },
     services::ServiceRegistry,
 };

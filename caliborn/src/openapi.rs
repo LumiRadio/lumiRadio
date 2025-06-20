@@ -1,5 +1,5 @@
 use utoipa::{
-    openapi::security::{ApiKey, ApiKeyValue, HttpAuthScheme, HttpBuilder, SecurityScheme}, Modify, OpenApi
+    openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme}, Modify, OpenApi
 };
 
 struct DiscordAuthAddon;
