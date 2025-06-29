@@ -1,4 +1,4 @@
-use sea_orm::{prelude::*, ActiveValue, Set};
+use sea_orm::{ActiveValue, Set, prelude::*};
 
 use crate::entities::server_role_config::*;
 use crate::prelude::JudeHarleyError;

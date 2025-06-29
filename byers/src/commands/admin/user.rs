@@ -1,8 +1,8 @@
 use crate::prelude::*;
-use judeharley::{sea_orm::Set, Users};
+use judeharley::{prelude::Users, sea_orm::Set};
 use poise::{
-    serenity_prelude::{CreateEmbed, User},
     CreateReply,
+    serenity_prelude::{CreateEmbed, User},
 };
 
 /// User commands

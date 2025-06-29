@@ -1,11 +1,14 @@
 use poise::{
-    serenity_prelude::{AutocompleteChoice, CreateEmbed, User},
     CreateReply,
+    serenity_prelude::{AutocompleteChoice, CreateEmbed, User},
 };
 use tracing_unwrap::ResultExt;
 
 use crate::prelude::*;
-use judeharley::{sea_orm::Set, SlcbCurrency, Users};
+use judeharley::{
+    prelude::{SlcbCurrency, Users},
+    sea_orm::Set,
+};
 
 pub async fn autocomplete_channels(
     ctx: ApplicationContext<'_>,

@@ -1,11 +1,11 @@
-use poise::serenity_prelude::{AutocompleteChoice, CreateActionRow, CreateButton, CreateEmbed};
 use poise::CreateReply;
+use poise::serenity_prelude::{AutocompleteChoice, CreateActionRow, CreateButton, CreateEmbed};
 use tracing_unwrap::ResultExt;
 
 use crate::event_handlers::message::update_activity;
 use crate::prelude::*;
 use ellipse::Ellipse;
-use judeharley::{Songs, Users};
+use judeharley::prelude::{Songs, Users};
 
 pub mod add_stuff;
 pub mod admin;
@@ -59,8 +59,8 @@ pub async fn autocomplete_songs(
             .expect_or_log("Failed to query database")
     } else {
         Songs::search(partial, &data.db)
-        .await
-        .expect_or_log("Failed to query database")
+            .await
+            .expect_or_log("Failed to query database")
     };
 
     songs.into_iter().take(20).map(|song| {

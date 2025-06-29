@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
 use fred::prelude::ClientLike;
-use poise::serenity_prelude as serenity;
 use poise::PrefixFrameworkOptions;
+use poise::serenity_prelude as serenity;
 use tracing::{debug, info};
 use tracing_unwrap::ResultExt;
 
@@ -19,7 +19,6 @@ use crate::{
         version::*,
         youtube::*,
     },
-    oauth2::oauth2_server,
     prelude::*,
 };
 use judeharley::communication::ByersUnixStream;
@@ -27,7 +26,6 @@ use judeharley::communication::ByersUnixStream;
 mod app_config;
 mod commands;
 mod event_handlers;
-mod oauth2;
 mod prelude;
 
 #[tokio::main]
@@ -90,24 +88,8 @@ async fn main() {
     info!("Connecting to Redis...");
     let redis_pool =
         judeharley::redis_pool(&config.redis_url).expect_or_log("failed to create Redis pool");
-
-    let mut redis_error_rx = redis_pool.on_error();
-    let mut redis_reconnect_rx = redis_pool.on_reconnect();
-
-    tokio::spawn(async move {
-        while let Ok(error) = redis_error_rx.recv().await {
-            tracing::error!("Redis error: {:?}", error);
-        }
-    });
-    tokio::spawn(async move {
-        while redis_reconnect_rx.recv().await.is_ok() {
-            tracing::info!("Redis reconnected");
-        }
-    });
-
-    let _ = redis_pool.connect();
-    redis_pool
-        .wait_for_connect()
+    let handle = redis_pool
+        .init()
         .await
         .expect_or_log("failed to connect to Redis");
 
@@ -171,15 +153,6 @@ async fn main() {
         .await
         .expect_or_log("failed to create client");
 
-    let (tx, rx) = tokio::sync::oneshot::channel::<()>();
-    let webserver_handle = tokio::spawn(oauth2_server(
-        config.secret.clone(),
-        db,
-        redis_pool.clone(),
-        config.discord,
-        rx,
-    ));
-
     let shard_handler = client.shard_manager.clone();
     tokio::spawn(async move {
         tokio::signal::ctrl_c()
@@ -188,11 +161,17 @@ async fn main() {
 
         info!("Shutting down...");
         shard_handler.shutdown_all().await;
-        tx.send(()).expect_or_log("failed to send shutdown signal");
-        let _ = webserver_handle.await;
     });
 
+    info!("Starting client...");
     client.start().await.expect_or_log("failed to start client");
 
-    redis_pool.quit_pool().await;
+    redis_pool
+        .quit()
+        .await
+        .expect_or_log("failed to quit Redis");
+    handle
+        .await
+        .expect_or_log("failed to await join handle")
+        .expect_or_log("failed to await Redis quit");
 }

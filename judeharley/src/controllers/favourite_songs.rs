@@ -1,4 +1,4 @@
-use sea_orm::{prelude::*, Iterable, QuerySelect, Set};
+use sea_orm::{Iterable, QuerySelect, Set, prelude::*};
 
 use crate::custom_entities::songs::{
     Column as SongColumn, Entity as SongEntity, Model as SongModel,

@@ -12,8 +12,8 @@ use crate::app_config::EmojiConfig;
 use judeharley::communication::{ByersUnixStream, LiquidsoapCommunication};
 
 lazy_static! {
-    pub static ref INTENTS: GatewayIntents = GatewayIntents::non_privileged()
-        | GatewayIntents::MESSAGE_CONTENT;
+    pub static ref INTENTS: GatewayIntents =
+        GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT;
 }
 
 pub type Context<'a> = poise::Context<'a, Data<ByersUnixStream>, Error>;
@@ -26,7 +26,7 @@ where
 {
     pub db: judeharley::sea_orm::DatabaseConnection,
     pub comms: Arc<Mutex<C>>,
-    pub redis_pool: fred::pool::RedisPool,
+    pub redis_pool: fred::clients::Pool,
     pub emoji: EmojiConfig,
     pub scheduler_handle: Arc<Mutex<Option<JoinHandle<()>>>>,
 }

@@ -8,8 +8,8 @@ authors.workspace = true
 
 [dependencies]
 tokio = { version = "1.44", features = ["full"] }
-fred = { version = "6.3.0", features = ["subscriber-client"] }
-axum = { version = "0.6.20", features = ["macros"] }
+fred = { version = "10.1", features = ["subscriber-client"] }
+axum = { version = "0.8", features = ["macros"] }
 serde = { version = "1.0.188", features = ["derive"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }

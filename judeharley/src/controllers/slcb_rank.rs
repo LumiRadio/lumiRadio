@@ -1,4 +1,4 @@
-use sea_orm::{prelude::*, QueryOrder, QuerySelect};
+use sea_orm::{QueryOrder, QuerySelect, prelude::*};
 
 use crate::entities::{slcb_rank::*, users::Model as UserModel};
 use crate::prelude::JudeHarleyError;

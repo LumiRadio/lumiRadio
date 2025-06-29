@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDateTime, TimeZone};
 use fred::{
-    prelude::{RedisError, RedisErrorKind},
-    types::{FromRedis, RedisValue},
+    prelude::{Error as RedisError, ErrorKind as RedisErrorKind},
+    types::Value,
 };
 
 pub(crate) type Error = JudeHarleyError;
@@ -14,7 +14,7 @@ pub use crate::entities::{
     server_channel_config::Model as ServerChannelConfig, server_config::Model as ServerConfig,
     server_role_config::Model as ServerRoleConfig, slcb_currency::Model as SlcbCurrency,
     slcb_rank::Model as SlcbRank, song_requests::Model as SongRequests, song_tags::Model as Tags,
-    users::Model as Users,
+    token_storage::Model as TokenStorage, users::Model as Users,
 };
 
 pub static SUPPORTED_AUDIO_FORMATS: [&str; 4] = ["mp3", "flac", "ogg", "wav"];
@@ -33,7 +33,7 @@ pub enum JudeHarleyError {
     #[error(transparent)]
     SeaOrmConn(#[from] sea_orm::ConnAcquireErr),
     #[error(transparent)]
-    Redis(#[from] fred::prelude::RedisError),
+    Redis(#[from] fred::prelude::Error),
     #[error(transparent)]
     Reqwest(#[from] reqwest::Error),
     #[error(transparent)]
@@ -180,22 +180,22 @@ impl<T> AsRef<T> for W<T> {
     }
 }
 
-impl TryFrom<W<chrono::NaiveDateTime>> for RedisValue {
+impl TryFrom<W<chrono::NaiveDateTime>> for Value {
     type Error = JudeHarleyError;
 
     fn try_from(value: W<chrono::NaiveDateTime>) -> Result<Self> {
-        Ok(RedisValue::Integer(value.0.and_utc().timestamp()))
+        Ok(Value::Integer(value.0.and_utc().timestamp()))
     }
 }
 
-impl FromRedis for W<chrono::NaiveDateTime> {
-    fn from_value(value: fred::types::RedisValue) -> std::result::Result<Self, RedisError> {
-        if let fred::types::RedisValue::Integer(i) = value {
+impl fred::prelude::FromValue for W<chrono::NaiveDateTime> {
+    fn from_value(value: Value) -> std::result::Result<Self, RedisError> {
+        if let fred::prelude::Value::Integer(i) = value {
             Ok(W(chrono::DateTime::from_timestamp(i, 0)
                 .unwrap()
                 .naive_utc()))
         } else {
-            Err(fred::prelude::RedisError::new(
+            Err(fred::prelude::Error::new(
                 RedisErrorKind::Parse,
                 "invalid value",
             ))

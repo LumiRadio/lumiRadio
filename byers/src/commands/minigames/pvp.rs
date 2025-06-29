@@ -2,11 +2,11 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use judeharley::sea_orm::Set;
+use poise::CreateReply;
 use poise::serenity_prelude::{
     ButtonStyle, CreateActionRow, CreateButton, CreateInteractionResponse,
     CreateInteractionResponseMessage, Mentionable, User,
 };
-use poise::CreateReply;
 use rand::distr::StandardUniform;
 use rand::prelude::Distribution;
 
@@ -14,9 +14,8 @@ use crate::prelude::*;
 use crate::{commands::minigames::Minigame, event_handlers::message::update_activity};
 use judeharley::{
     communication::ByersUnixStream,
-    cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
-    prelude::DiscordTimestamp,
-    ServerConfig, Users,
+    cooldowns::{UserCooldownKey, is_on_cooldown, set_cooldown},
+    prelude::{DiscordTimestamp, ServerConfig, Users},
 };
 
 pub enum PvPResult {
