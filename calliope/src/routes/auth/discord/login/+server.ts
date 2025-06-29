@@ -14,7 +14,6 @@ export const GET: RequestHandler = async ({ cookies, url }) => {
     });
 
     const clientId = env.CALLIOPE_DISCORD_CLIENT_ID;
-    console.log(url.origin);
     const redirectUri = `${url.origin}/auth/discord/callback`;
 
     const authUrl = new URL("https://discord.com/oauth2/authorize");

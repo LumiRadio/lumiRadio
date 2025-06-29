@@ -48,26 +48,42 @@ impl ToPublicError for EconomyServiceError {
     }
 }
 
-pub struct EconomyService {
-    user_repo: Box<dyn UserRepository>,
-    user_service: Arc<UserService>,
+#[async_trait::async_trait]
+pub trait EconomyService: Send + Sync + 'static {
+    async fn get_balance(&self, id: UserId) -> Result<i32, EconomyServiceError>;
+    async fn add_boonbucks(&self, id: UserId, amount: i32) -> Result<(), EconomyServiceError>;
+    async fn remove_boonbucks(&self, id: UserId, amount: i32) -> Result<(), EconomyServiceError>;
+    async fn transfer_boonbucks(
+        &self,
+        from_id: UserId,
+        to_id: UserId,
+        amount: i32,
+    ) -> Result<(), EconomyServiceError>;
 }
 
-impl EconomyService {
-    pub fn new(repo: Box<dyn UserRepository>, user_service: Arc<UserService>) -> Self {
+pub struct EconomyServiceImpl {
+    user_repo: Box<dyn UserRepository>,
+    user_service: Arc<dyn UserService>,
+}
+
+impl EconomyServiceImpl {
+    pub fn new(repo: Box<dyn UserRepository>, user_service: Arc<dyn UserService>) -> Self {
         Self {
             user_repo: repo,
             user_service,
         }
     }
+}
 
-    pub async fn get_balance(&self, id: UserId) -> Result<i32, EconomyServiceError> {
+#[async_trait::async_trait]
+impl EconomyService for EconomyServiceImpl {
+    async fn get_balance(&self, id: UserId) -> Result<i32, EconomyServiceError> {
         let user = self.user_service.get_user(id).await?;
 
         Ok(user.boonbucks)
     }
 
-    pub async fn add_boonbucks(&self, id: UserId, amount: i32) -> Result<(), EconomyServiceError> {
+    async fn add_boonbucks(&self, id: UserId, amount: i32) -> Result<(), EconomyServiceError> {
         let user = self.user_service.get_user(id).await?;
 
         self.user_service
@@ -77,11 +93,7 @@ impl EconomyService {
         Ok(())
     }
 
-    pub async fn remove_boonbucks(
-        &self,
-        id: UserId,
-        amount: i32,
-    ) -> Result<(), EconomyServiceError> {
+    async fn remove_boonbucks(&self, id: UserId, amount: i32) -> Result<(), EconomyServiceError> {
         let user = self.user_service.get_user(id).await?;
 
         self.user_service
@@ -91,7 +103,7 @@ impl EconomyService {
         Ok(())
     }
 
-    pub async fn transfer_boonbucks(
+    async fn transfer_boonbucks(
         &self,
         from_id: UserId,
         to_id: UserId,

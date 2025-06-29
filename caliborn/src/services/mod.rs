@@ -3,17 +3,20 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use cooldowns::CooldownService;
+use cooldowns::CooldownServiceImpl;
 use hmac::Hmac;
 use sha2::Sha256;
-use songs::SongService;
+use songs::SongServiceImpl;
 use tokio::sync::Mutex;
 
 use crate::{
     DiscordOAuthClient,
     liquidsoap::LiquidsoapClient,
     repositories::RepositoryFactory,
-    services::{auth::AuthService, cans::CansService, economy::EconomyService, users::UserService},
+    services::{
+        auth::AuthServiceImpl, cans::CansServiceImpl, economy::EconomyServiceImpl,
+        users::UserServiceImpl,
+    },
 };
 
 pub mod auth;
@@ -92,12 +95,12 @@ pub struct ServiceRegistry {
     liquidsoap_client: Arc<Mutex<LiquidsoapClient>>,
 
     // services
-    auth_service: CachedService<AuthService>,
-    economy_service: CachedService<EconomyService>,
-    user_service: CachedService<UserService>,
-    can_service: CachedService<CansService>,
-    cooldown_service: CachedService<CooldownService>,
-    song_service: CachedService<SongService>,
+    auth_service: CachedService<AuthServiceImpl>,
+    economy_service: CachedService<EconomyServiceImpl>,
+    user_service: CachedService<UserServiceImpl>,
+    can_service: CachedService<CansServiceImpl>,
+    cooldown_service: CachedService<CooldownServiceImpl>,
+    song_service: CachedService<SongServiceImpl>,
 }
 
 impl ServiceRegistry {
@@ -123,10 +126,10 @@ impl ServiceRegistry {
         }
     }
 
-    pub fn auth_service(&self) -> Arc<AuthService> {
+    pub fn auth_service(&self) -> Arc<AuthServiceImpl> {
         self.auth_service.get_or_init(|| {
             let user_repo = self.repository_factory.user_repository();
-            AuthService::new(
+            AuthServiceImpl::new(
                 user_repo,
                 self.oauth_client.clone(),
                 self.jwt_secret.clone(),
@@ -135,37 +138,37 @@ impl ServiceRegistry {
         })
     }
 
-    pub fn economy_service(&self) -> Arc<EconomyService> {
+    pub fn economy_service(&self) -> Arc<EconomyServiceImpl> {
         self.economy_service.get_or_init(|| {
             let user_repo = self.repository_factory.user_repository();
             let user_service = self.user_service();
-            EconomyService::new(user_repo, user_service)
+            EconomyServiceImpl::new(user_repo, user_service)
         })
     }
 
-    pub fn user_service(&self) -> Arc<UserService> {
+    pub fn user_service(&self) -> Arc<UserServiceImpl> {
         self.user_service.get_or_init(|| {
             let user_repo = self.repository_factory.user_repository();
             let cooldown_service = self.cooldown_service();
-            UserService::new(user_repo, cooldown_service)
+            UserServiceImpl::new(user_repo, cooldown_service)
         })
     }
 
-    pub fn can_service(&self) -> Arc<CansService> {
+    pub fn can_service(&self) -> Arc<CansServiceImpl> {
         self.can_service.get_or_init(|| {
             let can_repo = self.repository_factory.can_repository();
-            CansService::new(can_repo)
+            CansServiceImpl::new(can_repo)
         })
     }
 
-    pub fn cooldown_service(&self) -> Arc<CooldownService> {
+    pub fn cooldown_service(&self) -> Arc<CooldownServiceImpl> {
         self.cooldown_service.get_or_init(|| {
             let cooldown_repo = self.repository_factory.cooldown_repository();
-            CooldownService::new(cooldown_repo)
+            CooldownServiceImpl::new(cooldown_repo)
         })
     }
 
-    pub fn song_service(&self) -> Arc<SongService> {
+    pub fn song_service(&self) -> Arc<SongServiceImpl> {
         self.song_service.get_or_init(|| {
             let song_repo = self.repository_factory.song_repository();
             let user_repo = self.repository_factory.user_repository();
@@ -175,7 +178,7 @@ impl ServiceRegistry {
             let user_service = self.user_service();
             let cooldown_service = self.cooldown_service();
 
-            SongService::new(
+            SongServiceImpl::new(
                 song_repo,
                 user_repo,
                 song_request_repo,

@@ -1,6 +1,11 @@
-use sea_orm::{FromQueryResult, Statement, prelude::*};
+use sea_orm::{FromQueryResult, QueryOrder, QuerySelect, Statement, prelude::*};
+use sea_query::IntoCondition;
 
-use crate::{entities, repositories::RepositoryError};
+use crate::{
+    dtos::page::{Page, PaginationParams},
+    entities,
+    repositories::RepositoryError,
+};
 
 /// A trait representing a repository for songs.
 #[async_trait::async_trait]
@@ -46,7 +51,10 @@ pub trait SongRepository: Send + Sync + 'static {
     ///
     /// Returns a `RepositoryError` if something goes wrong while retrieving the
     /// songs.
-    async fn find_all(&self) -> Result<Vec<entities::songs::Model>, RepositoryError>;
+    async fn find_all(
+        &self,
+        pagination: &PaginationParams,
+    ) -> Result<Page<entities::songs::Model>, RepositoryError>;
 
     /// Find a song by its file path.
     ///
@@ -76,7 +84,11 @@ pub trait SongRepository: Send + Sync + 'static {
     ///
     /// Returns a `RepositoryError` if something goes wrong while searching for
     /// songs.
-    async fn search(&self, query: &str) -> Result<Vec<entities::songs::Model>, RepositoryError>;
+    async fn search(
+        &self,
+        query: &str,
+        pagination: &PaginationParams,
+    ) -> Result<Page<entities::songs::Model>, RepositoryError>;
 
     /// Search for favourite songs of a user matching a query string.
     ///
@@ -88,7 +100,8 @@ pub trait SongRepository: Send + Sync + 'static {
         &self,
         user_id: i64,
         query: &str,
-    ) -> Result<Vec<entities::songs::Model>, RepositoryError>;
+        pagination: &PaginationParams,
+    ) -> Result<Page<entities::songs::Model>, RepositoryError>;
 
     /// Count the total number of songs in the database.
     ///
@@ -97,6 +110,28 @@ pub trait SongRepository: Send + Sync + 'static {
     /// Returns a `RepositoryError` if something goes wrong while counting the
     /// songs.
     async fn count(&self) -> Result<u64, RepositoryError>;
+
+    /// Find the songs that have been requested recently.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `RepositoryError` if something goes wrong while retrieving the
+    /// songs.
+    async fn find_recently_requested(
+        &self,
+        limit: u64,
+    ) -> Result<Vec<entities::songs::Model>, RepositoryError>;
+
+    /// Find the songs that have been played recently.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `RepositoryError` if something goes wrong while retrieving the
+    /// songs.
+    async fn find_recently_played(
+        &self,
+        pagination: &PaginationParams,
+    ) -> Result<Page<entities::songs::Model>, RepositoryError>;
 }
 
 /// A SeaORM implementation of the `SongRepository` trait.
@@ -150,11 +185,22 @@ impl SongRepository for SeaOrmSongRepository {
         Ok(())
     }
 
-    async fn find_all(&self) -> Result<Vec<entities::songs::Model>, RepositoryError> {
-        entities::songs::Entity::find()
-            .all(&self.db)
-            .await
-            .map_err(RepositoryError::from)
+    async fn find_all(
+        &self,
+        pagination: &PaginationParams,
+    ) -> Result<Page<entities::songs::Model>, RepositoryError> {
+        let paginator = entities::songs::Entity::find().paginate(&self.db, pagination.page_size);
+
+        let page = paginator.fetch_page(pagination.page).await?;
+        let total = paginator.num_items_and_pages().await?;
+
+        Ok(Page::new(
+            page,
+            total.number_of_items,
+            pagination.page,
+            pagination.page_size,
+            total.number_of_pages,
+        ))
     }
 
     async fn find_by_path(
@@ -178,8 +224,12 @@ impl SongRepository for SeaOrmSongRepository {
             .map_err(RepositoryError::from)
     }
 
-    async fn search(&self, query: &str) -> Result<Vec<entities::songs::Model>, RepositoryError> {
-        entities::songs::Model::find_by_statement(Statement::from_sql_and_values(
+    async fn search(
+        &self,
+        query: &str,
+        pagination: &PaginationParams,
+    ) -> Result<Page<entities::songs::Model>, RepositoryError> {
+        let paginator = entities::songs::Model::find_by_statement(Statement::from_sql_and_values(
             self.db.get_database_backend(),
             r#"
             WITH search AS (
@@ -192,17 +242,27 @@ impl SongRepository for SeaOrmSongRepository {
             "#,
             [query.into()],
         ))
-        .all(&self.db)
-        .await
-        .map_err(RepositoryError::from)
+        .paginate(&self.db, pagination.page_size);
+
+        let page = paginator.fetch_page(pagination.page).await?;
+        let total = paginator.num_items_and_pages().await?;
+
+        Ok(Page::new(
+            page,
+            total.number_of_items,
+            pagination.page,
+            pagination.page_size,
+            total.number_of_pages,
+        ))
     }
 
     async fn search_favourite_songs(
         &self,
         user_id: i64,
         query: &str,
-    ) -> Result<Vec<entities::songs::Model>, RepositoryError> {
-        entities::songs::Model::find_by_statement(Statement::from_sql_and_values(
+        pagination: &PaginationParams,
+    ) -> Result<Page<entities::songs::Model>, RepositoryError> {
+        let paginator = entities::songs::Model::find_by_statement(Statement::from_sql_and_values(
             self.db.get_database_backend(),
             r#"
             WITH search AS (
@@ -216,9 +276,18 @@ impl SongRepository for SeaOrmSongRepository {
             "#,
             [query.into(), user_id.into()],
         ))
-        .all(&self.db)
-        .await
-        .map_err(RepositoryError::from)
+        .paginate(&self.db, pagination.page_size);
+
+        let page = paginator.fetch_page(pagination.page).await?;
+        let total = paginator.num_items_and_pages().await?;
+
+        Ok(Page::new(
+            page,
+            total.number_of_items,
+            pagination.page,
+            pagination.page_size,
+            total.number_of_pages,
+        ))
     }
 
     async fn count(&self) -> Result<u64, RepositoryError> {
@@ -226,5 +295,124 @@ impl SongRepository for SeaOrmSongRepository {
             .count(&self.db)
             .await
             .map_err(RepositoryError::from)
+    }
+
+    async fn find_recently_requested(
+        &self,
+        limit: u64,
+    ) -> Result<Vec<entities::songs::Model>, RepositoryError> {
+        entities::songs::Entity::find()
+            .inner_join(entities::song_requests::Entity)
+            .order_by_desc(entities::song_requests::Column::CreatedAt)
+            .limit(limit)
+            .all(&self.db)
+            .await
+            .map_err(RepositoryError::from)
+    }
+
+    async fn find_recently_played(
+        &self,
+        pagination: &PaginationParams,
+    ) -> Result<Page<entities::songs::Model>, RepositoryError> {
+        let paginator = entities::songs::Entity::find()
+            .inner_join(entities::played_songs::Entity)
+            .order_by_desc(entities::played_songs::Column::PlayedAt)
+            .paginate(&self.db, pagination.page_size);
+
+        let page = paginator.fetch_page(pagination.page).await?;
+        let total = paginator.num_items_and_pages().await?;
+
+        Ok(Page::new(
+            page,
+            total.number_of_items,
+            pagination.page,
+            pagination.page_size,
+            total.number_of_pages,
+        ))
+    }
+}
+
+mod custom_entity {
+    use sea_orm::entity::prelude::*;
+
+    use crate::entities;
+
+    #[derive(Clone, Copy, Debug, EnumIter)]
+    pub enum SongRelation {
+        SongRequests,
+        PlayedSongs,
+    }
+
+    #[derive(Clone, Copy, Debug, EnumIter)]
+    pub enum SongRequestRelation {
+        Song,
+    }
+
+    #[derive(Clone, Copy, Debug, EnumIter)]
+    pub enum PlayedSongRelation {
+        Song,
+    }
+
+    impl RelationTrait for SongRelation {
+        fn def(&self) -> RelationDef {
+            match self {
+                SongRelation::SongRequests => {
+                    entities::song_requests::Entity::belongs_to(entities::songs::Entity)
+                        .from(entities::song_requests::Column::SongId)
+                        .to(entities::songs::Column::FileHash)
+                        .into()
+                }
+                SongRelation::PlayedSongs => {
+                    entities::played_songs::Entity::belongs_to(entities::songs::Entity)
+                        .from(entities::played_songs::Column::SongId)
+                        .to(entities::songs::Column::FileHash)
+                        .into()
+                }
+            }
+        }
+    }
+
+    impl RelationTrait for SongRequestRelation {
+        fn def(&self) -> RelationDef {
+            match self {
+                SongRequestRelation::Song => {
+                    entities::songs::Entity::has_many(entities::song_requests::Entity).into()
+                }
+            }
+        }
+    }
+
+    impl RelationTrait for PlayedSongRelation {
+        fn def(&self) -> RelationDef {
+            match self {
+                PlayedSongRelation::Song => {
+                    entities::songs::Entity::has_many(entities::played_songs::Entity).into()
+                }
+            }
+        }
+    }
+
+    impl Related<entities::songs::Entity> for entities::song_requests::Entity {
+        fn to() -> RelationDef {
+            SongRelation::SongRequests.def()
+        }
+    }
+
+    impl Related<entities::song_requests::Entity> for entities::songs::Entity {
+        fn to() -> RelationDef {
+            SongRequestRelation::Song.def()
+        }
+    }
+
+    impl Related<entities::songs::Entity> for entities::played_songs::Entity {
+        fn to() -> RelationDef {
+            PlayedSongRelation::Song.def()
+        }
+    }
+
+    impl Related<entities::played_songs::Entity> for entities::songs::Entity {
+        fn to() -> RelationDef {
+            PlayedSongRelation::Song.def()
+        }
     }
 }

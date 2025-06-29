@@ -7,7 +7,7 @@ use crate::{
         auth::{DiscordLoginRequest, UserToken},
         error::{CalibornResult, ErrorResponse},
     },
-    services::ServiceRegistry,
+    services::{ServiceRegistry, auth::AuthService},
 };
 
 /// Logs in a user via Discord

@@ -31,6 +31,7 @@
 //! ```
 
 use axum::{extract::FromRequest, response::IntoResponse};
+use axum_macros::FromRequestParts;
 use error::ApiError;
 use reqwest::StatusCode;
 use serde::{Serialize, de::DeserializeOwned};
@@ -38,7 +39,9 @@ use serde::{Serialize, de::DeserializeOwned};
 use crate::dtos::error::CalibornResult;
 
 pub mod auth;
+pub mod cans;
 pub mod error;
+pub mod page;
 pub mod songs;
 pub mod users;
 
@@ -177,7 +180,7 @@ impl<T: DeserializeOwned> Json<T> {
 ///     })
 /// }
 /// ```
-#[derive(Debug, FromRequest)]
+#[derive(Debug, FromRequestParts)]
 #[from_request(via(axum::extract::Query), rejection(ApiError))]
 pub struct Query<T>(pub T);
 

@@ -19,22 +19,31 @@ impl ToPublicError for CansServiceError {
     }
 }
 
-pub struct CansService {
+#[async_trait::async_trait]
+pub trait CansService: Send + Sync + 'static {
+    async fn count(&self) -> Result<u64, CansServiceError>;
+    async fn add(&self, user_id: UserId) -> Result<(), CansServiceError>;
+}
+
+pub struct CansServiceImpl {
     can_repo: Box<dyn CanRepository>,
 }
 
-impl CansService {
+impl CansServiceImpl {
     pub fn new(repo: Box<dyn CanRepository>) -> Self {
         Self { can_repo: repo }
     }
+}
 
-    pub async fn count(&self) -> Result<u64, CansServiceError> {
+#[async_trait::async_trait]
+impl CansService for CansServiceImpl {
+    async fn count(&self) -> Result<u64, CansServiceError> {
         let count = self.can_repo.count().await?;
 
         Ok(count)
     }
 
-    pub async fn add(&self, user_id: UserId) -> Result<(), CansServiceError> {
+    async fn add(&self, user_id: UserId) -> Result<(), CansServiceError> {
         self.can_repo.add(user_id.into(), true).await?;
 
         Ok(())

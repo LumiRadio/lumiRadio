@@ -27,18 +27,51 @@ impl ToPublicError for CooldownServiceError {
     }
 }
 
-pub struct CooldownService {
+#[async_trait::async_trait]
+pub trait CooldownService: Send + Sync + 'static {
+    async fn set_global_cooldown(
+        &self,
+        key: &str,
+        duration: chrono::Duration,
+    ) -> Result<(), CooldownServiceError>;
+    async fn set_user_cooldown(
+        &self,
+        key: &str,
+        user_id: UserId,
+        duration: chrono::Duration,
+    ) -> Result<(), CooldownServiceError>;
+    async fn get_global_cooldown(
+        &self,
+        key: &str,
+    ) -> Result<Option<NaiveDateTime>, CooldownServiceError>;
+    async fn get_user_cooldown(
+        &self,
+        key: &str,
+        user_id: UserId,
+    ) -> Result<Option<NaiveDateTime>, CooldownServiceError>;
+    async fn is_on_user_cooldown(
+        &self,
+        key: &str,
+        user_id: UserId,
+    ) -> Result<bool, CooldownServiceError>;
+    async fn is_on_global_cooldown(&self, key: &str) -> Result<bool, CooldownServiceError>;
+}
+
+pub struct CooldownServiceImpl {
     cooldown_repository: Box<dyn CooldownRepository>,
 }
 
-impl CooldownService {
+impl CooldownServiceImpl {
     pub fn new(repo: Box<dyn CooldownRepository>) -> Self {
         Self {
             cooldown_repository: repo,
         }
     }
+}
 
-    pub async fn set_global_cooldown(
+#[async_trait::async_trait]
+impl CooldownService for CooldownServiceImpl {
+    async fn set_global_cooldown(
         &self,
         key: &str,
         duration: chrono::Duration,
@@ -56,7 +89,7 @@ impl CooldownService {
             .map_err(|e| CooldownServiceError::from(e))
     }
 
-    pub async fn set_user_cooldown(
+    async fn set_user_cooldown(
         &self,
         key: &str,
         user_id: UserId,
@@ -80,7 +113,7 @@ impl CooldownService {
             .map_err(|e| CooldownServiceError::from(e))
     }
 
-    pub async fn get_user_cooldown(
+    async fn get_user_cooldown(
         &self,
         key: &str,
         user_id: UserId,
@@ -91,7 +124,7 @@ impl CooldownService {
         Ok(expires_at)
     }
 
-    pub async fn get_global_cooldown(
+    async fn get_global_cooldown(
         &self,
         key: &str,
     ) -> Result<Option<NaiveDateTime>, CooldownServiceError> {
@@ -101,7 +134,7 @@ impl CooldownService {
         Ok(expires_at)
     }
 
-    pub async fn is_on_user_cooldown(
+    async fn is_on_user_cooldown(
         &self,
         key: &str,
         user_id: UserId,
@@ -114,7 +147,7 @@ impl CooldownService {
         Ok(expires_at > chrono::Utc::now().naive_utc())
     }
 
-    pub async fn is_on_global_cooldown(&self, key: &str) -> Result<bool, CooldownServiceError> {
+    async fn is_on_global_cooldown(&self, key: &str) -> Result<bool, CooldownServiceError> {
         let cooldown = self.cooldown_repository.get_global(key).await?;
         let expires_at = cooldown
             .map(|m| m.expires_at)
@@ -127,14 +160,17 @@ impl CooldownService {
 pub trait GlobalCooldown: Display {
     fn duration(&self) -> chrono::Duration;
 
-    async fn set<S: AsRef<CooldownService>>(&self, service: S) -> Result<(), CooldownServiceError> {
+    async fn set<S: AsRef<dyn CooldownService>>(
+        &self,
+        service: S,
+    ) -> Result<(), CooldownServiceError> {
         service
             .as_ref()
             .set_global_cooldown(&self.to_string(), self.duration())
             .await
     }
 
-    async fn get<S: AsRef<CooldownService>>(
+    async fn get<S: AsRef<dyn CooldownService>>(
         &self,
         service: S,
     ) -> Result<Option<NaiveDateTime>, CooldownServiceError> {
@@ -144,7 +180,7 @@ pub trait GlobalCooldown: Display {
             .await
     }
 
-    async fn on_cooldown<S: AsRef<CooldownService>>(
+    async fn on_cooldown<S: AsRef<dyn CooldownService>>(
         &self,
         service: S,
     ) -> Result<bool, CooldownServiceError> {
@@ -158,7 +194,7 @@ pub trait GlobalCooldown: Display {
 pub trait UserCooldown: Display {
     fn duration(&self) -> chrono::Duration;
 
-    async fn set<S: AsRef<CooldownService>>(
+    async fn set<S: AsRef<dyn CooldownService>>(
         &self,
         service: S,
         user_id: UserId,
@@ -169,7 +205,7 @@ pub trait UserCooldown: Display {
             .await
     }
 
-    async fn get<S: AsRef<CooldownService>>(
+    async fn get<S: AsRef<dyn CooldownService>>(
         &self,
         service: S,
         user_id: UserId,
@@ -180,7 +216,7 @@ pub trait UserCooldown: Display {
             .await
     }
 
-    async fn on_cooldown<S: AsRef<CooldownService>>(
+    async fn on_cooldown<S: AsRef<dyn CooldownService>>(
         &self,
         service: S,
         user_id: UserId,

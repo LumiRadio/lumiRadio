@@ -789,6 +789,7 @@ dependencies = [
  "sea-orm",
  "sea-query",
  "serde",
+ "serde_json",
  "serenity",
  "sha2 0.10.8",
  "subtle",

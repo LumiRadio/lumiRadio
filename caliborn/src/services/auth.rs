@@ -118,7 +118,27 @@ impl ToPublicError for AuthServiceError {
     }
 }
 
-pub struct AuthService {
+#[async_trait::async_trait]
+pub trait AuthService: Send + Sync + 'static {
+    async fn login_user(&self, code: &str) -> Result<UserToken, AuthServiceError>;
+    fn verify_token(&self, token: &str) -> Result<Claims, AuthServiceError>;
+    async fn create_api_key(
+        &self,
+        user_id: UserId,
+        description: &str,
+    ) -> Result<ApiKeyDto, AuthServiceError>;
+    async fn check_api_key(&self, api_key: &str) -> Result<i64, AuthServiceError>;
+    fn verify_hmac(
+        &self,
+        body: &[u8],
+        signature: &[u8],
+        timestamp: &str,
+        method: &str,
+        path: &str,
+    ) -> Result<(), AuthServiceError>;
+}
+
+pub struct AuthServiceImpl {
     user_repo: Box<dyn UserRepository>,
     oauth_client: DiscordOAuthClient,
     jwt_secret: Hmac<Sha256>,
@@ -127,7 +147,7 @@ pub struct AuthService {
     key_generator: PakControllerOsSha256,
 }
 
-impl AuthService {
+impl AuthServiceImpl {
     pub fn new(
         user_repo: Box<dyn UserRepository>,
         oauth_client: DiscordOAuthClient,
@@ -154,8 +174,11 @@ impl AuthService {
             key_generator,
         }
     }
+}
 
-    pub async fn login_user(&self, code: &str) -> Result<UserToken, AuthServiceError> {
+#[async_trait::async_trait]
+impl AuthService for AuthServiceImpl {
+    async fn login_user(&self, code: &str) -> Result<UserToken, AuthServiceError> {
         let token_response = self
             .oauth_client
             .exchange_code(AuthorizationCode::new(code.to_string()))
@@ -185,31 +208,6 @@ impl AuthService {
         let current_user = discord_client.get_current_user().await?;
         let user_id = current_user.id.get();
 
-        // let storage = if self
-        //     .token_storage_repo
-        //     .get_by_user_id(user_id as i64)
-        //     .await?
-        //     .is_some()
-        // {
-        //     self.token_storage_repo
-        //         .update(
-        //             user_id as i64,
-        //             token.secret(),
-        //             refresh_token.secret(),
-        //             expires_at.naive_utc(),
-        //         )
-        //         .await?
-        // } else {
-        //     self.token_storage_repo
-        //         .insert(
-        //             user_id as i64,
-        //             token.secret(),
-        //             refresh_token.secret(),
-        //             expires_at.naive_utc(),
-        //         )
-        //         .await?
-        // };
-
         let claims = Claims::new(user_id.into(), expiration);
         let token = claims
             .sign(&self.jwt_secret)
@@ -223,11 +221,11 @@ impl AuthService {
         })
     }
 
-    pub fn verify_token(&self, token: &str) -> Result<Claims, AuthServiceError> {
+    fn verify_token(&self, token: &str) -> Result<Claims, AuthServiceError> {
         Claims::verify(token, &self.jwt_secret).map_err(|_| AuthServiceError::InvalidJwtToken)
     }
 
-    pub async fn create_api_key(
+    async fn create_api_key(
         &self,
         user_id: UserId,
         description: &str,
@@ -245,7 +243,7 @@ impl AuthService {
         })
     }
 
-    pub async fn check_api_key(&self, api_key: &str) -> Result<i64, AuthServiceError> {
+    async fn check_api_key(&self, api_key: &str) -> Result<i64, AuthServiceError> {
         let pak: PrefixedApiKey = api_key
             .try_into()
             .map_err(|_| AuthServiceError::InvalidApiKey)?;
@@ -262,7 +260,7 @@ impl AuthService {
         }
     }
 
-    pub fn verify_hmac(
+    fn verify_hmac(
         &self,
         body: &[u8],
         signature: &[u8],

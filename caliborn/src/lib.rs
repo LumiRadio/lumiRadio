@@ -1,4 +1,4 @@
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
 
 //! Caliborn is an API server for LumiRadio. It provides the backend for the Discord bot and web frontend, Calliope.
 
@@ -108,6 +108,7 @@ pub fn make_app(
     let router = Router::new()
         .nest("/auth", routes::auth::routes())
         .nest("/user", routes::user::routes(app_state.clone()))
+        .nest("/cans", routes::cans::routes(app_state.clone()))
         .merge(SwaggerUi::new("/swagger").url("/openapi.json", ApiDoc::openapi()))
         .with_state(app_state);
 

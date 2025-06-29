@@ -6,7 +6,10 @@ use crate::{
         error::{CalibornResult, ErrorResponse},
         users::UserDto,
     },
-    services::auth::{AuthenticatedUser, authenticate},
+    services::{
+        auth::{AuthenticatedUser, authenticate},
+        users::UserService,
+    },
 };
 
 #[utoipa::path(

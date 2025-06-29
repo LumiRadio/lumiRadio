@@ -10,11 +10,14 @@ use crate::{
     },
     entities,
     repositories::{RepositoryError, users::UserRepository},
+    services::cooldowns::CooldownService,
 };
 
 use super::{
     UserId,
-    cooldowns::{CooldownService, CooldownServiceError, UserCooldown, user::UserActivityCooldown},
+    cooldowns::{
+        CooldownServiceError, CooldownServiceImpl, UserCooldown, user::UserActivityCooldown,
+    },
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -35,24 +38,36 @@ impl ToPublicError for UserServiceError {
     }
 }
 
-pub struct UserService {
-    user_repo: Box<dyn UserRepository>,
-
-    cooldown_service: Arc<CooldownService>,
+#[async_trait::async_trait]
+pub trait UserService: Send + Sync + 'static {
+    async fn create_user(&self, id: UserId) -> Result<UserDto, UserServiceError>;
+    async fn get_user(&self, id: UserId) -> Result<UserDto, UserServiceError>;
+    async fn update_user_boonbucks(&self, id: UserId, amount: i32) -> Result<(), UserServiceError>;
+    async fn update_user_activity_time(&self, id: UserId) -> Result<(), UserServiceError>;
+    async fn update_user_activity(&self, id: UserId) -> Result<(), UserServiceError>;
 }
 
-impl UserService {
-    pub fn new(repo: Box<dyn UserRepository>, cooldown_service: Arc<CooldownService>) -> Self {
+pub struct UserServiceImpl {
+    user_repo: Box<dyn UserRepository>,
+
+    cooldown_service: Arc<dyn CooldownService>,
+}
+
+impl UserServiceImpl {
+    pub fn new(repo: Box<dyn UserRepository>, cooldown_service: Arc<dyn CooldownService>) -> Self {
         Self {
             user_repo: repo,
             cooldown_service,
         }
     }
+}
 
+#[async_trait::async_trait]
+impl UserService for UserServiceImpl {
     /// Creates a new user
     ///
     /// If the user already exists, it will be returned
-    pub async fn create_user(&self, id: UserId) -> Result<UserDto, UserServiceError> {
+    async fn create_user(&self, id: UserId) -> Result<UserDto, UserServiceError> {
         let user = match self.user_repo.find_by_id(id.into()).await? {
             Some(user) => user,
             None => self.user_repo.insert(id.into()).await?,
@@ -64,15 +79,11 @@ impl UserService {
     /// Gets a user by their ID
     ///
     /// If the user does not exist, it will be created
-    pub async fn get_user(&self, id: UserId) -> Result<UserDto, UserServiceError> {
+    async fn get_user(&self, id: UserId) -> Result<UserDto, UserServiceError> {
         self.create_user(id).await
     }
 
-    pub async fn update_user_boonbucks(
-        &self,
-        id: UserId,
-        amount: i32,
-    ) -> Result<(), UserServiceError> {
+    async fn update_user_boonbucks(&self, id: UserId, amount: i32) -> Result<(), UserServiceError> {
         // ensure user exists
         self.get_user(id).await?;
 
@@ -89,7 +100,7 @@ impl UserService {
         Ok(())
     }
 
-    pub async fn update_user_activity_time(&self, id: UserId) -> Result<(), UserServiceError> {
+    async fn update_user_activity_time(&self, id: UserId) -> Result<(), UserServiceError> {
         let user = self.get_user(id).await?;
         let now = Utc::now().naive_utc();
         let time_diff = if let Some(last_message_sent) = user.last_message_sent {
@@ -115,7 +126,7 @@ impl UserService {
         Ok(())
     }
 
-    pub async fn update_user_activity(&self, id: UserId) -> Result<(), UserServiceError> {
+    async fn update_user_activity(&self, id: UserId) -> Result<(), UserServiceError> {
         self.update_user_activity_time(id).await?;
         let user = self.get_user(id).await?;
         let cooldown = UserActivityCooldown;

@@ -1,6 +1,17 @@
-use std::{path::{Path, PathBuf}, time::Duration};
+use std::{
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
-use tokio::{io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter}, net::{unix::{OwnedReadHalf, OwnedWriteHalf}, UnixStream}, time::timeout};
+use serde::Deserialize;
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter},
+    net::{
+        UnixStream,
+        unix::{OwnedReadHalf, OwnedWriteHalf},
+    },
+    time::timeout,
+};
 use tracing::warn;
 
 const RECONNECT_DELAY: Duration = Duration::from_millis(100);
@@ -27,6 +38,15 @@ pub enum LiquidsoapError {
     Io(std::io::Error),
 }
 
+#[derive(Debug, Deserialize)]
+pub struct QueueItem {
+    pub album: Option<String>,
+    pub artist: String,
+    pub title: String,
+    pub filename: String,
+    pub queue: String,
+}
+
 pub struct LiquidsoapClient {
     path: PathBuf,
     reader: BufReader<OwnedReadHalf>,
@@ -42,20 +62,27 @@ impl LiquidsoapClient {
         let reader = BufReader::with_capacity(BUF_SIZE, read_half);
         let writer = BufWriter::with_capacity(BUF_SIZE, write_half);
 
-        Ok(Self { path, reader, writer })
+        Ok(Self {
+            path,
+            reader,
+            writer,
+        })
     }
 
     async fn connect_with_retry(path: &Path) -> Result<UnixStream, LiquidsoapError> {
         let mut attempts = 0;
         let max_attempts = 30; // 3 seconds with 100ms delay
-        
+
         loop {
             attempts += 1;
-            
+
             if path.exists() {
                 match timeout(CONNECT_TIMEOUT, UnixStream::connect(path)).await {
                     Ok(Ok(stream)) => {
-                        tracing::debug!("Successfully connected to Liquidsoap socket at {}", path.display());
+                        tracing::debug!(
+                            "Successfully connected to Liquidsoap socket at {}",
+                            path.display()
+                        );
                         return Ok(stream);
                     }
                     Ok(Err(e)) => {
@@ -66,16 +93,24 @@ impl LiquidsoapClient {
                     }
                 }
             } else if attempts >= max_attempts {
-                return Err(LiquidsoapError::SocketDoesNotExist(path.display().to_string()));
+                return Err(LiquidsoapError::SocketDoesNotExist(
+                    path.display().to_string(),
+                ));
             }
-            
-            tracing::debug!("Waiting for Liquidsoap socket to appear at {}", path.display());
+
+            tracing::debug!(
+                "Waiting for Liquidsoap socket to appear at {}",
+                path.display()
+            );
             tokio::time::sleep(RECONNECT_DELAY).await;
         }
     }
 
     pub async fn reconnect(&mut self) -> Result<(), LiquidsoapError> {
-        tracing::debug!("Reconnecting to Liquidsoap socket at {}", self.path.display());
+        tracing::debug!(
+            "Reconnecting to Liquidsoap socket at {}",
+            self.path.display()
+        );
         let stream = Self::connect_with_retry(&self.path).await?;
 
         let (read_half, write_half) = stream.into_split();
@@ -101,17 +136,22 @@ impl LiquidsoapClient {
                 Ok(Ok(n)) => {
                     buffer.extend_from_slice(&chunk[..n]);
 
-                    if buffer.windows(END_MARKER.len()).any(|window| window == END_MARKER) {
-                        if let Some(end_idx) = buffer.windows(END_MARKER.len())
-                            .position(|window| window == END_MARKER) {
-                                let response = String::from_utf8(buffer[..end_idx].to_vec())?;
-                                return Ok(response);
-                            }
+                    if buffer
+                        .windows(END_MARKER.len())
+                        .any(|window| window == END_MARKER)
+                    {
+                        if let Some(end_idx) = buffer
+                            .windows(END_MARKER.len())
+                            .position(|window| window == END_MARKER)
+                        {
+                            let response = String::from_utf8(buffer[..end_idx].to_vec())?;
+                            return Ok(response);
+                        }
                     }
                 }
                 Ok(Err(e)) => {
                     return Err(LiquidsoapError::Io(e));
-                },
+                }
                 Err(_) => {
                     return Err(LiquidsoapError::ReadTimeout);
                 }
@@ -120,7 +160,10 @@ impl LiquidsoapClient {
     }
 
     pub async fn write(&mut self, data: &[u8]) -> Result<(), LiquidsoapError> {
-        self.writer.write_all(data).await.map_err(LiquidsoapError::Io)?;
+        self.writer
+            .write_all(data)
+            .await
+            .map_err(LiquidsoapError::Io)?;
         self.writer.flush().await.map_err(LiquidsoapError::Io)?;
         Ok(())
     }
@@ -151,12 +194,12 @@ impl LiquidsoapClient {
 
     pub async fn shutdown(mut self) -> Result<(), LiquidsoapError> {
         self.writer.flush().await.map_err(LiquidsoapError::Io)?;
-        
+
         let write_half = self.writer.get_mut();
         let _read_half = self.reader.get_mut();
 
         write_half.shutdown().await.map_err(LiquidsoapError::Io)?;
-        
+
         Ok(())
     }
 }

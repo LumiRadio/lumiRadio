@@ -1,8 +1,9 @@
+use axum::response::IntoResponse;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::entities;
+use crate::{dtos::json, entities};
 
 #[derive(Serialize, ToSchema)]
 pub struct SongDto {
@@ -24,6 +25,21 @@ impl From<entities::songs::Model> for SongDto {
             duration: value.duration,
             bitrate: value.bitrate,
         }
+    }
+}
+
+#[derive(Serialize)]
+pub struct SongListDto(Vec<SongDto>);
+
+impl From<Vec<SongDto>> for SongListDto {
+    fn from(value: Vec<SongDto>) -> Self {
+        Self(value)
+    }
+}
+
+impl IntoResponse for SongListDto {
+    fn into_response(self) -> axum::response::Response {
+        json(self).into_response()
     }
 }
 
@@ -71,6 +87,12 @@ impl SongWithCooldownInfo {
             song,
             cooldown_info,
         }
+    }
+}
+
+impl IntoResponse for SongWithCooldownInfo {
+    fn into_response(self) -> axum::response::Response {
+        json(self).into_response()
     }
 }
 
