@@ -8,6 +8,7 @@ use crate::prelude::*;
 pub mod config;
 pub mod control;
 pub mod import;
+pub mod ranks;
 pub mod user;
 
 /// Admin commands

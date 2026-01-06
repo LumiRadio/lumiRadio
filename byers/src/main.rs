@@ -7,6 +7,7 @@ use poise::serenity_prelude::UserId;
 use tracing::{debug, info};
 use tracing_unwrap::ResultExt;
 
+use crate::commands::admin::ranks::ranks;
 use crate::{
     commands::{
         add_stuff::*,
@@ -74,6 +75,7 @@ async fn main() {
         addcan(),
         addbear(),
         what_song(),
+        ranks(),
     ];
 
     info!("Loading {} commands...", commands.len());
