@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog],
 and this project adheres to [Semantic Versioning].
 
+
+
+## [1.3.8] - 2026-01-06
+
+### Added
+
+- Added `/ranks` command to manage ranks
+  - Added `/ranks add` to add a new rank
+  - Added `/ranks remove` to remove a rank
+  - Added `/ranks update` to update a rank
+
 ## [1.3.7] - 2025-03-23
 
 ### Changed
