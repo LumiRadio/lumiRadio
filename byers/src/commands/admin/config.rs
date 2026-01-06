@@ -1,12 +1,10 @@
 use poise::{
-    serenity_prelude::{Channel, CreateEmbed, Role, UserId},
     CreateReply,
+    serenity_prelude::{Channel, CreateEmbed, Role, UserId},
 };
 
 use crate::prelude::*;
-use judeharley::{
-    sea_orm::Set, Cans, ServerChannelConfig, ServerConfig, ServerRoleConfig, Users
-};
+use judeharley::{Cans, ServerChannelConfig, ServerConfig, ServerRoleConfig, Users, sea_orm::Set};
 
 /// Configuration-related commands
 #[poise::command(
@@ -173,15 +171,24 @@ pub async fn manage_channel(
 ) -> Result<(), Error> {
     let data = ctx.data;
 
-    let channel_config = ServerChannelConfig::get_or_insert(channel.id().get(), ctx.guild_id().unwrap().get(), &data.db).await?;
-    
+    let channel_config = ServerChannelConfig::get_or_insert(
+        channel.id().get(),
+        ctx.guild_id().unwrap().get(),
+        &data.db,
+    )
+    .await?;
 
-    channel_config.update(judeharley::entities::server_channel_config::ActiveModel {
-        allow_point_accumulation: Set(allow_point_accumulation),
-        allow_watch_time_accumulation: Set(allow_watch_time_accumulation),
-        hydration_reminder: Set(hydration_reminder),
-        ..Default::default()
-    }, &data.db).await?;
+    channel_config
+        .update(
+            judeharley::entities::server_channel_config::ActiveModel {
+                allow_point_accumulation: Set(allow_point_accumulation),
+                allow_watch_time_accumulation: Set(allow_watch_time_accumulation),
+                hydration_reminder: Set(hydration_reminder),
+                ..Default::default()
+            },
+            &data.db,
+        )
+        .await?;
 
     ctx.send(
         CreateReply::default().embed(

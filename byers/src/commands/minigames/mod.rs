@@ -3,8 +3,8 @@ use std::{collections::HashMap, sync::RwLock};
 use async_trait::async_trait;
 use chrono::Utc;
 use poise::{
-    serenity_prelude::{CreateEmbed, Permissions},
     Command, CooldownConfig,
+    serenity_prelude::{CreateEmbed, Permissions},
 };
 
 use crate::prelude::*;

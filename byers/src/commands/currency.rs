@@ -1,11 +1,11 @@
 use poise::{
-    serenity_prelude::{CreateEmbed, User},
     CreateReply, Modal,
+    serenity_prelude::{CreateEmbed, User},
 };
 
 use judeharley::{
-    sea_orm::{ActiveModelTrait, DbErr, IntoActiveModel, TransactionTrait},
     SlcbRank, Users,
+    sea_orm::{ActiveModelTrait, DbErr, IntoActiveModel, TransactionTrait},
 };
 
 use crate::{event_handlers::message::update_activity, prelude::*};
@@ -31,7 +31,14 @@ pub async fn boondollars(ctx: ApplicationContext<'_>) -> Result<(), Error> {
         .map(|r| r.hour_requirement as i64 - user.watched_time / 3600)
         .unwrap_or(0);
 
-    let message = format!("{username} - Hours: {hours:.2}/{seconds}s (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank:.0} hours. - You can check again in 5 minutes.", username = ctx.author().name, hours = rounded_hours, hours_pos = hours_pos, rank_name = rank_name, next_rank = next_rank);
+    let message = format!(
+        "{username} - Hours: {hours:.2}/{seconds}s (Rank #{hours_pos}) - Boondollars: {points:.0} (Rank #{points_pos}) - Echeladder: {rank_name} • Next rung in {next_rank:.0} hours. - You can check again in 5 minutes.",
+        username = ctx.author().name,
+        hours = rounded_hours,
+        hours_pos = hours_pos,
+        rank_name = rank_name,
+        next_rank = next_rank
+    );
     ctx.say(message).await?;
 
     Ok(())

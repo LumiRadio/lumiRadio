@@ -5,9 +5,9 @@ use std::{
 };
 
 use clap::{Parser, Subcommand};
-use judeharley::{sea_orm::DatabaseConnection, SUPPORTED_AUDIO_FORMATS};
+use judeharley::{SUPPORTED_AUDIO_FORMATS, sea_orm::DatabaseConnection};
 use notify::Watcher;
-use tokio::sync::{mpsc::Receiver, Mutex};
+use tokio::sync::{Mutex, mpsc::Receiver};
 use tracing::{debug, error, info, warn};
 
 #[derive(Parser)]

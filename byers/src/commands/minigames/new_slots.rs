@@ -3,18 +3,18 @@ use std::fmt::Display;
 
 use async_trait::async_trait;
 use judeharley::sea_orm::Set;
-use poise::serenity_prelude::CreateEmbed;
 use poise::CreateReply;
+use poise::serenity_prelude::CreateEmbed;
 use rand::seq::IndexedRandom;
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::prelude::*;
 use crate::{commands::minigames::Minigame, event_handlers::message::update_activity};
 use judeharley::{
-    communication::ByersUnixStream,
-    cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
-    prelude::DiscordTimestamp,
     Users,
+    communication::ByersUnixStream,
+    cooldowns::{UserCooldownKey, is_on_cooldown, set_cooldown},
+    prelude::DiscordTimestamp,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, Hash)]

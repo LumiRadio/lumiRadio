@@ -1,6 +1,6 @@
+use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::Json;
 use fred::pool::RedisPool;
 use fred::prelude::PubsubInterface;
 use fred::types::{PerformanceConfig, ReconnectPolicy, RedisConfig};

@@ -1,20 +1,20 @@
 use async_fred_session::RedisSessionStore;
 use axum::{
+    Json, Router,
     extract::{FromRef, Query, State},
     http::StatusCode,
     response::{Html, IntoResponse, Redirect},
     routing::get,
-    Json, Router,
 };
-use axum_sessions::{extractors::WritableSession, SessionLayer};
+use axum_sessions::{SessionLayer, extractors::WritableSession};
 use fred::pool::RedisPool;
 use judeharley::{
     discord::{DiscordConnection, MinimalDiscordUser},
     sea_orm::DatabaseConnection,
 };
 use oauth2::{
-    basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
-    ClientSecret, CsrfToken, Scope, TokenResponse, TokenUrl,
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, Scope, TokenResponse, TokenUrl,
+    basic::BasicClient, reqwest::async_http_client,
 };
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot::Receiver;

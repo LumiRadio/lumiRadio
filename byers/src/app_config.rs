@@ -45,8 +45,8 @@ impl AppConfig {
                     .separator("__")
                     .list_separator(",")
                     .with_list_parse_key("discord.admin_user_ids")
-                    .try_parsing(true)
-                )
+                    .try_parsing(true),
+            )
             .build()
             .unwrap();
 

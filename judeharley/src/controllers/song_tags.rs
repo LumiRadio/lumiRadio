@@ -1,7 +1,7 @@
+use crate::JudeHarleyError;
 use crate::custom_entities::songs::Model as SongModel;
 use crate::entities::song_tags::*;
-use crate::JudeHarleyError;
-use sea_orm::{prelude::*, Set};
+use sea_orm::{Set, prelude::*};
 
 pub struct NewTag(pub String, pub String);
 
@@ -20,15 +20,12 @@ impl Model {
             return Ok(());
         }
 
-        Entity::insert_many(
-            tags.iter()
-                .map(|t| ActiveModel {
-                    song_id: Set(song.file_hash.clone()),
-                    tag: Set(t.0.clone()),
-                    value: Set(t.1.clone()),
-                    ..Default::default()
-                }),
-        )
+        Entity::insert_many(tags.iter().map(|t| ActiveModel {
+            song_id: Set(song.file_hash.clone()),
+            tag: Set(t.0.clone()),
+            value: Set(t.1.clone()),
+            ..Default::default()
+        }))
         .exec(db)
         .await?;
 

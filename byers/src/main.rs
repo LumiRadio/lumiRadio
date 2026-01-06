@@ -1,9 +1,9 @@
 use std::str::FromStr;
 
 use fred::prelude::ClientLike;
-use poise::serenity_prelude::UserId;
-use poise::serenity_prelude as serenity;
 use poise::PrefixFrameworkOptions;
+use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::UserId;
 use tracing::{debug, info};
 use tracing_unwrap::ResultExt;
 
@@ -156,7 +156,12 @@ async fn main() {
                 ..Default::default()
             },
             initialize_owners: false,
-            owners: config.discord.admin_user_ids.iter().map(|id| UserId::new(*id)).collect(),
+            owners: config
+                .discord
+                .admin_user_ids
+                .iter()
+                .map(|id| UserId::new(*id))
+                .collect(),
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {

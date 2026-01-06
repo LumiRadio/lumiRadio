@@ -7,15 +7,15 @@ use crate::app_config::EmojiConfig;
 use crate::prelude::*;
 use crate::{commands::minigames::Minigame, event_handlers::message::update_activity};
 use judeharley::{
-    communication::ByersUnixStream,
-    cooldowns::{is_on_cooldown, set_cooldown, UserCooldownKey},
-    prelude::DiscordTimestamp,
     ServerConfig, Users,
+    communication::ByersUnixStream,
+    cooldowns::{UserCooldownKey, is_on_cooldown, set_cooldown},
+    prelude::DiscordTimestamp,
 };
 
 pub struct DiceRoll {
     server_roll: i32,
-    player_roll: [u8; 4],  // Using 4 dice, but might only use 3
+    player_roll: [u8; 4], // Using 4 dice, but might only use 3
 }
 
 impl DiceRoll {
@@ -384,7 +384,7 @@ pub async fn roll_dice(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                 &data.db,
             )
             .await?;
-            
+
             // Player roll display depends on the mode
             let player_roll_display = if guild_config.dice_roll < 1000 {
                 game.player_roll_three_dice()
@@ -423,7 +423,7 @@ mod tests {
         assert_eq!(super::roll_over(146), 151);
         assert_eq!(super::roll_over(156), 161);
         assert_eq!(super::roll_over(166), 211);
-        
+
         // Test 4-dice system
         assert_eq!(super::roll_over(1111), 1112);
         assert_eq!(super::roll_over(6666), 1111);

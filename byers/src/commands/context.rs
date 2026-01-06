@@ -1,5 +1,5 @@
 use judeharley::PlayedSongs;
-use poise::{serenity_prelude::CreateEmbed, CreateReply};
+use poise::{CreateReply, serenity_prelude::CreateEmbed};
 
 use crate::prelude::{ApplicationContext, Error};
 
