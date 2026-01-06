@@ -24,6 +24,7 @@ pub struct DiscordConfig {
     pub client_secret: String,
 
     pub emoji: EmojiConfig,
+    pub admin_user_ids: Vec<u64>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -39,7 +40,13 @@ pub struct EmojiConfig {
 impl AppConfig {
     pub fn from_env() -> Self {
         let config = config::Config::builder()
-            .add_source(config::Environment::default().separator("__"))
+            .add_source(
+                config::Environment::default()
+                    .separator("__")
+                    .list_separator(",")
+                    .with_list_parse_key("discord.admin_user_ids")
+                    .try_parsing(true)
+                )
             .build()
             .unwrap();
 
