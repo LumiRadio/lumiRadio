@@ -29,13 +29,13 @@ COPY judeharley/ judeharley/
 COPY migration/ migration/
 RUN cargo build --release
 
-FROM debian:bookworm-slim AS final
+FROM debian:trixie-slim AS final
 
 COPY docker/wait-for-it.sh /usr/local/bin/wait-for-it.sh
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN apt-get update \
-    && apt-get install -y ca-certificates tzdata libpq5 libavutil57 libavformat59 libavfilter8 \
+    && apt-get install -y ca-certificates tzdata libpq5 ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -r lumiradio && useradd -g lumiradio lumiradio
