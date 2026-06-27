@@ -58,7 +58,20 @@ async fn addcan_action(ctx: Context<'_>) -> Result<(), Error> {
     let can_count = Cans::count(&ctx.data().db).await?;
     let can_town_name = can_name("Can", can_count);
     let now_in_35_seconds = chrono::Utc::now() + chrono::Duration::seconds(35);
-    ctx.send(
+    if can_count.to_string().chars().all(|c| c == '8') {
+        ctx.send(
+        CreateReply::default()
+            .embed(
+                CreateEmbed::new()
+                    .title(&can_town_name)
+                    .description(format!(
+                        "You place a can in {can_town_name}. There's now {can_count} cans. GR8!!!!!!!! Someone can add another {}.",
+                        now_in_35_seconds.relative_time()
+                    )),
+            )
+        ).await?;
+    } else {
+        ctx.send(
         CreateReply::default()
             .embed(
                 CreateEmbed::new()
@@ -68,7 +81,8 @@ async fn addcan_action(ctx: Context<'_>) -> Result<(), Error> {
                         now_in_35_seconds.relative_time()
                     )),
             )
-    ).await?;
+        ).await?;
+    }
 
     Ok(())
 }
@@ -108,7 +122,20 @@ async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
     let can_count = Cans::count(&ctx.data().db).await?;
     let can_town_name = can_name("Bear", can_count);
     let now_in_35_seconds = chrono::Utc::now() + chrono::Duration::seconds(35);
-    ctx.send(
+    if can_count.to_string().chars().all(|c| c == '8') {
+        ctx.send(
+            CreateReply::default()
+                .embed(
+                    CreateEmbed::new()
+                        .title(&can_town_name)
+                        .description(format!(
+                            "You place a bear in {can_town_name}. There's now {can_count} bears. GR8!!!!!!!! Someone can add another {}.",
+                            now_in_35_seconds.relative_time()
+                        )),
+                )
+        ).await?;
+    } else {
+        ctx.send(
         CreateReply::default()
             .embed(
                 CreateEmbed::new()
@@ -118,7 +145,8 @@ async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
                         now_in_35_seconds.relative_time()
                     )),
             )
-    ).await?;
+        ).await?;
+    }
 
     Ok(())
 }

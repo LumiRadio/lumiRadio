@@ -4,7 +4,10 @@ use crate::entities::{slcb_rank::*, users::Model as UserModel};
 use crate::prelude::JudeHarleyError;
 
 impl Model {
-    pub async fn get_by_id(id: i32, db: &DatabaseConnection) -> Result<Option<Self>, JudeHarleyError> {
+    pub async fn get_by_id(
+        id: i32,
+        db: &DatabaseConnection,
+    ) -> Result<Option<Self>, JudeHarleyError> {
         Entity::find_by_id(id).one(db).await.map_err(Into::into)
     }
 
@@ -30,7 +33,11 @@ impl Model {
     }
 
     pub async fn delete(id: i32, db: &DatabaseConnection) -> Result<(), JudeHarleyError> {
-        Entity::delete_by_id(id).exec(db).await.map(|_| ()).map_err(Into::into)
+        Entity::delete_by_id(id)
+            .exec(db)
+            .await
+            .map(|_| ())
+            .map_err(Into::into)
     }
 
     pub async fn update(
@@ -41,7 +48,10 @@ impl Model {
         user_id: Option<i64>,
         db: &DatabaseConnection,
     ) -> Result<Self, JudeHarleyError> {
-        let mut rank = Self::get_by_id(id, db).await?.ok_or(JudeHarleyError::RankNotFound)?.into_active_model();
+        let mut rank = Self::get_by_id(id, db)
+            .await?
+            .ok_or(JudeHarleyError::RankNotFound)?
+            .into_active_model();
         if let Some(rank_name) = rank_name {
             rank.rank_name = ActiveValue::set(rank_name.to_string());
         }
