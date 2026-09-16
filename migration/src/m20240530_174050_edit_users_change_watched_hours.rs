@@ -39,7 +39,7 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
-        
+
         let db = manager.get_connection();
 
         db.execute_unprepared("UPDATE users u SET watched_time = ou.watched_time / 3600 FROM users ou WHERE u.id = ou.id;").await?;

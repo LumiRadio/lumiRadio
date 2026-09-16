@@ -10,10 +10,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(ServerChannelConfig::Table)
-                    .add_column(
-                        ColumnDef::new(ServerChannelConfig::LastMessageSent)
-                            .timestamp(),
-                    )
+                    .add_column(ColumnDef::new(ServerChannelConfig::LastMessageSent).timestamp())
                     .to_owned(),
             )
             .await

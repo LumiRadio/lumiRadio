@@ -1,4 +1,4 @@
-use sea_orm::{prelude::*, ActiveValue, FromQueryResult, QueryOrder, QuerySelect, Set};
+use sea_orm::{ActiveValue, FromQueryResult, QueryOrder, QuerySelect, Set, prelude::*};
 
 use crate::controllers::CountQuery;
 use crate::custom_entities::songs::Model as SongModel;
@@ -8,7 +8,7 @@ use crate::entities::connected_youtube_accounts::{
     Entity as ConnectedYoutubeAccount, Model as ConnectedYoutubeAccountModel,
 };
 use crate::entities::favourite_songs::Model as FavouriteSongModel;
-use crate::{entities::users::*, JudeHarleyError};
+use crate::{JudeHarleyError, entities::users::*};
 
 #[derive(FromQueryResult)]
 struct UserCount {

@@ -1,9 +1,9 @@
-use sea_orm::{prelude::*, Set};
+use sea_orm::{Set, prelude::*};
 
+use crate::JudeHarleyError;
 use crate::discord::DiscordConnection;
 use crate::entities::connected_youtube_accounts::*;
 use crate::entities::users::Model as UserModel;
-use crate::JudeHarleyError;
 
 impl Model {
     pub async fn get_all(

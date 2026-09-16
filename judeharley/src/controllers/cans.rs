@@ -4,9 +4,9 @@ use sea_orm::{
     QuerySelect, Set,
 };
 
+use crate::JudeHarleyError;
 use crate::entities::cans::*;
 use crate::entities::users::Model as UserModel;
-use crate::JudeHarleyError;
 
 #[derive(FromQueryResult)]
 struct CanCount {

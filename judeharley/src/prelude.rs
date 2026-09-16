@@ -24,6 +24,9 @@ pub enum JudeHarleyError {
     #[error("Song not found")]
     SongNotFound,
 
+    #[error("Rank not found")]
+    RankNotFound,
+
     #[error(transparent)]
     SeaOrmDb(#[from] sea_orm::DbErr),
     #[error(transparent)]

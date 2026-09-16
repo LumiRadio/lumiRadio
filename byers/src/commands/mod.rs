@@ -1,5 +1,5 @@
-use poise::serenity_prelude::{AutocompleteChoice, CreateActionRow, CreateButton, CreateEmbed};
 use poise::CreateReply;
+use poise::serenity_prelude::{AutocompleteChoice, CreateActionRow, CreateButton, CreateEmbed};
 use tracing_unwrap::ResultExt;
 
 use crate::event_handlers::message::update_activity;
@@ -59,8 +59,8 @@ pub async fn autocomplete_songs(
             .expect_or_log("Failed to query database")
     } else {
         Songs::search(partial, &data.db)
-        .await
-        .expect_or_log("Failed to query database")
+            .await
+            .expect_or_log("Failed to query database")
     };
 
     songs.into_iter().take(20).map(|song| {

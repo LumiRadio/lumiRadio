@@ -1,12 +1,12 @@
 use std::path::Path;
 
-use sea_orm::{prelude::*, FromQueryResult, QuerySelect, Set, Statement};
+use sea_orm::{FromQueryResult, QuerySelect, Set, Statement, prelude::*};
 
 use crate::entities::{
     favourite_songs::Model as FavouriteSongModel, played_songs::Model as PlayedModel,
     song_requests::Model as RequestModel, song_tags::Model as TagsModel, users::Model as UserModel,
 };
-use crate::{custom_entities::songs::*, JudeHarleyError};
+use crate::{JudeHarleyError, custom_entities::songs::*};
 
 pub struct NewSong {
     pub title: String,
@@ -24,10 +24,7 @@ struct PathQuery {
 }
 
 impl Model {
-    pub async fn insert(
-        params: NewSong,
-        db: &DatabaseConnection,
-    ) -> Result<Self, JudeHarleyError> {
+    pub async fn insert(params: NewSong, db: &DatabaseConnection) -> Result<Self, JudeHarleyError> {
         ActiveModel {
             file_path: Set(params.file_path),
             file_hash: Set(params.file_hash),

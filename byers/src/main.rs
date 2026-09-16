@@ -1,11 +1,13 @@
 use std::str::FromStr;
 
 use fred::prelude::ClientLike;
-use poise::serenity_prelude as serenity;
 use poise::PrefixFrameworkOptions;
+use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::UserId;
 use tracing::{debug, info};
 use tracing_unwrap::ResultExt;
 
+use crate::commands::admin::ranks::ranks;
 use crate::{
     commands::{
         add_stuff::*,
@@ -71,6 +73,7 @@ async fn main() {
         addcan(),
         addbear(),
         what_song(),
+        ranks(),
     ];
 
     info!("Loading {} commands...", commands.len());
@@ -133,6 +136,13 @@ async fn main() {
                 case_insensitive_commands: true,
                 ..Default::default()
             },
+            initialize_owners: false,
+            owners: config
+                .discord
+                .admin_user_ids
+                .iter()
+                .map(|id| UserId::new(*id))
+                .collect(),
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {
