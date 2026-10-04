@@ -217,7 +217,7 @@ pub async fn queue(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 }
 
 /// Lets you search for a song and then request it
-#[poise::command(slash_command)]
+#[poise::command(slash_command, check = "official_guild_only")]
 pub async fn search(
     ctx: ApplicationContext<'_>,
     #[description = "The song to search for"] search: String,
@@ -541,7 +541,7 @@ async fn request_song(ctx: ApplicationContext<'_>, song: String) -> Result<(), E
 }
 
 /// Requests a song for the radio from your favourites
-#[poise::command(slash_command)]
+#[poise::command(slash_command, check = "official_guild_only")]
 pub async fn request_favourite(
     ctx: ApplicationContext<'_>,
     #[description = "The song to request"]
@@ -553,7 +553,7 @@ pub async fn request_favourite(
 }
 
 /// Requests a song for the radio
-#[poise::command(slash_command)]
+#[poise::command(slash_command, check = "official_guild_only")]
 pub async fn request(
     ctx: ApplicationContext<'_>,
     #[description = "The song to request"]

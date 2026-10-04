@@ -25,6 +25,8 @@ pub struct DiscordConfig {
 
     pub emoji: EmojiConfig,
     pub admin_user_ids: Vec<u64>,
+    #[serde(default)]
+    pub allowed_guild_ids: Vec<u64>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -45,6 +47,7 @@ impl AppConfig {
                     .separator("__")
                     .list_separator(",")
                     .with_list_parse_key("discord.admin_user_ids")
+                    .with_list_parse_key("discord.allowed_guild_ids")
                     .try_parsing(true),
             )
             .build()
