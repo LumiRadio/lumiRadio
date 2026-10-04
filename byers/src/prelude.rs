@@ -1,7 +1,7 @@
 use poise::serenity_prelude as serenity;
 use sentry::Breadcrumb;
 use serde_json::json;
-use serenity::GatewayIntents;
+use serenity::{GatewayIntents, GuildId};
 
 use std::sync::Arc;
 
@@ -29,6 +29,30 @@ where
     pub redis_pool: fred::pool::RedisPool,
     pub emoji: EmojiConfig,
     pub scheduler_handle: Arc<Mutex<Option<JoinHandle<()>>>>,
+    pub allowed_guild_ids: Vec<GuildId>,
+}
+
+/// Command check restricting a command to the configured official guild(s).
+///
+/// If no guilds are configured, the command is allowed everywhere.
+pub async fn official_guild_only(ctx: Context<'_>) -> Result<bool, Error> {
+    let allowed = &ctx.data().allowed_guild_ids;
+    if allowed.is_empty() {
+        return Ok(true);
+    }
+
+    if ctx.guild_id().is_some_and(|id| allowed.contains(&id)) {
+        return Ok(true);
+    }
+
+    ctx.send(
+        poise::CreateReply::default()
+            .content("This command can only be used in the official lumiRadio server.")
+            .ephemeral(true),
+    )
+    .await?;
+
+    Ok(false)
 }
 
 pub struct BreadcrumbableContext<'a>(pub Context<'a>);

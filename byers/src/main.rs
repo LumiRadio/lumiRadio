@@ -122,6 +122,12 @@ async fn main() {
         redis_pool: redis_pool.clone(),
         emoji: config.discord.emoji.clone(),
         scheduler_handle: std::sync::Arc::new(tokio::sync::Mutex::new(None)),
+        allowed_guild_ids: config
+            .discord
+            .allowed_guild_ids
+            .iter()
+            .map(|id| serenity::GuildId::new(*id))
+            .collect(),
     };
 
     let framework = poise::Framework::builder()

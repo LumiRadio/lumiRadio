@@ -153,7 +153,7 @@ async fn addbear_action(ctx: Context<'_>) -> Result<(), Error> {
 
 #[allow(unused_variables)]
 /// Add a can to can town
-#[poise::command(prefix_command, slash_command)]
+#[poise::command(prefix_command, slash_command, check = "official_guild_only")]
 pub async fn addcan(
     ctx: Context<'_>,
     #[description = "A comment for adding the can"]
@@ -165,7 +165,7 @@ pub async fn addcan(
 
 #[allow(unused_variables)]
 /// Add a... bear...? to bear town...?
-#[poise::command(prefix_command, slash_command)]
+#[poise::command(prefix_command, slash_command, check = "official_guild_only")]
 pub async fn addbear(
     ctx: Context<'_>,
     #[description = "A comment for adding the can"]
@@ -184,7 +184,7 @@ async fn add_can(db: &DatabaseConnection, user_id: u64) -> Result<(), Error> {
 
 #[allow(unused_variables)]
 /// Add a can to can town
-#[poise::command(slash_command)]
+#[poise::command(slash_command, check = "official_guild_only")]
 pub async fn can(
     ctx: Context<'_>,
     #[description = "A comment for adding the can"]
@@ -196,7 +196,7 @@ pub async fn can(
 
 #[allow(unused_variables)]
 /// Add a... bear...? to bear town...?
-#[poise::command(slash_command)]
+#[poise::command(slash_command, check = "official_guild_only")]
 pub async fn bear(
     ctx: Context<'_>,
     #[description = "A comment for adding the can"]
